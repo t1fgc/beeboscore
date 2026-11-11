@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BeeboScore — Live preview</title>
+<link rel="icon" href="/favicon.ico">
+<style>
+  :root { color-scheme: dark; }
+  html, body { margin: 0; height: 100%; background: #0b0d12; color: #cfd3dc; font: 13px/1.3 "Segoe UI", system-ui, sans-serif; overflow: hidden; }
+  .bar { position: fixed; left: 0; right: 0; top: 0; height: 38px; display: flex; align-items: center; gap: 8px; padding: 0 10px; background: rgba(11,13,18,.92); border-bottom: 1px solid #1f2430; z-index: 2; transition: opacity .2s; }
+  body.idle .bar { opacity: 0; }
+  .bar b { font-weight: 700; color: #fff; } .bar small { color: #8a91a1; }
+  .bar .sp { flex: 1; }
+  .chip { border: 1px solid #2a3040; background: #141822; color: #cfd3dc; border-radius: 999px; padding: 4px 10px; font: inherit; cursor: pointer; }
+  .chip.on { background: #ffb020; border-color: #ffb020; color: #111; font-weight: 700; }
+  .stage { position: fixed; inset: 0; display: grid; place-items: center; }
+  .wrap { position: relative; overflow: hidden; }
+  .wrap.checker { background: repeating-conic-gradient(#1a1e28 0 25%, #12151c 0 50%) 0 0 / 22px 22px; }
+  .wrap.green { background: #00b140; } .wrap.game { background: linear-gradient(160deg, #2f3d5c, #5b3f4e 50%, #24283a); } .wrap.black { background: #000; }
+  .wrap iframe, .wrap img { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; border: 0; transform-origin: 0 0; pointer-events: none; color-scheme: normal; background: transparent; }
+</style>
+</head>
+<body>
+<div class="bar"><img src="/favicon.ico" width="20" height="20" alt=""><b>Live preview</b><small id="name"></small><span class="sp"></span><span id="bgs"></span></div>
+<div class="stage"><div class="wrap checker" id="wrap"><iframe id="fr" title="Overlay" tabindex="-1"></iframe></div></div>
+<script>
+(function () {
+  'use strict';
+  const BGS = [['checker', 'Transparent'], ['game', 'Game'], ['green', 'Green'], ['black', 'Black']];
+  const store = (k, v) => { try { if (v === undefined) return localStorage.getItem('sb.' + k); localStorage.setItem('sb.' + k, v); } catch (e) { return null; } };
+  const wrap = document.getElementById('wrap'), fr = document.getElementById('fr');
+  function fit() {                        // 16:9, as big as the window allows, under the toolbar
+    const W = innerWidth, H = innerHeight - 38, s = Math.min(W / 1920, H / 1080);
+    wrap.style.width = Math.floor(1920 * s) + 'px'; wrap.style.height = Math.floor(1080 * s) + 'px'; wrap.style.marginTop = '38px';
+    for (const el of wrap.children) el.style.transform = `scale(${s})`;
+  }
+  addEventListener('resize', fit); fit();
+  function setBg(v) { wrap.className = 'wrap ' + v; store('popBg', v); document.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c.dataset.v === v)); }
+  document.getElementById('bgs').innerHTML = BGS.map(([v, t]) => `<button class="chip" data-v="${v}">${t}</button>`).join(' ');
+  document.getElementById('bgs').onclick = e => { const c = e.target.closest('.chip'); if (c) setBg(c.dataset.v); };
+  setBg(store('popBg') || store('bg') || 'checker');
+  // follows the active layout (and the potato-mode still picture)
+  fetch('/api/potato', { cache: 'no-store' }).then(r => r.json()).then(p => {
+    if (p && p.renderer) {
+      fr.remove(); const img = document.createElement('img'); img.alt = ''; wrap.appendChild(img); fit();
+      const load = v => { img.src = '/overlay.png?v=' + v; }; load(p.ver);
+      setInterval(() => fetch('/api/potato', { cache: 'no-store' }).then(r => r.json()).then(d => { if (d.ver !== p.ver) { p.ver = d.ver; load(d.ver); } }).catch(() => {}), 1000);
+    } else fr.src = '/overlay?preview';
+  }).catch(() => { fr.src = '/overlay?preview'; });
+  fetch('/api/overlays').then(r => r.json()).then(list => { const a = (list || []).find(o => o.active); if (a) document.getElementById('name').textContent = '· ' + a.title; }).catch(() => {});
+  // the toolbar fades away when the mouse rests
+  let t = 0; const wake = () => { document.body.classList.remove('idle'); clearTimeout(t); t = setTimeout(() => document.body.classList.add('idle'), 2500); };
+  addEventListener('mousemove', wake); wake();
+})();
+</script>
+</body>
+</html>

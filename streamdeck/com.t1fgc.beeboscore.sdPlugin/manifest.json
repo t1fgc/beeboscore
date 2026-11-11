@@ -1,0 +1,199 @@
+{
+  "$schema": "https://schemas.elgato.com/streamdeck/plugins/manifest.json",
+  "Name": "BeeboScore",
+  "Version": "1.0.0.0",
+  "Author": "Beebo",
+  "Description": "Run the BeeboScore fighting game scoreboard from your Stream Deck: live score keys, reset, swap sides, undo, losers [L], and start.gg: next match, set player, report results and refresh.",
+  "UUID": "com.t1fgc.beeboscore",
+  "URL": "https://github.com/t1fgc/beeboscore",
+  "Icon": "imgs/plugin",
+  "Category": "BeeboScore",
+  "CategoryIcon": "imgs/category",
+  "CodePath": "bin/plugin.js",
+  "PropertyInspectorPath": "ui/inspector.html",
+  "SDKVersion": 2,
+  "Software": {
+    "MinimumVersion": "6.4"
+  },
+  "OS": [
+    {
+      "Platform": "windows",
+      "MinimumVersion": "10"
+    },
+    {
+      "Platform": "mac",
+      "MinimumVersion": "12"
+    }
+  ],
+  "Nodejs": {
+    "Version": "20"
+  },
+  "Actions": [
+    {
+      "UUID": "com.t1fgc.beeboscore.score",
+      "Name": "Player score",
+      "Icon": "imgs/actions/score",
+      "Tooltip": "Tap +1, hold −1. Shows the player's name and live score.",
+      "Controllers": [
+        "Keypad",
+        "Encoder"
+      ],
+      "Encoder": {
+        "layout": "$B1",
+        "Icon": "imgs/actions/score-dial",
+        "TriggerDescription": {
+          "Rotate": "Change score",
+          "Push": "+1",
+          "Touch": "+1 (long touch −1)"
+        }
+      },
+      "States": [
+        {
+          "Image": "imgs/keys/score",
+          "ShowTitle": false
+        }
+      ],
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboscore.reset",
+      "Name": "Reset scores",
+      "Icon": "imgs/actions/reset",
+      "Tooltip": "Both scores back to 0–0.",
+      "States": [
+        {
+          "Image": "imgs/keys/reset",
+          "ShowTitle": false
+        }
+      ],
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboscore.swap",
+      "Name": "Swap sides",
+      "Icon": "imgs/actions/swap",
+      "Tooltip": "Swap Player 1 and Player 2.",
+      "States": [
+        {
+          "Image": "imgs/keys/swap",
+          "ShowTitle": false
+        }
+      ],
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboscore.undo",
+      "Name": "Undo",
+      "Icon": "imgs/actions/undo",
+      "Tooltip": "Undo the last change.",
+      "States": [
+        {
+          "Image": "imgs/keys/undo",
+          "ShowTitle": false
+        }
+      ],
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboscore.loser",
+      "Name": "Losers [L]",
+      "Icon": "imgs/actions/loser",
+      "Tooltip": "Mark a player as coming from losers.",
+      "States": [
+        {
+          "Image": "imgs/keys/loser-off",
+          "ShowTitle": false
+        },
+        {
+          "Image": "imgs/keys/loser-on",
+          "ShowTitle": false
+        }
+      ],
+      "DisableAutomaticStates": true,
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboscore.overlay",
+      "Name": "Show / hide overlay",
+      "Icon": "imgs/actions/overlay",
+      "Tooltip": "Hides the whole overlay in OBS during downtime; press again to bring it back.",
+      "States": [
+        {
+          "Image": "imgs/keys/overlay-on",
+          "ShowTitle": false
+        },
+        {
+          "Image": "imgs/keys/overlay-off",
+          "ShowTitle": false
+        }
+      ],
+      "DisableAutomaticStates": true,
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboscore.layout",
+      "Name": "Switch layout",
+      "Icon": "imgs/actions/layout",
+      "Tooltip": "Next layout, or a specific one (including layouts you made in the Overlay maker).",
+      "States": [
+        {
+          "Image": "imgs/keys/layout",
+          "ShowTitle": false
+        }
+      ],
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboscore.sggreport",
+      "Name": "Report result to start.gg",
+      "Icon": "imgs/actions/sggreport",
+      "Tooltip": "Sends the finished set's result to start.gg (the match has to come from the start.gg bracket, and your account has to be able to report).",
+      "States": [
+        {
+          "Image": "imgs/keys/sggreport",
+          "ShowTitle": false
+        }
+      ],
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboscore.bracketrefresh",
+      "Name": "Refresh start.gg matches",
+      "Icon": "imgs/actions/bracketrefresh",
+      "Tooltip": "Pull the latest matches and results from start.gg right now.",
+      "States": [
+        {
+          "Image": "imgs/keys/bracketrefresh",
+          "ShowTitle": false
+        }
+      ],
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboscore.player",
+      "Name": "Set player",
+      "Icon": "imgs/actions/player",
+      "Tooltip": "Pop-up to type a name or pick a player.",
+      "States": [
+        {
+          "Image": "imgs/keys/player",
+          "ShowTitle": false
+        }
+      ],
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboscore.nextmatch",
+      "Name": "Next match (start.gg)",
+      "Icon": "imgs/actions/nextmatch",
+      "Tooltip": "Load the next match from start.gg at 0–0.",
+      "States": [
+        {
+          "Image": "imgs/keys/nextmatch",
+          "ShowTitle": false
+        }
+      ],
+      "UserTitleEnabled": false
+    }
+  ]
+}

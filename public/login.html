@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BeeboScore — Sign in</title>
+<style>
+  :root { --bg: #0b0d12; --card: #161a23; --line: #262c3b; --text: #eef1f7; --muted: #8b93a7; --accent: #ffc23d; --err: #ff4d5e; }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: var(--bg); color: var(--text); font: 15px/1.4 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; padding: 16px; }
+  form { width: min(380px, 100%); background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 26px; }
+  .logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 18px; margin-bottom: 6px; }
+  .logo b { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 9px; background: linear-gradient(135deg, #c30a24, #ff7a12); font-size: 13px; }
+  p { color: var(--muted); margin: 0 0 18px; }
+  label { display: block; font-size: 12px; font-weight: 600; letter-spacing: .5px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+  input { width: 100%; background: #11141b; border: 1px solid var(--line); border-radius: 9px; padding: 12px; color: inherit; font: inherit; outline: none; }
+  input:focus { border-color: #4a5470; }
+  button { width: 100%; margin-top: 14px; border: 0; border-radius: 9px; padding: 12px; background: var(--accent); color: #111; font: inherit; font-weight: 700; cursor: pointer; }
+  .err { color: var(--err); margin-top: 10px; min-height: 20px; font-size: 14px; }
+</style>
+</head>
+<body>
+<form id="f">
+  <div class="logo"><img src="/favicon.ico" alt="" width="34" height="34" style="border-radius:9px"> BeeboScore</div>
+  <p>Enter the remote-control password set in the app.</p>
+  <label for="pw">Password</label>
+  <input id="pw" type="password" autocomplete="current-password" autofocus required>
+  <button type="submit">Sign in</button>
+  <div class="err" id="err"></div>
+</form>
+<script>
+  document.getElementById('f').onsubmit = async e => {
+    e.preventDefault();
+    const err = document.getElementById('err');
+    err.textContent = '';
+    try {
+      const r = await fetch('/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: document.getElementById('pw').value }) });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Sign-in failed');
+      location.href = '/';
+    } catch (x) { err.textContent = x.message; }
+  };
+</script>
+</body>
+</html>

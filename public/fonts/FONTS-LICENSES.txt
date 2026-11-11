@@ -1,0 +1,12 @@
+Fonts bundled with BeeboScore (used by the layouts and the Layout Designer).
+All are free to use, embed and redistribute. Files come from the Fontsource project (fontsource.org),
+which packages the Google Fonts releases.
+
+SIL Open Font License 1.1 (https://openfontlicense.org):
+  Saira Condensed, Chakra Petch (see OFL-Saira.txt, OFL-ChakraPetch.txt),
+  Sedgwick Ave Display, Rubik Wet Paint, Black Ops One, Metal Mania, Russo One, Bungee, Fredoka,
+  Rubik Bubbles, Patrick Hand, Comfortaa, Sniglet, Bangers, Racing Sans One, Teko, Audiowide,
+  Shojumaru, Cinzel, Kaushan Script, Yuji Syuku.
+
+Apache License 2.0 (https://www.apache.org/licenses/LICENSE-2.0):
+  Permanent Marker, Chewy.

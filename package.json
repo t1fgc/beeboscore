@@ -1,0 +1,82 @@
+{
+  "name": "beeboscore",
+  "productName": "BeeboScore",
+  "version": "1.0.0",
+  "description": "Barebones fighting game scoreboard: matches, start.gg events, go online, the Shattered layout and Stream Deck keys.",
+  "author": {
+    "name": "Beebo"
+  },
+  "homepage": "https://github.com/t1fgc/beeboscore",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/t1fgc/beeboscore.git"
+  },
+  "bugs": {
+    "url": "https://github.com/t1fgc/beeboscore/issues"
+  },
+  "license": "MIT",
+  "main": "desktop/main.js",
+  "scripts": {
+    "start": "electron .",
+    "server": "node server.js",
+    "build:streamdeck": "cd streamdeck && npm install && npm run build",
+    "predist": "npm run build:streamdeck",
+    "dist": "electron-builder --win portable --x64 --publish never"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "electron": "45.2.3",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "com.t1fgc.beeboscore",
+    "productName": "BeeboScore",
+    "copyright": "Copyright © 2026 Beebo",
+    "artifactName": "BeeboScore-${version}.${ext}",
+    "asar": true,
+    "compression": "maximum",
+    "electronLanguages": [
+      "en-US"
+    ],
+    "directories": {
+      "output": "dist",
+      "buildResources": "desktop"
+    },
+    "files": [
+      "server.js",
+      "package.json",
+      "lib/**",
+      "public/**",
+      "overlays/**",
+      "desktop/*.js",
+      "desktop/icon.*",
+      "!**/*.map",
+      "!**/{CHANGELOG.md,README.md,readme.md,*.d.ts,test,tests,__tests__,docs,example,examples}/**",
+      "!desktop/beta-setup.config.js"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "desktop/icon.ico",
+      "legalTrademarks": "Beebo"
+    },
+    "portable": {
+      "artifactName": "BeeboScore-${version}.${ext}",
+      "unpackDirName": "BeeboScore"
+    },
+    "extraResources": [
+      {
+        "from": "streamdeck/dist/com.t1fgc.beeboscore.streamDeckPlugin",
+        "to": "streamdeck/com.t1fgc.beeboscore.streamDeckPlugin"
+      }
+    ]
+  }
+}

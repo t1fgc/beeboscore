@@ -1,0 +1,59 @@
+# Builds the portable exe when a version tag (v1.1.0) is pushed, and attaches it to a DRAFT release.
+# Nothing is public until you press "Publish release" — see docs/RELEASING.md.
+name: Build release draft
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Build the exe
+        run: npm run dist
+
+      - name: Read the version
+        id: v
+        shell: bash
+        run: echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Keep the exe with this run
+        uses: actions/upload-artifact@v6
+        with:
+          name: BeeboScore-${{ steps.v.outputs.version }}
+          path: dist/BeeboScore-${{ steps.v.outputs.version }}.exe
+          if-no-files-found: error
+
+      - name: The tag has to match package.json
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        run: |
+          if [ "$GITHUB_REF_NAME" != "v${{ steps.v.outputs.version }}" ]; then
+            echo "Tag $GITHUB_REF_NAME does not match version ${{ steps.v.outputs.version }} in package.json"; exit 1
+          fi
+
+      - name: Create the draft release
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${{ steps.v.outputs.version }}"
+          NOTES="docs/release-notes/$VERSION.md"
+          if [ -f "$NOTES" ]; then FLAGS=(--notes-file "$NOTES"); else FLAGS=(--generate-notes); fi
+          gh release create "$GITHUB_REF_NAME" "dist/BeeboScore-$VERSION.exe" --draft --title "BeeboScore $VERSION" "${FLAGS[@]}"

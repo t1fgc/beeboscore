@@ -1,0 +1,112 @@
+/* =========================================================================================
+   BeeboScore — "Shattered" UI theme (Settings › Look & feel). Same materials as the
+   Shattered overlay: obsidian glass, ember orange, chrome italic headings, Chakra Petch labels,
+   hairline cracks. Only active with <html class="theme-shattered">; Classic stays untouched.
+   ========================================================================================= */
+@font-face { font-family: 'Saira Condensed'; font-weight: 700; font-style: normal; font-display: swap; src: url(/static/fonts/saira-condensed-latin-700-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Saira Condensed'; font-weight: 800; font-style: normal; font-display: swap; src: url(/static/fonts/saira-condensed-latin-800-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Chakra Petch'; font-weight: 500; font-style: normal; font-display: swap; src: url(/static/fonts/chakra-petch-latin-500-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Chakra Petch'; font-weight: 600; font-style: normal; font-display: swap; src: url(/static/fonts/chakra-petch-latin-600-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Chakra Petch'; font-weight: 700; font-style: normal; font-display: swap; src: url(/static/fonts/chakra-petch-latin-700-normal.woff2) format('woff2'); }
+
+html.theme-shattered {
+  --bg: #050507; --bg-2: #0b0c0f; --card: #101115; --card-2: #17181d; --line: rgba(255, 90, 31, .16); --line-2: rgba(255, 90, 31, .38);
+  --text: #eceef2; --muted: #9a9ea9; --faint: #6c707b;
+  --accent: #ff5a1f; --accent-2: #ffb36b; --ok: #3ddc84; --err: #ff4d5e;
+  --radius: 3px; --sub: #8d919d;
+  --label: 'Chakra Petch', 'Segoe UI', sans-serif; --display: 'Saira Condensed', 'Arial Narrow', Impact, sans-serif;
+}
+html.theme-shattered body {
+  background:
+    radial-gradient(ellipse 70% 45% at 50% 115%, rgba(255, 90, 31, .16), transparent 70%),
+    radial-gradient(ellipse 40% 50% at 100% 30%, rgba(163, 24, 10, .10), transparent 70%),
+    linear-gradient(158deg, transparent 0 31%, rgba(255,255,255,.018) 31% 31.12%, transparent 31.12% 64%, rgba(255,255,255,.014) 64% 64.1%, transparent 64.1%),
+    #050507;
+  background-attachment: fixed;
+}
+html.theme-shattered ::-webkit-scrollbar-thumb { background: #2a1d17; border-color: #050507; }
+html.theme-shattered ::selection { background: rgba(255, 90, 31, .45); }
+
+/* header: an obsidian plate with an ember edge */
+html.theme-shattered .head { background: linear-gradient(180deg, rgba(20,21,26,.97), rgba(8,8,10,.97)); border-bottom: 1px solid rgba(255,90,31,.35); box-shadow: 0 1px 0 rgba(0,0,0,.6), 0 8px 30px -18px rgba(255,90,31,.6); }
+html.theme-shattered .brand b { font: italic 800 20px/1 var(--display); letter-spacing: .5px; text-transform: uppercase;
+  background: linear-gradient(180deg, #fff 0%, #e9ebf0 40%, #8f939d 55%, #d9dce3 80%, #fff 100%); -webkit-background-clip: text; background-clip: text; color: transparent; padding-right: 3px; }
+html.theme-shattered .brand small { font: 600 10px var(--label); letter-spacing: 2px; text-transform: uppercase; color: var(--accent); }
+html.theme-shattered .picker label { font-family: var(--label); letter-spacing: 2px; color: var(--accent); }
+html.theme-shattered .picker select { background-color: #0b0c0f; border-color: rgba(255,90,31,.25); border-radius: 2px; font-family: var(--label); letter-spacing: .3px; }
+html.theme-shattered .picker select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(255,90,31,.18); }
+html.theme-shattered .seg { background: #0b0c0f; border-color: rgba(255,90,31,.25); border-radius: 2px; }
+html.theme-shattered .seg button { font-family: var(--label); letter-spacing: 1.5px; text-transform: uppercase; font-size: 12px; border-radius: 1px; }
+html.theme-shattered .seg button.on { background: linear-gradient(180deg, #ff7a3a, #a3180a); color: #fff; }
+html.theme-shattered .status, html.theme-shattered .pending { font-family: var(--label); letter-spacing: .5px; }
+
+/* buttons: angled glass plates; primary = molten */
+html.theme-shattered .btn { font-family: var(--label); font-weight: 600; letter-spacing: .6px; border-radius: 0; border-color: rgba(255,90,31,.3);
+  background: linear-gradient(180deg, #1b1c22, #0b0c0f); clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%); padding-left: 18px; padding-right: 18px; }
+html.theme-shattered .btn:hover { border-color: rgba(255,90,31,.65); background: linear-gradient(180deg, #24252c, #0f1013); }
+html.theme-shattered .btn.ghost { background: transparent; }
+html.theme-shattered .btn.primary, html.theme-shattered .update-btn { background: linear-gradient(180deg, #ff7a3a 0%, #e04a14 55%, #a3180a 100%); border-color: #ff8a4a; color: #fff; text-shadow: 0 1px 0 rgba(0,0,0,.35); }
+html.theme-shattered .btn.primary:hover, html.theme-shattered .update-btn:hover { filter: brightness(1.12); }
+html.theme-shattered .update-btn { clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%); font: 700 13px var(--label); letter-spacing: 2px; text-transform: uppercase; border-radius: 0; }
+html.theme-shattered .update-btn.live { background: linear-gradient(180deg, #2a1d17, #0b0c0f); color: var(--accent-2); }
+html.theme-shattered .chip { border-radius: 0; font-family: var(--label); letter-spacing: .5px; clip-path: polygon(5px 0, 100% 0, calc(100% - 5px) 100%, 0 100%); border-color: rgba(255,90,31,.25); background: #0e0f12; }
+html.theme-shattered .chip.on { background: linear-gradient(180deg, #ff7a3a, #a3180a); border-color: #ff8a4a; color: #fff; }
+html.theme-shattered .pill { border-radius: 0; font-family: var(--label); letter-spacing: 1.5px; clip-path: polygon(5px 0, 100% 0, calc(100% - 5px) 100%, 0 100%); }
+
+/* side rail */
+html.theme-shattered nav.rail { background: linear-gradient(180deg, #0b0c0f, #050507); border-right: 1px solid rgba(255,90,31,.18); }
+html.theme-shattered nav.rail button { font-family: var(--label); letter-spacing: 1px; text-transform: uppercase; font-size: 10px; border-radius: 0; }
+html.theme-shattered nav.rail button.on { background: linear-gradient(90deg, rgba(255,90,31,.22), rgba(255,90,31,0)); color: #fff; box-shadow: inset 3px 0 0 var(--accent); }
+html.theme-shattered nav.rail button.on svg { fill: var(--accent); filter: drop-shadow(0 0 6px rgba(255,90,31,.6)); }
+html.theme-shattered nav.rail button .badge { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+
+/* cards: obsidian glass with an ember hairline and a cut corner */
+html.theme-shattered .card { position: relative; border-radius: 0; border: 0; background: linear-gradient(180deg, #131418 0%, #0b0c0f 100%);
+  box-shadow: inset 0 0 0 1px rgba(255,90,31,.14), inset 0 1px 0 rgba(255,255,255,.04);
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%); }
+html.theme-shattered .card::before { content: ''; position: absolute; left: 0; top: 0; width: 140px; height: 2px; background: linear-gradient(90deg, #ff5a1f, rgba(255,90,31,0)); }
+html.theme-shattered .card h2 { font: 700 12px var(--label); letter-spacing: 3.5px; color: var(--sub); white-space: nowrap; }
+html.theme-shattered aside.side .card h2 { letter-spacing: 2px; }
+html.theme-shattered aside.side .card h2 .btn { padding-left: 12px; padding-right: 12px; }
+html.theme-shattered .card h2::before { content: ''; width: 8px; height: 8px; background: var(--accent); clip-path: polygon(30% 0, 100% 0, 70% 100%, 0 100%); flex: none; }
+html.theme-shattered .pagetitle { font: italic 800 38px/1 var(--display); letter-spacing: .5px; text-transform: uppercase; padding-right: 6px;
+  background: linear-gradient(180deg, #fff 0%, #e9ebf0 38%, #8f939d 52%, #ffd0a0 64%, #ff5a1f 86%); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 3px 0 rgba(0,0,0,.7)); }
+html.theme-shattered .pagetitle .pill { -webkit-text-fill-color: initial; color: var(--text); filter: none; }
+
+/* fields */
+html.theme-shattered label.l { font: 600 11px var(--label); letter-spacing: 2px; color: var(--sub); }
+html.theme-shattered input[type=text], html.theme-shattered input[type=number], html.theme-shattered input[type=password], html.theme-shattered input[type=search],
+html.theme-shattered select.f, html.theme-shattered textarea { background: #08090b; border-color: rgba(255,255,255,.08); border-radius: 0; }
+html.theme-shattered input:focus, html.theme-shattered select.f:focus, html.theme-shattered textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(255,90,31,.16), 0 0 18px -6px rgba(255,90,31,.6); }
+html.theme-shattered .toggle .sw { border-radius: 2px; background: #0b0c0f; border-color: rgba(255,255,255,.14); }
+html.theme-shattered .toggle .sw::after { border-radius: 1px; background: #6c707b; }
+html.theme-shattered .toggle input:checked + .sw { background: linear-gradient(180deg, #ff7a3a, #a3180a); }
+html.theme-shattered .toggle input:checked + .sw::after { background: #fff; }
+html.theme-shattered .kbd { border-radius: 0; font-family: var(--label); }
+html.theme-shattered .hint { color: #8a8e99; }
+
+/* the match: player plates like the overlay's */
+html.theme-shattered .pcard { border-radius: 0; background: linear-gradient(180deg, #17181d, #090a0c); border: 0; box-shadow: inset 0 0 0 1px rgba(255,255,255,.06);
+  clip-path: polygon(0 0, 100% 0, calc(100% - 12px) 100%, 0 100%); }
+html.theme-shattered .ptitle { font: italic 800 20px var(--display); letter-spacing: 2px; }
+html.theme-shattered .scorebox { border-radius: 0; }
+html.theme-shattered .scorebox input { font-family: var(--label); font-weight: 700; text-shadow: 0 0 18px rgba(255,90,31,.45); }
+html.theme-shattered .scorebox button { border-radius: 0; font-family: var(--label); }
+html.theme-shattered .mid .btn { clip-path: none; }
+html.theme-shattered .qs { border-radius: 0; }
+html.theme-shattered .qs b.n { border-radius: 0; background: linear-gradient(180deg, #ff7a3a, #a3180a); color: #fff; clip-path: polygon(20% 0, 100% 0, 80% 100%, 0 100%); }
+html.theme-shattered .winner-card { background: linear-gradient(180deg, #2a1209, #0b0c0f); }
+
+/* lists, popovers, preview */
+html.theme-shattered .set, html.theme-shattered .sd-row, html.theme-shattered .lat-row, html.theme-shattered .lat-summary > div, html.theme-shattered .keyrow { border-radius: 0; background: #0d0e11; }
+html.theme-shattered .set:hover { box-shadow: inset 2px 0 0 var(--accent); }
+html.theme-shattered .ac { border-radius: 0; background: #0b0c0f; border-color: rgba(255,90,31,.35); }
+html.theme-shattered .ac-item { border-radius: 0; }
+html.theme-shattered .ac-item.on, html.theme-shattered .ac-item:hover { background: linear-gradient(90deg, rgba(255,90,31,.3), rgba(255,90,31,.06)); }
+html.theme-shattered .preview-wrap { border-radius: 0; border-color: rgba(255,90,31,.3); box-shadow: 0 0 0 1px rgba(0,0,0,.6), 0 10px 30px -14px rgba(255,90,31,.45); }
+html.theme-shattered .toast { border-radius: 0; font-family: var(--label); letter-spacing: .3px; background: linear-gradient(180deg, #1b1c22, #0b0c0f); border: 1px solid rgba(255,90,31,.45); clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%); }
+html.theme-shattered .banner { background: linear-gradient(90deg, rgba(255,90,31,.22), rgba(255,90,31,.04)); border-bottom-color: rgba(255,90,31,.45); font-family: var(--label); }
+html.theme-shattered .modal .box, html.theme-shattered .pm-box { border-radius: 0; }
+html.theme-shattered .lat-chip { border-radius: 0; clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%); }
+html.theme-shattered .theme-opt.on { box-shadow: inset 0 0 0 2px var(--accent), 0 0 24px -8px rgba(255,90,31,.7); }
+html.theme-shattered .br-side .br-seg button.on { background: linear-gradient(180deg, #ff7a3a, #a3180a); color: #fff; }

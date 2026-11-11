@@ -1,0 +1,7 @@
+{
+  "name": "beeboscore-streamdeck",
+  "private": true,
+  "description": "Builds the BeeboScore Stream Deck plugin (node build.js).",
+  "scripts": { "build": "node build.js" },
+  "devDependencies": { "esbuild": "0.24.0", "ws": "8.18.0" }
+}

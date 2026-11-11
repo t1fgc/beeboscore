@@ -1,0 +1,24 @@
+# dependencies and build output
+node_modules/
+dist/
+streamdeck/node_modules/
+streamdeck/dist/
+
+# what the app writes when you run it from source (npm start / npm run server)
+/data/
+/output/
+/overlays/*
+!/overlays/shattered/
+BeeboScore Data/
+
+# never commit these: a start.gg OAuth app's ID and secret, and local environment files
+startgg-oauth.json
+.env
+.env.*
+
+# editor and OS noise
+*.log
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

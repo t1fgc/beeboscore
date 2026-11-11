@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1, viewport-fit=cover" name="viewport"/>
+<title>BeeboScore</title>
+<link href="/favicon.ico" rel="icon"/>
+<link href="/static/panel.css" rel="stylesheet"/>
+<style id="liteStyle">
+/* BeeboScore: the prototype notice at the top of every tab (open the first time, remembers being closed) */
+.proto { border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 12px; background: var(--card); margin-bottom: 4px; }
+.proto summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 10px; padding: 10px 14px; font-size: 13px; }
+.proto summary::-webkit-details-marker { display: none; }
+.proto summary b { color: var(--accent); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
+.proto summary span { color: var(--muted); flex: 1; min-width: 0; }
+.proto summary i { font-style: normal; font-size: 12px; font-weight: 700; color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 3px 10px; white-space: nowrap; }
+.proto summary i::before { content: 'Show'; }
+.proto[open] summary i::before { content: 'Hide'; }
+.proto summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 10px; }
+.proto .proto-body { padding: 2px 16px 14px; font-size: 13.5px; line-height: 1.5; }
+.proto .proto-body p { margin: 0 0 8px; }
+.proto ul { margin: 0; padding-left: 18px; }
+.proto li { margin: 3px 0; }
+.proto li b { color: var(--text); }
+body.mk-open .proto { margin: 14px 26px; }
+</style></head>
+<body>
+<a class="skip-link" href="#main">Skip to the controls</a>
+<header class="head">
+<div class="brand"><img alt="" src="/favicon.ico"/><div><b>BeeboScore</b><small id="verLabel">by Beebo</small></div></div><div class="pickers">
+<div class="picker"><label for="layoutPick">Layout · live in OBS</label><select id="layoutPick" title="Switch the layout shown in OBS (instant)"></select></div>
+</div>
+<div class="spacer"></div>
+<div class="status"><span class="dot" id="dot"></span><span id="statusText">Connecting…</span></div>
+<button class="btn ghost sm ov-toggle" id="ovBtn" title="Hide the whole overlay during downtime, show it again when you're back (Ctrl+Shift+H)"><svg viewbox="0 0 24 24"><path d="M12 5C6.5 5 2.7 9.4 1.5 12c1.2 2.6 5 7 10.5 7s9.3-4.4 10.5-7C21.3 9.4 17.5 5 12 5zm0 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8z"></path></svg><span>Overlay on</span></button><button class="btn ghost sm" id="undoBtn" title="Undo the last change sent to stream (Ctrl+Z)"><svg viewbox="0 0 24 24"><path d="M12.5 8c-2.6 0-5 1-6.9 2.6L2 7v9h9l-3.6-3.6A8 8 0 0 1 20.1 16l2.4-.8A10.5 10.5 0 0 0 12.5 8z"></path></svg>Undo</button>
+<span class="pending" hidden="" id="pending">Unsaved changes</span>
+<button class="btn ghost sm" hidden="" id="revertBtn" title="Discard changes">Revert</button>
+<div aria-label="Update mode" class="seg" role="tablist">
+<button data-mode="manual" title="Changes go live when you press Update">Manual</button>
+<button data-mode="live" title="Every change goes to the overlay instantly">Live</button>
+</div>
+<button class="btn primary update-btn" id="updateBtn" title="Ctrl + Enter">UPDATE</button>
+</header>
+<div class="banner info" hidden="" id="remoteBanner">
+<span id="remoteText">You're controlling this scoreboard remotely.</span><span class="spacer"></span><button class="btn sm ghost" id="logoutBtn">Sign out</button>
+</div>
+<div class="app">
+<nav aria-label="Sections" class="rail">
+<button class="on" data-tab="match"><svg viewbox="0 0 24 24"><path d="M3 5h8v14H3zm10 0h8v14h-8z" opacity=".35"></path><path d="M6 9h2v6H6zm10 0h2v6h-2z"></path></svg>Matches</button>
+<button data-tab="bracket"><svg viewbox="0 0 24 24"><path d="M3 4h6v4H3zm0 12h6v4H3zm12-6h6v4h-6zM9 6h3v12H9v-2h1V8H9zm3 5h3v2h-3z"></path></svg>start.gg</button>
+<button data-tab="stream"><svg viewbox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm1 17.9V18h-2v1.9A8 8 0 0 1 4.1 13H6v-2H4.1A8 8 0 0 1 11 4.1V6h2V4.1a8 8 0 0 1 6.9 6.9H18v2h1.9a8 8 0 0 1-6.9 6.9zM12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"></path></svg>Stream</button><button class="local-only" data-tab="maker" title="Turn a static PNG overlay into an animated layout"><svg viewbox="0 0 24 24"><path d="M9.64 7.64c.23-.5.36-1.05.36-1.64a4 4 0 1 0-4 4c.59 0 1.14-.13 1.64-.36L10 12l-2.36 2.36A3.9 3.9 0 0 0 6 14a4 4 0 1 0 4 4c0-.59-.13-1.14-.36-1.64L12 14l7 7h3v-1L9.64 7.64zM6 8a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm0 12a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm6-7.5a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1zM19 3l-6 6 2 2 7-7V3h-3z"></path></svg>Overlay maker</button><button class="local-only" data-tab="settings" title="Version and updates"><svg viewbox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.48.48 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6a3.6 3.6 0 1 1 0-7.2 3.6 3.6 0 0 1 0 7.2z"></path></svg>Settings</button>
+<span class="grow" style="flex:1"></span>
+</nav>
+<main id="main" tabindex="-1"><details class="proto" id="protoNote" open="">
+<summary><b>Prototype build</b><span>A new build is on the way later in 2026.</span><i aria-hidden="true"></i></summary>
+<div class="proto-body">
+<p>This is only a prototype build. A new build is coming later in 2026, and it will include all of the following:</p>
+<ul>
+<li><b>Multiple supported game formats:</b> Team Battle, KOTH, Death Battle and more</li>
+<li><b>Twitch integration</b> for Viewer Battles and Tournaments</li>
+<li><b>Bracket Generator</b> with custom overlays</li>
+<li><b>Layout Designer</b> with so many features creators will love to start creating their own overlays!</li>
+<li>And more!</li>
+</ul>
+</div>
+</details>
+<!-- ===================== MATCH ===================== -->
+<section class="tab on" data-tab="match">
+<div class="card winner-card" hidden="" id="winCard">
+<div class="win-row">
+<div aria-hidden="true" class="trophy"><svg viewbox="0 0 24 24"><path d="M19 4h-2V2H7v2H5a2 2 0 0 0-2 2v1a5 5 0 0 0 4.3 4.9A5 5 0 0 0 11 14.9V18H8v2h8v-2h-3v-3.1a5 5 0 0 0 3.7-3A5 5 0 0 0 21 7V6a2 2 0 0 0-2-2zM5 7V6h2v3.8A3 3 0 0 1 5 7zm14 0a3 3 0 0 1-2 2.8V6h2z"></path></svg></div>
+<div class="win-text"><b id="winTitle">Player 1 wins the set!</b><span id="winSub">What's next?</span></div>
+<span class="spacer"></span>
+<div class="win-acts">
+<button class="btn primary" hidden="" id="winNextMatch">Load next match</button>
+<button class="btn primary" hidden="" id="winReport" title="Send this result to start.gg">📤 Report to start.gg</button>
+<button class="btn" id="winVictory" title="Show (or hide) the full-screen victory splash for the winner">🏆 Victory splash</button>
+<button class="btn" id="winClear">Next set: clear players</button>
+<button class="btn ghost" id="winScores">Just reset scores</button>
+</div>
+</div>
+</div>
+<div class="card">
+<h2>Players <span class="spacer"></span>
+</h2>
+<div class="versus">
+<div class="pcard p1">
+<div class="ptitle">PLAYER 1</div>
+<div class="scorebox">
+<button aria-label="P1 minus" class="minus" data-d="-1" data-score="p1">−</button>
+<input aria-label="P1 score" data-path="p1.score" inputmode="numeric" min="0" type="number"/>
+<button aria-label="P1 plus" class="plus" data-d="1" data-score="p1">+</button>
+</div>
+<div class="field"><label class="l">Name</label><input autocomplete="off" data-path="p1.name" data-player="p1" placeholder="Start typing a name…" type="text"/></div>
+<label class="toggle"><input data-path="p1.loser" type="checkbox"/><span class="sw"></span> In losers [L]</label>
+</div>
+<div class="mid">
+<button class="btn" id="swapBtn" title="Swap sides (Ctrl+Shift+X)"><svg viewbox="0 0 24 24"><path d="M7 7h11l-3-3 1.4-1.4L21.8 8l-5.4 5.4L15 12l3-3H7V7zm10 10H6l3 3-1.4 1.4L2.2 16l5.4-5.4L9 12l-3 3h11v2z"></path></svg>Swap</button>
+<button class="btn" id="resetBtn" title="Reset both scores to 0"><svg viewbox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7a5 5 0 1 1-5 5H5a7 7 0 1 0 7-7z"></path></svg>Reset</button>
+<button class="btn" id="clearBtn" title="Clear both players for the next set"><svg viewbox="0 0 24 24"><path d="M19 6.4 17.6 5 12 10.6 6.4 5 5 6.4 10.6 12 5 17.6 6.4 19 12 13.4 17.6 19 19 17.6 13.4 12z"></path></svg>Clear</button>
+</div>
+<div class="pcard p2">
+<div class="ptitle">PLAYER 2</div>
+<div class="scorebox">
+<button aria-label="P2 minus" class="minus" data-d="-1" data-score="p2">−</button>
+<input aria-label="P2 score" data-path="p2.score" inputmode="numeric" min="0" type="number"/>
+<button aria-label="P2 plus" class="plus" data-d="1" data-score="p2">+</button>
+</div>
+<div class="field"><label class="l">Name</label><input autocomplete="off" data-path="p2.name" data-player="p2" placeholder="Start typing a name…" type="text"/></div>
+<label class="toggle"><input data-path="p2.loser" type="checkbox"/><span class="sw"></span> In losers [L]</label>
+</div>
+</div>
+</div>
+<div class="card">
+<h2>Round &amp; format</h2>
+<div class="field">
+<label class="l">Round</label>
+<input autocomplete="off" data-path="round" list="roundList" type="text"/>
+<div class="chips" id="roundChips"></div>
+</div>
+<div class="field" style="margin:0">
+<label class="l">Format</label>
+<div class="chips" id="boChips" style="margin-top:0"></div>
+</div>
+</div>
+<div class="card">
+<h2>Event</h2>
+<div class="row">
+<div class="field"><label class="l">Event name</label><input autocomplete="off" data-path="event" type="text"/></div>
+</div>
+</div>
+</section>
+<!-- ===================== BRACKET ===================== -->
+<section class="tab" data-tab="bracket">
+<h1 class="pagetitle">start.gg event <span class="pill" id="sggPill">Not connected</span></h1>
+<p>Sign in, load your event, and pull its players and matches onto the scoreboard. Results can go back to start.gg when a set ends.</p>
+<div class="sgg-grid" id="sggGrid">
+<div class="card" id="sggCard">
+<h2>Connect start.gg</h2>
+<div class="sgg-acct local-only" id="sggAcct">
+<div id="sggSignedOut">
+<button class="btn primary sgg-signin" id="sggSignin"><svg viewbox="0 0 24 24"><path d="M3 3h11v5H8v8H3zm7 5h11v13H10v-5h6V13h-6z"></path></svg>Sign in with start.gg</button>
+<p class="hint" id="sggSigninHint">Opens start.gg in your browser — if you're already signed in there, it's one click. Your sign-in stays encrypted on this PC and never leaves BeeboScore. Sign out any time.</p>
+</div>
+<div class="sgg-me" hidden="" id="sggSignedIn"><img alt="" id="sggAva"/><div><b id="sggUser"></b><small id="sggUserSub">Signed in with start.gg</small></div><button class="btn sm ghost" id="sggSignout">Sign out</button></div>
+<details class="sgg-adv" id="sggAdv"><summary>Advanced: start.gg app for sign-in</summary>
+<p class="hint">Sign-in uses a start.gg OAuth app. If this copy of BeeboScore doesn't have one built in, create one at <a href="https://start.gg/admin/profile/developer" rel="noopener" target="_blank">start.gg › Developer Settings › OAuth applications</a> with the redirect URL below, then paste its Client ID and Secret. The secret is stored encrypted.</p>
+<div class="row" style="grid-template-columns:1fr 1fr"><div class="field" style="margin:0"><label class="l">Client ID</label><input autocomplete="off" class="f" id="sggAppId" spellcheck="false"/></div><div class="field" style="margin:0"><label class="l">Client secret</label><input autocomplete="off" class="f" id="sggAppSecret" placeholder="••••••" type="password"/></div></div>
+<div class="field" style="margin:10px 0 0"><label class="l">Redirect URL</label><input autocomplete="off" class="f" id="sggAppRedirect" spellcheck="false"/></div>
+<button class="btn sm" id="sggAppSave" style="margin-top:10px">Save app</button>
+</details>
+</div>
+<details class="sgg-tokdet" id="sggTokDet"><summary>Or use an API token</summary>
+<div class="field" id="sggTokenRow">
+<label class="l">API token</label>
+<div class="inline"><input autocomplete="off" id="sggToken" placeholder="Paste your start.gg API token" type="password"/><button class="btn" id="sggTokenSave">Save</button></div>
+<p class="hint">Create one at <a href="https://start.gg/admin/profile/developer" rel="noopener" target="_blank">start.gg → Settings → Developer Settings</a> → <b>Create new token</b>. It's stored only in this app.</p>
+</div>
+<div class="field sgg-saved" hidden="" id="sggTokenSaved">Token <b>saved</b> <span id="sggTokenHint"></span> <button class="btn sm ghost" id="sggTokenChange">Change</button></div>
+</details>
+<div class="field">
+<label class="l">Tournament or event link</label>
+<div class="inline"><input autocomplete="off" id="sggLink" placeholder="start.gg/tournament/my-weekly/event/singles" type="text"/><button class="btn primary" id="sggLoad">Load</button></div>
+</div>
+<div class="row" hidden="" id="sggEventRow">
+<div class="field" style="margin:0"><label class="l">Event</label><select class="f" id="sggEvent"></select></div>
+<div class="field" style="margin:0"><label class="l">Players for autocomplete</label>
+<div class="inline" style="height:40px"><b id="sggCount">—</b><button class="btn sm" id="sggReimport">Refresh</button></div></div>
+</div>
+</div>
+<div class="card" hidden="" id="sggMine">
+<h2>My tournaments <span class="spacer"></span><button class="btn sm ghost" id="sggMineRefresh" title="Load the list again">↻</button></h2>
+<p class="hint" style="margin:-4px 0 10px">Tournaments you run on start.gg. <b>Pull players</b> loads one as your tournament: its players fill the name autocomplete and its bracket feeds the splash.</p>
+<div class="sgg-mine" id="sggMineList"><div class="hint">Loading…</div></div>
+</div>
+</div>
+<div class="card" hidden="" id="sggReportCard">
+<h2>📤 Results to start.gg <span class="spacer"></span><span class="seg" id="sggReportMode"><button data-rm="off">Off</button><button data-rm="ask">Ask</button><button data-rm="auto">Automatic</button></span></h2>
+<p class="hint" id="sggReportHint" style="margin:0 0 8px"></p>
+<div class="rep-list" id="sggReportList"></div>
+</div>
+<div class="card" hidden="" id="sggSetsCard">
+<h2>Matches</h2>
+<div class="tabs">
+<div class="seg"><button class="on" data-smode="event">Bracket</button><button data-smode="stream">Stream queue</button></div>
+<span class="spacer"></span>
+<input autocomplete="off" id="sggFilter" placeholder="Filter by name…" type="search"/>
+<button class="btn sm" id="sggRefreshSets" title="Refresh matches">↻ Refresh</button>
+</div>
+<div class="sets" id="sggSets"></div>
+<label class="toggle" style="margin-top:12px"><input id="sggAuto" type="checkbox"/><span class="sw"></span> Auto-refresh every 30 seconds</label>
+</div>
+</section>
+<!-- ===================== LAYOUTS ===================== -->
+<!-- ===================== DESIGNER (built in) ===================== -->
+<!-- ===================== STREAM ===================== -->
+<section class="tab" data-tab="stream">
+<h1 class="pagetitle">Stream setup</h1>
+<p>Connect OBS, control from other devices, or put your scoreboard online.</p>
+<div class="card">
+<h2>OBS</h2>
+<label class="l">Browser Source URL (always shows the live layout)</label>
+<div class="urlbox"><input id="obsUrl" readonly="" type="text"/><button class="btn" data-copy="obsUrl">Copy</button></div>
+<p class="hint">In OBS: <b>Sources → + → Browser</b>, paste the URL, width <b>1920</b>, height <b>1080</b>. Leave “Refresh browser when scene becomes active” off.</p>
+<div class="hint local-only" id="lanInfo"></div>
+</div>
+<div class="card local-only" id="onlineCard">
+<h2>Go online <span class="spacer"></span><span class="pill" id="onlinePill">Offline</span></h2>
+<p class="lead">Get a public overlay link for OBS anywhere, and control the scoreboard from any phone or PC over the internet.</p>
+<div class="field">
+<label class="l">Remote-control password</label>
+<div class="inline"><input autocomplete="new-password" id="pwInput" placeholder="At least 8 characters" type="password"/><button class="btn ghost" id="pwShow" title="Show / hide">Show</button><button class="btn ghost" id="pwGen" title="Make a strong random password">Generate</button><button class="btn" id="pwSave">Save</button></div>
+<p class="hint" id="pwHint">Needed to open the control panel over the internet. Overlay links don't need it.</p>
+</div>
+<button class="btn primary" id="goOnline" style="width:100%">Go online</button>
+<div class="hint" id="onlineMsg"></div>
+<div hidden="" id="onlineInfo">
+<div class="field" style="margin-top:12px"><label class="l">Overlay link (OBS Browser Source)</label><div class="urlbox"><input id="pubOverlay" readonly="" type="text"/><button class="btn" data-copy="pubOverlay">Copy</button></div></div>
+<div class="field"><label class="l">Remote control link</label><div class="urlbox"><input id="pubControl" readonly="" type="text"/><button class="btn" data-copy="pubControl">Copy</button></div></div>
+<button class="btn sm danger" id="goOffline">Go offline</button>
+</div>
+<p class="hint" style="margin-top:12px">Uses a free Cloudflare tunnel: the link changes each time and works while this app is open — unless you use your own tunnel below.</p>
+<details class="sgg-adv" id="ntBox"><summary>Permanent address: your own Cloudflare tunnel</summary>
+<p class="hint">With a free Cloudflare account and your own domain, the online link stays the same every time. In the Cloudflare dashboard: <b>Networking › Tunnels › Create Tunnel</b>, pick Windows, and copy the install command (don't run it — BeeboScore runs the tunnel itself). Paste it below, then on the tunnel's <b>Routes</b> tab add a <b>Published application</b> (e.g. <code>bracket.yourdomain.com</code>) with the service URL <code>http://localhost:3300</code>. The token is stored encrypted on this PC.</p>
+<div class="row" style="grid-template-columns:1fr 1fr"><div class="field" style="margin:0"><label class="l" for="ntHost">Address</label><input autocomplete="off" class="f" id="ntHost" placeholder="bracket.yourdomain.com" spellcheck="false"/></div>
+<div class="field" style="margin:0"><label class="l" for="ntToken">Tunnel token</label><input autocomplete="off" class="f" id="ntToken" placeholder="eyJh… or the whole install command" type="password"/></div></div>
+<div class="inline" style="margin-top:10px;gap:10px;flex-wrap:wrap"><label class="toggle"><input id="ntOn" type="checkbox"/><span class="sw"></span> Use my tunnel when going online</label><button class="btn sm" id="ntSave">Save</button></div>
+</details>
+</div>
+</section><!-- ===================== OVERLAY MAKER (this build only) ===================== -->
+<section class="tab local-only" data-tab="maker"><div id="mkRoot"></div></section><!-- ===================== SETTINGS (this build: updates & about) ===================== -->
+<section class="tab local-only" data-tab="settings"><div class="card local-only" id="updCard">
+<h2>Updates &amp; about</h2>
+<div class="about"><img alt="" src="/favicon.ico"/><div style="flex:1;min-width:0"><b style="font-size:16px">BeeboScore</b><div class="hint" id="aboutText" style="margin:2px 0 0">Developed by Beebo</div></div></div>
+<div class="hint" hidden="" id="updUnsupported" style="margin-top:12px">Checking for updates works in the desktop app, on the PC that runs it.</div>
+<div id="updBody" style="margin-top:14px">
+<div class="inline" style="gap:14px;flex-wrap:wrap">
+<div><b id="updVersion">Version —</b><div class="hint" hidden="" id="updStatusText" style="margin:2px 0 0"></div></div>
+<span class="spacer"></span>
+<button class="btn" id="updCheck">Check for updates</button>
+<button class="btn primary" hidden="" id="updInstall">Restart &amp; update</button>
+</div>
+<div class="progress" hidden="" id="updProgress"><i></i></div>
+</div>
+</div></section>
+<!-- ===================== SETTINGS ===================== -->
+</main>
+<!-- ===================== PREVIEW ===================== -->
+<aside class="side">
+<div class="card">
+<h2>Live preview <span class="spacer"></span>
+<button class="btn sm ghost icon-btn" id="pvPop" title="Open the preview in its own window"><svg viewbox="0 0 24 24"><path d="M14 3h7v7h-2V6.4l-8.3 8.3-1.4-1.4L17.6 5H14zM5 5h6v2H7v10h10v-4h2v6H5z"></path></svg>Pop out</button>
+<button class="btn sm ghost icon-btn" id="pvHide" title="Hide the preview"><svg viewbox="0 0 24 24"><path d="M7 14l5-5 5 5z"></path></svg><span>Hide</span></button></h2>
+<div class="pv-body" id="pvBody">
+<div class="chips" id="bgChips" style="margin:0 0 8px"></div>
+<div class="preview-wrap checker" id="previewWrap"><iframe allow="autoplay" id="preview" tabindex="-1" title="Overlay preview"></iframe></div>
+<div class="now">
+<div class="sw" id="nowSwatch"></div>
+<div><b id="nowName">—</b><span id="nowGame">—</span></div>
+<span class="spacer"></span>
+<button class="btn sm" data-copy="obsUrl" title="Copy the OBS overlay URL">Copy OBS URL</button>
+</div>
+</div>
+</div>
+<div class="card extra">
+<h2>Up next</h2>
+<div class="hint" id="sideNext" style="margin:0">Load a start.gg tournament in the <a data-goto="bracket" href="#">start.gg</a> tab to see the next matches here.</div>
+</div>
+</aside>
+</div>
+<!-- ===================== editor ===================== -->
+<div class="modal" id="editorModal">
+<div class="editor">
+<div class="ed-top">
+<strong id="edTitle">Edit layout</strong>
+<select aria-label="File" class="f" id="edFile"></select>
+<label class="toggle" title="Save as you type — the overlay updates in real time"><input checked="" id="edAuto" type="checkbox"/><span class="sw"></span> Real-time</label>
+<span class="ed-save" id="edSave"></span>
+<span class="spacer"></span>
+<button class="btn sm local-only" id="edFolder">Open folder</button>
+<button class="btn sm primary" id="edSaveBtn">Save</button>
+<button class="btn sm" id="edClose">Close</button>
+</div>
+<div class="ed-body">
+<div class="ed-code"><textarea autocapitalize="off" autocomplete="off" id="edText" spellcheck="false"></textarea></div>
+<div class="ed-side">
+<div class="preview-wrap checker" id="edPreviewWrap"><iframe id="edPreview" tabindex="-1" title="Editor preview"></iframe></div>
+<details open=""><summary class="l" style="cursor:pointer">Insert a binding</summary>
+<p class="hint">Click to insert at the cursor.</p>
+<div class="ref" id="refButtons"></div>
+</details>
+<details><summary class="l" style="cursor:pointer">How bindings work</summary>
+<p class="hint" style="line-height:1.8">
+<code>data-sb="p1.name"</code> sets text · <code>data-sb="{p1.team} | {p1.name}"</code> mixes values<br/>
+<code>data-sb-src="p1.flagUrl"</code> image · <code>data-sb-src="chars/{p1.characterSlug}.png"</code> your own art<br/>
+<code>data-sb-show="p1.loser"</code> / <code>data-sb-hide</code> (prefix <code>!</code> to invert) · <code>data-sb-class="lead:p1.leading"</code><br/>
+<code>data-sb-pips="p1"</code> game-win markers · <code>data-sb-fit="40,22"</code> shrink-to-fit text<br/>
+<code>&lt;html&gt;</code> gets <code>sb-p1-winner</code>, <code>sb-p2-matchpoint</code>, <code>sb-final-game</code>, <code>sb-gf</code>…<br/>
+<code>.sb-changed</code> / <code>.sb-scored</code> for animations · <code>addEventListener('scoreboard', e =&gt; e.detail)</code>
+</p>
+</details>
+</div>
+</div>
+</div>
+</div>
+<datalist id="charList"></datalist>
+<datalist id="pronounList"><option>he/him</option><option>she/her</option><option>they/them</option><option>he/they</option><option>she/they</option><option>any</option></datalist>
+<datalist id="gameList"></datalist>
+<datalist id="roundList"></datalist>
+<datalist id="countryList"></datalist>
+<div class="toasts" id="toasts"></div>
+<div aria-hidden="true" hidden="" id="liteAttic" style="display:none!important"><button class="lat-chip" hidden="" id="latChip" title="Viewer latency: how fast your last update reached the slowest viewer. Click for details."><svg viewbox="0 0 24 24"><path d="M12 5C6.5 5 2.7 9.4 1.5 12c1.2 2.6 5 7 10.5 7s9.3-4.4 10.5-7C21.3 9.4 17.5 5 12 5zm0 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8z"></path></svg><b id="latChipN">0</b><span id="latChipMs"></span></button><button class="btn ghost sm" id="miniBtn" title="Open a small always-on-top score controller"><svg viewbox="0 0 24 24"><path d="M19 11h-8v6h8v-6zm4 8V5a2 2 0 0 0-2-2H3a2 2 0 0 0-2 2v14c0 1.1.9 2 2 2h18a2 2 0 0 0 2-2zm-2 0H3V5h18v14z"></path></svg>Mini</button><div class="banner" hidden="" id="updBanner">
+<svg fill="currentColor" height="18" viewbox="0 0 24 24" width="18"><path d="M12 4V1L8 5l4 4V6a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8z"></path></svg>
+<span id="updBannerText">An update is ready.</span><span class="spacer"></span>
+<button class="btn sm primary" id="updBannerBtn">Restart &amp; update</button>
+<button class="btn sm ghost" id="updBannerLater">Later</button>
+</div><div class="banner" hidden="" id="sdBanner">
+<svg fill="currentColor" height="18" viewbox="0 0 24 24" width="18"><path d="M4 3h16a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zm2 3v4h4V6zm8 0v4h4V6zM6 14v4h4v-4zm8 0v4h4v-4z"></path></svg>
+<span id="sdBannerText"></span><span class="spacer"></span>
+<a class="btn sm primary" href="https://www.elgato.com/downloads" id="sdBannerGet" rel="noopener" target="_blank">Get Stream Deck</a>
+<button class="btn sm ghost" id="sdBannerLater">Later</button>
+</div><i class="badge" hidden="" id="fmtBadge"></i><i class="badge" hidden="" id="twBadge"></i><i class="badge" hidden="" id="setBadge"></i><section class="tab fmt-tab" data-tab="format">
+<div class="card fmt-head">
+<div class="fmt-title"><b id="fmtName">Game formats</b><span class="pill" id="fmtPill">Off</span><span class="spacer"></span>
+<button class="btn primary" hidden="" id="fmtStart">▶ Start</button><button class="btn" hidden="" id="fmtEnd" title="Stop now — the best record wins">⏹ End</button>
+<button class="btn ghost" hidden="" id="fmtReset" title="Back to setup, keeping the rosters">↺ Back to setup</button><button class="btn ghost" hidden="" id="fmtClear" title="Turn formats off">✕</button></div>
+<p class="hint" id="fmtSub">Run a crew battle, a Sajam Slam-style team battle, a gauntlet, a Death Battle, King of the Hill or a league. Set it up here; once it starts, every match is run from the Matches tab.</p>
+</div>
+<div class="card" id="fmtPresets">
+<h2>Pick a format</h2>
+<div class="fmt-presets" id="fmtPresetList"></div>
+</div>
+<div class="card" hidden="" id="fmtLive">
+<h2>Now playing <span class="pill" id="fmtLabel"></span><span class="spacer"></span><button class="btn sm ghost" id="fmtUndo" title="Undo the last result (Ctrl+Alt+Z)">↶ Undo result</button></h2>
+<div class="fmt-now" id="fmtNow"></div>
+<div class="fmt-pending" hidden="" id="fmtPending"></div>
+<div class="fmt-acts" id="fmtActs"></div>
+<div class="fmt-splash"><span class="lbl">On stream:</span>
+<button class="btn sm" data-fsplash="fvs" id="fsVs">⚔ Team VS</button><button class="btn sm" data-fsplash="fboard" id="fsBoard">📋 Board</button><button class="btn sm" data-fsplash="fwin" id="fsWin">🏆 Champion</button><button class="btn sm" id="fsBar" title="Show or hide the format bar along the bottom of the layout (also on Stream Deck and the OBS dock)">▁ Format bar</button>
+<span class="spacer"></span><button class="btn sm ghost" hidden="" id="fmtLayoutBtn"></button></div>
+</div>
+<div class="card" hidden="" id="fmtBoardCard"><h2 id="fmtBoardTitle">Board</h2><div id="fmtBoard"></div></div>
+<div class="card" hidden="" id="fmtRules"><h2>Rules</h2><div id="fmtRulesBody"></div></div>
+<div class="card" hidden="" id="fmtRoster"><h2 id="fmtRosterTitle">Teams <span class="spacer"></span><select class="f fmt-saved" id="fmtSaved"><option value="">📂 Load a saved list…</option></select></h2><div id="fmtRosterBody"></div></div>
+<div class="card" hidden="" id="fmtLogCard"><h2>Results <span class="spacer"></span><button class="btn sm ghost" id="fmtCsv">⬇ CSV</button></h2><div id="fmtLog"></div></div>
+</section><section class="tab" data-tab="layouts">
+<h1 class="pagetitle">Layouts</h1>
+<p>Pick what OBS shows. Switching is instant. Click <b>Edit</b> to change any layout's HTML live.</p>
+<div class="card designer-card local-only">
+<div class="dz-hero">
+<div aria-hidden="true" class="dz-art"><span>🎨</span><i>✂️</i><b>✨</b></div>
+<div class="dz-copy"><h2>Layout Designer</h2>
+<p>Build your own overlay without writing code: drag player bars, a header, commentators, your logo and shapes onto the screen, snap them together, cut them with the magic scissors, pick colours, effects and transitions — and design your own VS intro and victory screen.</p></div>
+<button class="btn primary dz-go" id="openDesigner">Open Layout Designer</button>
+</div>
+</div>
+<div class="card">
+<h2>Your layouts <span class="spacer"></span><button class="btn sm local-only" id="newOverlayBtn">+ New layout</button></h2>
+<div class="chips" id="gameFilter" style="margin:-4px 0 14px"></div>
+<div class="lgrid" id="overlayList"></div>
+</div>
+<div class="card local-only">
+<h2>Upload a layout</h2>
+<div class="drop" id="drop" tabindex="0">
+<strong>Drop your layout here</strong><br/>
+          A <code>.beebo</code> file from the Layout Designer, or an <code>.html</code> file plus any images, fonts or CSS it uses — or a whole folder.<br/>
+<span style="display:inline-flex;gap:8px;margin-top:12px">
+<button class="btn sm" id="pickFiles">Choose files</button>
+<button class="btn sm" id="pickFolder">Choose folder</button>
+</span>
+</div>
+<input hidden="" id="fileInput" multiple="" type="file"/>
+<input hidden="" id="folderInput" multiple="" type="file" webkitdirectory=""/>
+</div>
+</section><section class="tab designer-tab local-only" data-tab="designer">
+<div class="dz-frame" id="dzFrame"><div class="dz-loading">🎨 Opening the Layout Designer…</div></div>
+</section><section class="tab" data-tab="twitch">
+<h1 class="pagetitle">Twitch Stuff</h1>
+<p>Connect your channel's chat, then let viewers queue up to play you.</p>
+<div class="card tw-conn" id="twConn">
+<h2><span class="tw-glyph"></span>Twitch chat <span class="spacer"></span><span class="pill" id="twPill">Off</span></h2>
+<div class="inline tw-chan">
+<span class="tw-prefix">twitch.tv/</span><input autocomplete="off" id="twChannel" placeholder="your channel name" spellcheck="false" type="text"/>
+<button class="btn primary" id="twConnect">Connect</button><button class="btn ghost" hidden="" id="twDisconnect">Disconnect</button>
+</div>
+<p class="hint" id="twConnHint">Just your channel name: BeeboScore reads chat like a viewer would, no password or login needed.</p>
+<div class="tw-auth" id="twAuth"></div>
+<details class="tw-adv local-only" id="twAdv"><summary>Advanced: Twitch app</summary>
+<p class="hint">Chat replies and official profile pictures use a Twitch app's <b>Client ID</b>. If your copy of BeeboScore doesn't have one built in, make a free app at <a href="https://dev.twitch.tv/console/apps" rel="noopener" target="_blank">dev.twitch.tv/console</a> (Category: <i>Application Integration</i>, Client Type: <b>Public</b>, OAuth Redirect URL: <code>http://localhost</code>), then paste its Client ID here.</p>
+<div class="inline"><input autocomplete="off" id="twClientId" placeholder="Client ID" spellcheck="false" type="text"/><button class="btn" id="twClientSave">Save</button></div>
+</details>
+</div>
+<nav class="tw-subnav"><span class="tw-subhead">⚔️ Viewer Matches</span><a data-scroll-to="twPlay" href="#">Play</a><a data-scroll-to="twQueueCard" href="#">Queue</a><a data-scroll-to="twOverlays" href="#">Overlays</a><a data-scroll-to="twArtCard" href="#">Your picture</a><a data-scroll-to="twCmdCard" href="#">Commands</a><a data-scroll-to="twSetCard" href="#">Settings</a></nav>
+<div class="tw-grid">
+<div class="tw-col">
+<div class="card tw-play" id="twPlay">
+<h2>Now playing <span class="spacer"></span>
+<label class="toggle tw-open" title="Open or close the queue to chat"><input id="twOpen" type="checkbox"/><span class="sw"></span><span id="twOpenTxt">Queue closed</span></label></h2>
+<div class="tw-now" id="twNow"></div>
+<div class="tw-score" id="twScore">
+<div class="tw-side"><small id="twMeName">You</small><b id="twS">0</b>
+<div class="tw-pm"><button class="btn sm ghost" data-d="-1" data-res="streamer" title="Take one back">−</button><button class="btn sm tw-win" data-d="1" data-res="streamer">+ I won</button></div></div>
+<span class="tw-dash">–</span>
+<div class="tw-side"><small id="twVName">Viewer</small><b id="twV">0</b>
+<div class="tw-pm"><button class="btn sm tw-win v" data-d="1" data-res="viewer">+ They won</button><button class="btn sm ghost" data-d="-1" data-res="viewer" title="Take one back">−</button></div></div>
+</div>
+<div class="tw-hold"><span>VS splash stays up</span><input id="twHoldR" max="5" min="1" step="0.5" type="range"/><b id="twHoldV">3 s</b></div>
+<div class="tw-ctrls">
+<button class="btn primary tw-next" id="twNext">Next viewer ▶</button>
+<button class="btn" id="twVs">Show VS</button>
+<button class="btn" id="twSide" title="Show or hide the “how to join” sidebar on stream">Hide sidebar</button>
+<button class="btn ghost" id="twUndo" title="Undo the last queue change">↶ Undo</button>
+</div>
+<p class="hint" id="twSession"></p>
+</div>
+<div class="card" id="twQueueCard">
+<h2>Queue <span class="tw-count" id="twCount">0</span><span class="spacer"></span><button class="btn sm ghost danger" id="twClear">Clear</button></h2>
+<div class="tw-queue" id="twQueue"></div>
+<div class="inline tw-add"><input autocomplete="off" id="twAddName" placeholder="Add someone by Twitch name" spellcheck="false" type="text"/><button class="btn" id="twAddBtn">Add</button></div>
+<details class="tw-played"><summary>Played recently <span id="twPlayedN"></span></summary><div id="twPlayed"></div></details>
+</div>
+</div>
+<div class="tw-col">
+<div class="card" id="twFeedCard">
+<h2>Chat activity <span class="spacer"></span><span class="hint" id="twFeedHint" style="margin:0"></span></h2>
+<div class="tw-feed" id="twFeed"></div>
+</div>
+<div class="card" id="twOverlays">
+<h2>Overlays for OBS</h2>
+<div class="field"><label class="l">“How to join” sidebar · Browser Source 340 × 1080</label>
+<div class="urlbox"><input id="twSideUrl" readonly="" type="text"/><button class="btn" data-copy="twSideUrl">Copy</button><a class="btn ghost" id="twSidePrev" rel="noopener" target="_blank">Preview</a></div></div>
+<div class="field"><label class="l">Viewer VS splash · Browser Source 1920 × 1080</label>
+<div class="urlbox"><input id="twVsUrl" readonly="" type="text"/><button class="btn" data-copy="twVsUrl">Copy</button><a class="btn ghost" id="twVsPrev" rel="noopener" target="_blank">Preview</a></div></div>
+<p class="hint">Put the VS splash on top of your game scene: it's see-through until <b>Next viewer</b> (or <b>Show VS</b>) plays it. The sidebar lists who's up and shows chat how to join. <b>Preview</b> opens a demo with made-up viewers.</p>
+</div>
+<div class="card local-only" id="twArtCard">
+<h2>Your picture on the VS splash</h2>
+<div class="tw-art">
+<div class="tw-artbox" id="twArtBox"><canvas height="500" hidden="" id="twArtCv" width="400"></canvas><div class="tw-artempty" id="twArtEmpty">Drop a PNG, GIF,<br/>WebM or MP4 here</div></div>
+<div class="tw-artside">
+<div class="tw-size"><b>Best size: 800 × 1000 px</b> (portrait, 4:5).<br/>It fills your half of the VS screen, like a character select picture. Anything from 600 × 750 up works; it's scaled to fit.</div>
+<ul class="tw-tips">
+<li><b>Still picture:</b> PNG with a see-through background.</li>
+<li><b>Animated:</b> WebM, MP4 or GIF on a solid <span class="tw-green"></span> <b>green #00FF00</b> background. BeeboScore removes the green itself, so no OBS filter is needed.</li>
+<li>Leave a little room above the head. Short loops (2–6 s) look best. 40 MB max.</li>
+</ul>
+<div class="tw-up" hidden="" id="twUp"><div class="tw-up-bar"><i id="twUpBar"></i></div><div class="tw-up-t"><span id="twUpTxt">Uploading…</span><button class="btn sm ghost" id="twUpCancel">Cancel</button></div></div>
+<div class="inline" style="flex-wrap:wrap"><label class="btn primary" for="twArtFile" id="twArtPick">Upload…</label><input accept="image/png,image/webp,image/gif,image/jpeg,video/webm,video/mp4" hidden="" id="twArtFile" type="file"/><button class="btn ghost danger" hidden="" id="twArtDel">Remove</button></div>
+<div hidden="" id="twChroma">
+<label class="toggle" style="margin-top:12px"><input id="twChromaOn" type="checkbox"/><span class="sw"></span>Remove green background</label>
+<div class="tw-tol"><span>Strength</span><input id="twTol" max="90" min="5" step="1" type="range"/><span id="twTolV"></span></div>
+</div>
+<p class="hint" id="twArtInfo"></p>
+</div>
+</div>
+</div>
+<div class="card" id="twCmdCard">
+<h2>Chat commands</h2>
+<p class="hint" style="margin:-6px 0 10px">Change a command by typing a new one. Add a second one with a space (e.g. <code>!join !play</code>).</p>
+<div class="tw-cmds" id="twCmds"></div>
+</div>
+<div class="card" id="twSetCard">
+<h2>Viewer match settings</h2>
+<div class="opts">
+<div class="opt-row"><span class="opt-t"><b>Who can join</b><small>Subs only also lets in VIPs and mods.</small></span>
+<select class="f" id="twWho" style="width:auto"><option value="everyone">Everyone</option><option value="subs">Subscribers only</option></select></div>
+<div class="opt-row"><span class="opt-t"><b>Queue size limit</b><small>New joins are turned away once it's full.</small></span>
+<select class="f" id="twMax" style="width:auto"><option value="0">No limit</option><option>5</option><option>10</option><option>15</option><option>20</option><option>30</option><option>50</option></select></div>
+<label class="toggle opt"><input id="twRejoin" type="checkbox"/><span class="sw"></span><span class="opt-t"><b>Viewers can join again after playing</b><small>Off: one match each per stream (until you start a new session).</small></span></label>
+<label class="toggle opt"><input id="twReplies" type="checkbox"/><span class="sw"></span><span class="opt-t"><b>Reply in chat</b><small id="twRepliesHint">“@name you're #3 in line”, who's up next, queue open/closed. Needs you signed in with Twitch.</small></span></label>
+<label class="toggle opt"><input id="twSplashNext" type="checkbox"/><span class="sw"></span><span class="opt-t"><b>Play the VS splash on Next viewer</b><small>Off: only when you press Show VS.</small></span></label>
+<label class="toggle opt"><input id="twSync" type="checkbox"/><span class="sw"></span><span class="opt-t"><b>Put viewer matches on the scoreboard</b><small>Next viewer loads you (P1) vs the viewer (P2) at 0–0, and the win buttons count on the scoreboard too.</small></span></label>
+<div class="opt-row"><span class="opt-t"><b>Your name on the overlays</b><small>Leave empty to use your channel name.</small></span>
+<input id="twMe" maxlength="25" placeholder="channel name" style="width:200px" type="text"/></div>
+<div class="opt-row"><span class="opt-t"><b>Sidebar call to action</b><small>Shown under the join command.</small></span>
+<input id="twJoinText" maxlength="80" placeholder="Battle me in chat!" style="width:200px" type="text"/></div>
+<div class="opt-row"><span class="opt-t"><b>Session record</b><small id="twSessTxt">Your wins and losses this stream.</small></span>
+<button class="btn sm" id="twNewSession">Start new session</button></div>
+</div>
+</div>
+</div>
+</div>
+</section><section class="tab" data-tab="autoscore">
+<h1 class="pagetitle">Autoscore <span class="as-badge">EXPERIMENTAL</span></h1>
+<p>Watches the round markers in your game and gives the set point to whoever wins a game.</p>
+<div class="card as-main" id="asMain">
+<div class="as-warn"><b>⚠ Experimental.</b> Autoscore hasn't been tested at a real tournament yet. Keep an eye on the score, and use <b>Undo auto point</b> if it ever gets one wrong. It's off until you turn it on.</div>
+<div class="as-switch">
+<label class="toggle as-big"><input id="asOn" type="checkbox"/><span class="sw"></span><span><b>Autoscore</b><small id="asOnTxt">Off</small></span></label>
+<span class="spacer"></span><span class="pill" id="asPill">Off</span>
+</div>
+<div class="as-mode"><span>When a game is won</span>
+<div class="seg" id="asMode"><button data-mode="confirm">Ask me first <small>recommended</small></button><button data-mode="auto">Add the point by itself</button></div>
+</div>
+<label class="toggle opt as-swap"><input id="asSwap" type="checkbox"/><span class="sw"></span><span class="opt-t"><b>Player 1 plays on the right side</b><small>Turn on when the scoreboard's Player 1 is on the right side in the game.</small></span></label>
+<p class="hint" id="asMainHint"></p>
+</div>
+<div class="card as-how">
+<h2>How to turn it on</h2>
+<ol>
+<li><b>OBS:</b> Tools → <b>WebSocket Server Settings</b> → tick <i>Enable WebSocket server</i>, then <i>Show Connect Info</i> for the password.</li>
+<li><b>Connect</b> below and pick your <b>game capture</b> source (or a capture card).</li>
+<li><b>Calibrate</b> with <b>✨ Auto-calibrate</b> below: live, from a video clip, or from 2 screenshots. It finds the round markers and the timer, counts how many rounds win a game and tunes itself. It’s saved, so next time BeeboScore recognises your game by itself.</li>
+<li>Flip <b>Autoscore</b> on. Play a game and watch the round counts below.</li>
+</ol>
+</div>
+<div class="as-grid">
+<div class="as-col">
+<div class="card" id="asStatusCard">
+<h2>Live <span class="spacer"></span><span class="hint" id="asState" style="margin:0"></span></h2>
+<div class="as-rounds" id="asRounds"></div>
+<div class="as-ask" hidden="" id="asAsk"></div>
+<div class="inline as-btns"><button class="btn" id="asUndo">↶ Undo auto point</button><button class="btn ghost" id="asResync" title="Forget what it saw and wait for the next 0–0">Resync</button></div>
+<div class="as-log" id="asLog"></div>
+</div>
+</div>
+<div class="as-col">
+<div class="card local-only" id="asSourceCard">
+<h2>Game video <span class="spacer"></span><span class="pill" id="asSrcPill">Not connected</span></h2>
+<div class="seg as-srcseg" id="asSrc"><button data-src="obs">OBS</button><button data-src="device">Capture card / camera</button></div>
+<div id="asObs">
+<div class="row"><div class="field"><label class="l">OBS WebSocket address</label><input id="asUrl" spellcheck="false" type="text"/></div>
+<div class="field"><label class="l">Password</label><input autocomplete="new-password" id="asPw" placeholder="from OBS › WebSocket Server Settings" type="password"/></div></div>
+<div class="field"><label class="l">Game capture source</label><select class="f" id="asSrcName"><option value="">Connect first</option></select></div>
+</div>
+<div hidden="" id="asDev"><div class="field"><label class="l">Device</label><select class="f" id="asDevice"><option value="">Connect first</option></select></div></div>
+<button class="btn primary" id="asConnect">Connect</button>
+<p class="hint">Use the game capture you stream with. If you move or resize it later, BeeboScore finds the HUD again by itself.</p>
+</div>
+</div>
+</div>
+<div class="card local-only" id="asCalCard">
+<h2>Calibrate <span class="spacer"></span><span class="hint" id="asCalState" style="margin:0"></span></h2>
+<div class="as-auto" id="asAutoBox">
+<div class="as-auto-head"><b>✨ Auto-calibrate</b><small>Finds the round markers and the timer, counts how many rounds win a game and tunes the sensitivity, all by itself. Pick whichever is easiest:</small></div>
+<div class="as-ways">
+<div class="as-way">
+<div class="as-way-t">🎮 Live</div>
+<p>Press it at the <b>start of a game</b> (round 1: full health, no round markers lit), then just play. It’s done once someone wins a round, usually in under a minute.</p>
+<button class="btn primary" id="asAuto">✨ Auto-calibrate live</button>
+</div>
+<div class="as-way">
+<div class="as-way-t">🎞 A video clip</div>
+<div class="as-strip"><span>Round start</span><i></i><span>fight</span><i></i><span class="ko">Round won</span></div>
+<p>A recording of your game capture that shows <b>a round start</b> and then <b>someone winning that round</b>. A whole game recorded in OBS is perfect. Anything from 20 seconds to a few minutes, MP4 or WebM.</p>
+<button class="btn" id="asUseVideo">Choose a video…</button>
+</div>
+<div class="as-way">
+<div class="as-way-t">🖼 2 screenshots</div>
+<div class="as-shots"><figure><svg class="as-mini" viewbox="0 0 160 90"><rect fill="#33406a" height="90" width="160"></rect><path d="M0 60 Q40 40 80 62 T160 55 V90 H0Z" fill="#4b3a5e"></path><rect fill="#111" height="7" width="62" x="8" y="7"></rect><rect fill="#111" height="7" width="62" x="90" y="7"></rect><rect fill="#e8c22c" height="5" width="60" x="9" y="8"></rect><rect fill="#e8c22c" height="5" width="60" x="91" y="8"></rect><rect fill="#1a1626" height="13" width="14" x="73" y="4"></rect><text fill="#fff" font-family="sans-serif" font-size="8" font-weight="700" text-anchor="middle" x="80" y="14">60</text><rect fill="#2d2840" height="5" stroke="#ddd" stroke-width=".8" transform="rotate(45 64.5 20.5)" width="5" x="62" y="18"></rect><rect fill="#2d2840" height="5" stroke="#ddd" stroke-width=".8" transform="rotate(45 57.5 20.5)" width="5" x="55" y="18"></rect><rect fill="#2d2840" height="5" stroke="#ddd" stroke-width=".8" transform="rotate(45 50.5 20.5)" width="5" x="48" y="18"></rect><rect fill="#2d2840" height="5" stroke="#ddd" stroke-width=".8" transform="rotate(45 95.5 20.5)" width="5" x="93" y="18"></rect><rect fill="#2d2840" height="5" stroke="#ddd" stroke-width=".8" transform="rotate(45 102.5 20.5)" width="5" x="100" y="18"></rect><rect fill="#2d2840" height="5" stroke="#ddd" stroke-width=".8" transform="rotate(45 109.5 20.5)" width="5" x="107" y="18"></rect></svg><figcaption>1 · Round start<small>full health, no markers lit</small></figcaption></figure><figure><svg class="as-mini" viewbox="0 0 160 90"><rect fill="#33406a" height="90" width="160"></rect><path d="M0 60 Q40 40 80 62 T160 55 V90 H0Z" fill="#4b3a5e"></path><rect fill="#111" height="7" width="62" x="8" y="7"></rect><rect fill="#111" height="7" width="62" x="90" y="7"></rect><rect fill="#e8c22c" height="5" width="27.0" x="42.0" y="8"></rect><rect fill="#e8c22c" height="5" width="60" x="91" y="8"></rect><rect fill="#1a1626" height="13" width="14" x="73" y="4"></rect><text fill="#fff" font-family="sans-serif" font-size="8" font-weight="700" text-anchor="middle" x="80" y="14">38</text><rect fill="#ffc832" height="5" stroke="#ddd" stroke-width=".8" transform="rotate(45 64.5 20.5)" width="5" x="62" y="18"></rect><rect fill="#2d2840" height="5" stroke="#ddd" stroke-width=".8" transform="rotate(45 57.5 20.5)" width="5" x="55" y="18"></rect><rect fill="#2d2840" height="5" stroke="#ddd" stroke-width=".8" transform="rotate(45 50.5 20.5)" width="5" x="48" y="18"></rect><rect fill="#2d2840" height="5" stroke="#ddd" stroke-width=".8" transform="rotate(45 95.5 20.5)" width="5" x="93" y="18"></rect><rect fill="#2d2840" height="5" stroke="#ddd" stroke-width=".8" transform="rotate(45 102.5 20.5)" width="5" x="100" y="18"></rect><rect fill="#2d2840" height="5" stroke="#ddd" stroke-width=".8" transform="rotate(45 109.5 20.5)" width="5" x="107" y="18"></rect><circle cx="64.5" cy="20.5" fill="none" r="7" stroke="#ffc832" stroke-dasharray="2 2" stroke-width="1.2"></circle></svg><figcaption>2 · A round was won<small>a marker is lit (KO or next round)</small></figcaption></figure></div>
+<p>Full-size screenshots of the game capture, in either order. In OBS: right-click the game source › <b>Screenshot (Source)</b>.</p>
+<button class="btn" id="asUsePics">Choose 2 pictures…</button>
+</div>
+</div>
+<small class="as-rec-note">Videos and screenshots must be of <b>the same game capture you stream</b>, framed the same way (no extra crop, zoom or overlays on top of the HUD).</small>
+<input accept="video/*,.mkv" hidden="" id="asVideoFile" type="file"/><input accept="image/*" hidden="" id="asPicFiles" multiple="" type="file"/>
+</div>
+<div class="as-auto-run" hidden="" id="asAutoRun"><span class="as-auto-dot"></span><span id="asAutoTxt">Watching…</span><span class="spacer"></span><button class="btn sm ghost" hidden="" id="asAutoBack">Put my old boxes back</button></div>
+<div class="as-rec" hidden="" id="asRec">
+<div class="as-rec-vid" hidden="" id="asRecVid">
+<p><b>Move to a round start</b> (round 1 is best: full health, no round markers lit), then press <b>Calibrate from here</b>. The clip needs at least one round won after that point.</p>
+<div class="inline"><input id="asRecPos" max="1000" min="0" type="range" value="0"/><span class="as-rec-time" id="asRecTime">0:00</span></div>
+<div class="inline"><button class="btn primary" id="asRecGo">Calibrate from here</button><button class="btn ghost" id="asRecClose">Cancel</button></div>
+</div>
+<div class="as-rec-pics" hidden="" id="asRecPics">
+<div class="as-pics"><figure><canvas height="180" id="asPicA" width="320"></canvas><figcaption>Round start<br/><small>no round markers lit</small></figcaption></figure>
+<button class="btn sm ghost" id="asPicSwap" title="Swap the two pictures (it also works this out by itself)">⇄</button>
+<figure><canvas height="180" id="asPicB" width="320"></canvas><figcaption>After a round is won<br/><small>a marker lit</small></figcaption></figure></div>
+<div class="inline"><button class="btn primary" id="asPicGo">Calibrate from these</button><button class="btn ghost" id="asPicClose">Cancel</button></div>
+</div>
+</div>
+<div class="as-profiles" id="asProfiles">
+<div class="as-prof-h"><span><b>Saved calibrations</b><small>Each calibration is saved with a picture of the HUD. When BeeboScore sees your game it recognises it and loads the right one by itself, even if you moved or resized the capture.</small></span>
+<button class="btn sm ghost" id="asProfImport">Import…</button><input accept=".json,application/json" hidden="" id="asProfFile" type="file"/></div>
+<div class="as-prof-list" id="asProfList"></div>
+</div>
+<div class="as-train" id="asTrain">
+<div class="as-train-h"><b>🧠 Teach it with your footage</b>
+<small>Drop in recordings, tournament VODs or replays and it learns what your round markers look like: lit, unlit, under special-move lighting, flashes and all. Nothing to label. Best with <b>5–10 full sets (45–90 minutes)</b>; <b>2–3 sets (about 15 minutes)</b> is enough to start. Variety beats length: different stages and characters, rounds won by both sides, and some menus between games. Same game and HUD as your calibration, 720p or better, MP4 or WebM.</small></div>
+<label class="as-drop" id="asDrop"><input accept="video/*,.mkv" hidden="" id="asTrainFiles" multiple="" type="file"/>
+<span class="as-drop-i">🎞</span><span><b>Drop video files here</b> or click to choose</span><small>They stay on this PC. Reading takes about 8 minutes per hour of footage, and you can keep using BeeboScore meanwhile.</small></label>
+<div class="as-train-list" id="asTrainList"></div>
+<div class="as-train-res" hidden="" id="asTrainRes"></div>
+</div>
+<div class="as-draw"><span>Or draw by hand:</span>
+<div class="seg" id="asDrawMode"><button class="on" data-m="left">P1 round markers</button><button data-m="right">P2 round markers</button><button data-m="hud">Timer (menu check)</button></div></div>
+<div class="as-stage" id="asStage"><canvas height="360" id="asFrame" width="640"></canvas><canvas height="360" id="asOver" width="640"></canvas><div class="as-stage-empty" id="asStageEmpty">Connect your game video, then press <b>Grab frame</b>.</div></div>
+<div class="inline as-btns" style="flex-wrap:wrap">
+<button class="btn" id="asGrab">Grab frame</button><button class="btn primary" id="asBase">Set empty baseline</button>
+<button class="btn ghost" id="asUndoBox">Remove last box</button><button class="btn ghost danger" id="asClearBoxes">Clear all boxes</button>
+<span class="spacer"></span><button class="btn" id="asPreview">▶ Live preview</button>
+</div>
+<div class="as-read" id="asRead"></div>
+<details class="as-adv"><summary>Advanced: settings file</summary>
+<textarea id="asJson" spellcheck="false"></textarea>
+<div class="inline"><button class="btn sm" id="asCopy">Copy</button><button class="btn sm" id="asDownload">Download</button><button class="btn sm" id="asLoad">Load from box</button></div>
+</details>
+</div>
+</section><section class="tab" data-tab="settings">
+<h1 class="pagetitle">Settings</h1>
+<p>Saved on this PC. Changes apply straight away.</p>
+<div class="set-jump">
+<a data-scroll-to="setLook" href="#">Look &amp; feel</a><a data-scroll-to="setBehave" href="#">Scoreboard</a><a data-scroll-to="sdCard" href="#">Stream Deck</a><a data-scroll-to="keysCard" href="#">Shortcuts</a><a data-scroll-to="bkCard" href="#">Backups</a><a data-scroll-to="updCard" href="#">Updates &amp; about</a>
+</div>
+<div class="set-search"><input aria-label="Search settings" autocomplete="off" class="f" id="setSearch" placeholder="🔎 Search settings — e.g. sound, victory, backup" type="search"/><span class="hint" hidden="" id="setSearchNone">Nothing matches — try another word.</span></div>
+<div class="card" id="setLook">
+<h2>Look &amp; feel</h2>
+<div class="theme-pick local-only" id="themePick">
+<button class="theme-opt" data-theme="classic"><span class="tp-sw tp-classic"><i></i><i></i><i></i></span><span><b>Classic</b><small>The original BeeboScore look.</small></span></button>
+<button class="theme-opt" data-theme="shattered"><span class="tp-sw tp-shattered"><i></i><i></i><i></i></span><span><b>Shattered</b><small>Obsidian glass and ember, like the Shattered overlay.</small></span></button>
+</div>
+<div class="opts">
+<label class="toggle opt"><input id="setPreviewAnim" type="checkbox"/><span class="sw"></span><span class="opt-t"><b>Animate the live preview</b><small>Turn off on slower PCs — OBS still shows the animations.</small></span></label>
+<label class="toggle opt"><input id="setQuick" type="checkbox"/><span class="sw"></span><span class="opt-t"><b>Quick-start tips</b><small>Show the three-step guide at the top of the Matches tab.</small></span></label>
+<label class="toggle opt local-only"><input id="setShowAutoscore" type="checkbox"/><span class="sw"></span><span class="opt-t"><b>🧪 Show the Autoscore tab</b><small>Autoscore is still being built, so its tab is hidden. Turn this on to try it.</small></span></label>
+<label class="toggle opt local-only"><input id="setLightFx" type="checkbox"/><span class="sw"></span><span class="opt-t"><b>⚡ Light effects</b><small>Keeps every animation but drops the heaviest extras (embers, glows, screen shakes, background lightning) — for PCs that drop frames in OBS. In between full effects and potato mode; no restart.</small></span></label>
+<label class="toggle opt local-only"><input id="setPotato" type="checkbox"/><span class="sw"></span><span class="opt-t"><b>🥔 Potato mode</b><small>Windows XP look, no effects, layouts as still pictures — for the lowest-end PCs. Restarts the app.</small></span></label>
+</div>
+</div>
+<div class="card local-only" id="setBehave">
+<h2>Scoreboard</h2>
+<div class="opts">
+<label class="toggle opt"><input id="setAutoSwitch" type="checkbox"/><span class="sw"></span><span class="opt-t"><b>Follow the game</b><small>Switch to that game’s layout when you change the game at the top.</small></span></label>
+<label class="toggle opt"><input id="setFollowFormat" type="checkbox"/><span class="sw"></span><span class="opt-t"><b>Follow the format</b><small>Pick a format (crew battle, Death Battle…) and the layout switches to that format’s version of the same look. Clear the format and it switches back.</small></span></label>
+<label class="toggle opt"><input id="setRefreshReset" type="checkbox"/><span class="sw"></span><span class="opt-t"><b>Refresh OBS on reset</b><small>Reload the overlay when scores go back to 0–0, so every set starts clean.</small></span></label>
+<label class="toggle opt"><input id="setAutoVictory" type="checkbox"/><span class="sw"></span><span class="opt-t"><b>Victory splash when a set ends</b><small>A moment after someone wins, the winner takes the whole screen. You can also show it from the win card, a shortcut or Stream Deck.</small></span></label>
+<div class="opt-row"><span class="opt-t"><b>Keep the victory splash up for</b><small>Then it hides by itself.</small></span>
+<select class="f local-only" id="setVictoryHold" style="width:auto"><option value="5">5 seconds</option><option value="8">8 seconds</option><option value="12">12 seconds</option><option value="20">20 seconds</option><option value="0">until I hide it</option></select></div>
+</div>
+</div>
+<div class="card local-only" id="setSound">
+<h2>Sound <span class="spacer"></span><span class="pill" id="sndPill">Off</span></h2>
+<p class="hint" style="margin:-4px 0 12px">Every layout has its own sounds — glass, embers and low booms on Shattered, taiko drums and temple bells on Oni. The app makes them itself (nothing to download), on a point, match point, a set won, the VS intro, splashes and game-format moments.</p>
+<div class="opts">
+<label class="toggle opt"><input id="setSoundOn" type="checkbox"/><span class="sw"></span><span class="opt-t"><b>Play sound on stream</b><small>Off until you turn it on. In OBS, tick <b>Control audio via OBS</b> on the browser source, then set its level in the mixer.</small></span></label>
+<div class="opt-row"><span class="opt-t"><b>Stream volume</b><small>How loud layouts play in OBS. The 🔊 under the live preview only changes what you hear here.</small></span>
+<div class="snd-vol"><input aria-label="Stream volume" id="setSoundVol" max="100" min="0" step="5" type="range"/><b id="setSoundVolV">80%</b></div></div>
+<label class="toggle opt"><input id="setObsVolume" type="checkbox"/><span class="sw"></span><span class="opt-t"><b>Let OBS set the level</b><small>Layouts send their sound at full level and you set it with the source’s fader in the OBS mixer (the stream volume above is ignored).</small></span></label>
+<div class="opt-row"><span class="opt-t"><b>Control it from inside OBS</b><small>A <b>BeeboScore dock</b> for OBS: sound on / off, volume, the VS and victory splashes and the team bar, without leaving OBS. In OBS: <b>Docks › Custom Browser Docks…</b>, name it BeeboScore, paste the link, Apply.</small></span>
+<button class="btn sm" id="sndDock">📋 Copy dock link</button></div>
+<div class="opt-row"><span class="opt-t"><b>OBS audio</b><small id="sndObsTxt">Checks every BeeboScore browser source can be heard in OBS, and fixes the ones that can’t.</small></span>
+<button class="btn sm" id="sndObs">🎥 Check OBS</button></div>
+</div>
+<div class="snd-test">
+<div class="opt-row"><span class="opt-t"><b>Sound test</b><small>Hear every sound, at the preview volume.</small></span>
+<select class="f" id="sndPack" style="width:auto"><option value="shattered">🪞 Shattered pack</option><option value="oni">🥁 Oni pack</option></select></div>
+<div class="snd-grid" id="sndGrid"></div>
+</div>
+</div>
+<div class="card" id="sdCard">
+<h2>Stream Deck <span class="spacer"></span><span class="pill" id="sdPill">Not connected</span></h2>
+<p class="hint" style="margin:-4px 0 12px">Run the scoreboard from an Elgato Stream Deck: scores, reset, swap, undo, VS intro, bracket and Top 8 splashes, [L], layouts, next match from start.gg, and a <b>Set player</b> key that pops up a name picker.</p>
+<div class="sd-rows">
+<div class="sd-row"><i class="sd-dot" id="sdAppDot"></i><div class="sd-txt"><b>Stream Deck app</b><small id="sdAppTxt">Checking…</small></div>
+<a class="btn sm" hidden="" href="https://www.elgato.com/downloads" id="sdGetApp" rel="noopener" target="_blank">Get Stream Deck</a></div>
+<div class="sd-row"><i class="sd-dot" id="sdPlugDot"></i><div class="sd-txt"><b>BeeboScore plugin</b><small id="sdPlugTxt">Checking…</small></div>
+<button class="btn sm primary local-only" hidden="" id="sdInstall">Install</button></div>
+</div>
+<div class="opts" style="margin-top:6px">
+<label class="toggle opt local-only"><input id="setSdAuto" type="checkbox"/><span class="sw"></span><span class="opt-t"><b>Keep the plugin up to date</b><small>When BeeboScore has a newer plugin it hands it to Stream Deck for you — just confirm there.</small></span></label>
+</div>
+<p class="hint" style="margin:10px 0 0">Not on this PC? <a download="" href="/downloads/beeboscore.streamDeckPlugin" id="sdDownload">Download the plugin file</a> and double-click it on the PC with the Stream Deck.</p>
+</div>
+<div class="card" id="keysCard">
+<h2>Keyboard shortcuts</h2>
+<p class="hint" style="margin:-4px 0 12px">Click a shortcut, then press the new key or combination. <span class="kbd">Esc</span> cancels, <span class="kbd">Backspace</span> clears it. Single keys only work while you're not typing in a box.</p>
+<div class="keylist" id="keyList"></div>
+<div style="display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap">
+<button class="btn ghost local-only" id="keyReset">Reset to defaults</button>
+<span class="hint" style="margin:0">Always available: <span class="kbd">Alt</span>+<span class="kbd">1–7</span> switch tabs · <span class="kbd">Ctrl</span>+<span class="kbd">M</span> mini controller · <span class="kbd">Ctrl</span>+<span class="kbd">S</span> save in editor</span></div>
+</div>
+<div class="card local-only" id="bkCard">
+<h2>Backups <span class="spacer"></span><span class="pill" id="bkPill">—</span></h2>
+<p class="hint" style="margin:-4px 0 12px">Everything you set up: settings and shortcuts, players, saved teams, brand kits, your own layouts and pictures. <b>Passwords and sign-ins are never in a backup</b> (OBS, start.gg, Twitch, remote control) — sign in again after restoring. BeeboScore also keeps a backup by itself once a day (the last 7).</p>
+<div class="inline" style="gap:8px;flex-wrap:wrap">
+<a class="btn" download="" href="/api/backup" id="bkDownload">⬇ Download a backup</a>
+<button class="btn" id="bkRestoreBtn">⬆ Restore from a backup…</button><input accept=".beebo-backup" hidden="" id="bkFile" type="file"/>
+<button class="btn ghost" id="bkOpen">📂 Open the backups folder</button>
+</div>
+<div class="bk-list" id="bkList"></div>
+</div>
+</section><div class="card wn-card" hidden="" id="wnCard"></div><div class="card obs-warn" hidden="" id="obsWarn"><h2>⚠ OBS isn't showing your overlay <span class="spacer"></span><button class="btn sm ghost" id="obsWarnX">Dismiss</button></h2><p class="hint" style="margin:0">Nothing has your layout open. In OBS, add a <b>Browser Source</b> with your overlay link (Layouts tab › Copy link), or right-click the source › <b>Refresh</b>. This goes away by itself once it connects.</p></div><div class="card" hidden="" id="quickStart">
+<h2>Quick start <span class="spacer"></span><button class="btn sm ghost" id="qsHide">Got it</button></h2>
+<div class="quick">
+<div class="qs"><b class="n">1</b><div><strong>Add it to OBS</strong>Add a Browser Source with the overlay URL from the <a data-goto="stream" href="#">Stream</a> tab (1920×1080).</div></div>
+<div class="qs"><b class="n">2</b><div><strong>Pick your game</strong>Choose the game at the top — the matching layout goes live automatically.</div></div>
+<div class="qs"><b class="n">3</b><div><strong>Run the match</strong>Type names (they autocomplete), tap + to score, then press <b>Update</b>.</div></div>
+</div>
+</div><div class="card" hidden="" id="screensCard">
+<h2>Screens <span class="spacer"></span><button class="btn sm ghost" id="scrDesign" title="Open this layout in the Layout Designer">🎨 Design</button></h2>
+<p class="hint" style="margin:-4px 0 12px">This layout's extra screens, made in the Layout Designer — Starting soon, Be right back, Top 8, lower thirds… Click one to put it on stream, click again to take it off.</p>
+<div class="scr-btns" id="scrBtns"></div>
+</div><div class="card" id="vsCard">
+<h2>VS intro <span class="spacer"></span><button class="btn sm ghost" id="vsRefresh" title="Fetch the latest pictures and bracket records from start.gg">↻ start.gg</button><button class="btn vs-toggle" id="vsToggle">Show VS intro</button></h2>
+<p class="hint" style="margin:-4px 0 12px">Covers the scoreboard with a player-vs-player splash animated in the current layout's style. Players loaded from start.gg get their profile picture and bracket record (wins – losses in this event) automatically.</p>
+<div class="vsgrid">
+<div class="vsp p1"><div class="vsava"><img alt="" id="vsAva1"/><b id="vsIni1">1</b></div>
+<div class="vsf"><div class="row" style="margin:0"><div class="field"><label class="l">Wins</label><input autocomplete="off" data-path="p1.wins" inputmode="numeric" placeholder="—" type="text"/></div><div class="field"><label class="l">Losses</label><input autocomplete="off" data-path="p1.losses" inputmode="numeric" placeholder="—" type="text"/></div></div>
+<div class="field" style="margin:0"><label class="l">Picture URL</label><input autocomplete="off" data-path="p1.avatar" placeholder="Filled in from start.gg" type="text"/></div></div></div>
+<div class="vsp p2"><div class="vsava"><img alt="" id="vsAva2"/><b id="vsIni2">2</b></div>
+<div class="vsf"><div class="row" style="margin:0"><div class="field"><label class="l">Wins</label><input autocomplete="off" data-path="p2.wins" inputmode="numeric" placeholder="—" type="text"/></div><div class="field"><label class="l">Losses</label><input autocomplete="off" data-path="p2.losses" inputmode="numeric" placeholder="—" type="text"/></div></div>
+<div class="field" style="margin:0"><label class="l">Picture URL</label><input autocomplete="off" data-path="p2.avatar" placeholder="Filled in from start.gg" type="text"/></div></div></div>
+</div>
+</div><details class="card more" id="customCard">
+<summary>Custom fields</summary>
+<div id="customRows"></div>
+<button class="btn sm" id="addCustom">+ Add field</button>
+<p class="hint">Use them in a layout with <code>data-sb="custom.yourField"</code>. Built-in switches: <code>guide</code> = <code>on</code> shows where the game's HUD sits; <code>layout</code> = <code>bottom</code> moves supported layouts to the bottom.</p>
+</details><button class="btn primary" hidden="" id="winGF">Bracket reset → Grand Finals Reset</button><a class="hint" data-goto="settings" data-scroll="keysCard" href="#" style="margin:0;font-size:11px;letter-spacing:0;text-transform:none">Keyboard shortcuts</a><button class="btn sm ghost" id="swapCasters">Swap casters</button><div class="row">
+<div class="field"><label class="l">Team / Sponsor</label><input autocomplete="off" data-path="p1.team" type="text"/></div>
+<div class="field"><label class="l">Pronouns</label><input autocomplete="off" data-path="p1.pronouns" list="pronounList" type="text"/></div>
+</div><div class="row">
+<div class="field"><label class="l">Country</label><div class="country"><img alt="" id="p1flag"/><input autocomplete="off" data-path="p1.country" list="countryList" maxlength="2" placeholder="us" type="text"/></div></div>
+<div class="field"><label class="l">Character</label><input autocomplete="off" data-path="p1.character" list="charList" type="text"/></div>
+</div><div class="row">
+<div class="field"><label class="l">Team / Sponsor</label><input autocomplete="off" data-path="p2.team" type="text"/></div>
+<div class="field"><label class="l">Pronouns</label><input autocomplete="off" data-path="p2.pronouns" list="pronounList" type="text"/></div>
+</div><div class="row">
+<div class="field"><label class="l">Country</label><div class="country"><img alt="" id="p2flag"/><input autocomplete="off" data-path="p2.country" list="countryList" maxlength="2" placeholder="jp" type="text"/></div></div>
+<div class="field"><label class="l">Character</label><input autocomplete="off" data-path="p2.character" list="charList" type="text"/></div>
+</div><div class="field"><label class="l">Game (shown on overlay)</label><input autocomplete="off" data-path="game" list="gameList" type="text"/></div><div class="field"><label class="l">Commentator 1</label><input autocomplete="off" data-path="c1.name" type="text"/></div><div class="field"><label class="l">Handle</label><input autocomplete="off" data-path="c1.handle" placeholder="@handle" type="text"/></div><div class="field" style="margin:0"><label class="l">Commentator 2</label><input autocomplete="off" data-path="c2.name" type="text"/></div><div class="field" style="margin:0"><label class="l">Handle</label><input autocomplete="off" data-path="c2.handle" placeholder="@handle" type="text"/></div><div class="seg br-src" id="brSrc" title="Where the bracket on stream comes from"><button data-src="startgg">start.gg event</button><button data-src="viewer">🎮 Viewer tournament</button></div><div class="card" hidden="" id="vtCard">
+<h2>Viewer tournament <span class="pill" id="vtPill">Not set up</span><span class="spacer"></span><button class="btn sm ghost" hidden="" id="vtUndo" title="Take back the last change">↶ Undo</button></h2>
+<div id="vtSetup">
+<p class="hint" style="margin:-4px 0 12px">Twitch viewers sign up from chat with <b>!enter</b> (or <b>!join</b> while your viewer-match queue is closed). When you're ready, BeeboScore draws a single- or double-elimination bracket and loads each match onto the scoreboard.</p>
+<div class="row vt-opts">
+<div class="field" style="margin:0"><label class="l" for="vtName">Name</label><input class="f" id="vtName" maxlength="40" placeholder="Viewer Tournament"/></div>
+<div class="field" style="margin:0"><label class="l" for="vtFt">Matches</label><select class="f" id="vtFt"><option value="1">First to 1</option><option selected="" value="2">First to 2</option><option value="3">First to 3</option></select></div>
+<div class="field" style="margin:0"><label class="l" for="vtMax">Max players</label><select class="f" id="vtMax"><option value="0">No limit</option><option value="8">8</option><option value="16">16</option><option value="32">32</option><option value="64">64</option><option value="128">128</option></select></div>
+<div class="field" style="margin:0"><label class="l" for="vtSeed">Seeding</label><select class="f" id="vtSeed"><option value="random">Random</option><option value="order">Order they joined</option></select></div>
+<div class="field" style="margin:0"><label class="l" for="vtType">Bracket</label><select class="f" id="vtType"><option value="SE">Single elimination</option><option value="DE">Double elimination</option><option value="RR">Round robin (pools)</option><option value="SW">Swiss</option></select></div>
+<div class="field vt-grp" hidden="" style="margin:0"><label class="l" for="vtPools">Pools</label><select class="f" id="vtPools"><option value="1">One group</option><option value="2">2 pools</option><option value="4">4 pools</option><option value="8">8 pools</option></select></div>
+<div class="field vt-sw" hidden="" style="margin:0"><label class="l" for="vtRounds">Swiss rounds</label><select class="f" id="vtRounds"><option value="0">Automatic</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option></select></div>
+<div class="field vt-gc" hidden="" style="margin:0"><label class="l" for="vtCut">Then</label><select class="f" id="vtCut"><option value="0">No playoffs (table decides)</option><option value="4">Top 4 playoffs</option><option value="8">Top 8 playoffs</option><option value="2">Top 2 final</option><option value="16">Top 16 playoffs</option></select></div>
+<div class="field" style="margin:0"><label class="l" for="vtStations">Stations</label><select class="f" id="vtStations" title="Setups besides the stream — ready matches are called to the next free one"><option value="0">Stream only</option><option value="1">+1</option><option value="2">+2</option><option value="3">+3</option><option value="4">+4</option><option value="6">+6</option><option value="8">+8</option></select></div>
+</div>
+<button class="btn primary" id="vtCreate" style="margin-top:12px">🎮 Open signups</button>
+</div>
+<div hidden="" id="vtSignup">
+<div class="inline vt-bar">
+<label class="toggle"><input id="vtOpen" type="checkbox"/><span class="sw"></span><span id="vtOpenTxt">Signups closed</span></label>
+<span class="hint" id="vtChat" style="margin:0"></span>
+</div>
+<div class="vt-ci" hidden="" id="vtCi"></div>
+<div class="vt-list" id="vtList"></div>
+<div class="inline vt-seedbar" style="margin-top:8px;gap:8px;flex-wrap:wrap"><button class="btn sm ghost" id="vtShuffle" title="Shuffle the seeds now (you can still move players up)">🔀 Shuffle seeds</button><span class="hint" style="margin:0">▲ moves a player up a seed. Seed 1 and 2 can only meet in the final.</span></div>
+<div class="inline" style="margin-top:10px"><input autocomplete="off" id="vtAddName" maxlength="25" placeholder="Add a player by hand" type="text"/><button class="btn" id="vtAdd">Add</button></div>
+<div class="inline" style="margin-top:14px;gap:8px;flex-wrap:wrap"><button class="btn" id="vtCheckin" title="Ask everyone who signed up to type !here — only they make the bracket">✅ Start check-in</button><button class="btn primary" id="vtGenerate">🏆 Generate bracket</button><button class="btn ghost" id="vtClear">Clear players</button><button class="btn ghost danger" id="vtDelete1">Delete</button></div>
+</div>
+<div hidden="" id="vtLive">
+<div class="vt-now" id="vtNow"></div>
+<div class="inline" style="gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn primary" id="vtConfirm">✓ Confirm result &amp; next match</button><button class="btn" id="vtLoadNext">Load next match</button><span class="spacer"></span><button class="btn sm ghost" hidden="" id="vtFfA">🏳 Forfeit</button><button class="btn sm ghost" hidden="" id="vtFfB">🏳 Forfeit</button></div>
+<p class="hint" id="vtProgress" style="margin:12px 0 6px"></p>
+<div class="vt-stn" hidden="" id="vtStn"></div>
+<div class="vt-tables" hidden="" id="vtTables"></div>
+<div class="vt-next" id="vtNext"></div>
+<div class="inline vt-dq" id="vtDqRow" style="margin-top:12px;gap:8px;flex-wrap:wrap"><select aria-label="Player to disqualify" class="f" id="vtDqSel" style="width:auto;max-width:240px"></select><button class="btn sm ghost danger" id="vtDq" title="Their remaining matches become forfeits">⛔ DQ player</button></div>
+<div class="inline" style="margin-top:14px;gap:8px;flex-wrap:wrap"><button class="btn ghost" id="vtRestart">↺ Start over with the same players</button><button class="btn ghost danger" id="vtDelete2">Delete tournament</button></div>
+</div>
+<div class="vt-side" hidden="" id="vtSide"><span>🧾 <b>Sign-up sidebar for OBS</b> — who's joining, then the match on stream and who's left. Add it as a Browser Source (420 × 1080).</span><button class="btn sm" id="vtSideCopy">Copy link</button></div>
+</div><div class="card" hidden="" id="splashCard">
+<h2>Bracket splash <span class="pill" id="brPill">Not loaded</span><span class="spacer"></span></h2>
+<p class="hint" style="margin:-4px 0 12px">A full-screen bracket that builds itself from the loaded event (up to 48 players), with live scores for the match on stream. Once the event reaches Top 8 it switches to the Top 8 splash.</p>
+<div class="splash-btns">
+<button class="btn vs-toggle" id="brToggle"><svg viewbox="0 0 24 24"><path d="M3 4h6v4H3zm0 12h6v4H3zm12-6h6v4h-6zM9 6h3v12H9v-2h1V8H9zm3 5h3v2h-3z"></path></svg><span>Show bracket</span></button>
+<button class="btn vs-toggle t8" id="t8Toggle"><svg viewbox="0 0 24 24"><path d="M14 2 6 13h5l-2 9 9-12h-5z"></path></svg><span>Show Top 8</span></button>
+</div>
+<div class="br-refresh">
+<button class="btn" id="brRefresh" title="Fetch the latest results from start.gg right now"><svg viewbox="0 0 24 24"><path d="M17.7 6.3A8 8 0 1 0 20 12h-2a6 6 0 1 1-1.8-4.2L13 11h7V4z"></path></svg><span>Refresh now</span></button>
+<label class="l" for="brEvery" style="margin:0">Auto-refresh while showing</label>
+<select class="f local-only" id="brEvery"><option value="10">every 10 s</option><option value="20">every 20 s</option><option value="45">every 45 s</option><option value="0">off</option></select>
+<span class="hint" id="brAgo" style="margin:0"></span>
+</div>
+<div class="br-refresh br-side">
+<span class="l" style="margin:0">On screen</span>
+<div class="seg br-seg" id="brSide" title="Big brackets show Winners and Losers on separate pages"><button data-side="W">Winners</button><button data-side="L">Losers</button></div>
+<label class="l" for="brPage" style="margin:0">Switch to the other side</label>
+<select class="f local-only" id="brPage"><option value="8">every 8 s</option><option value="14">every 14 s</option><option value="20">every 20 s</option><option value="30">every 30 s</option><option value="45">every 45 s</option><option value="60">every 60 s</option><option value="0">only when I switch</option></select>
+</div>
+<p class="hint" hidden="" id="brSideHint" style="margin:6px 0 0">This bracket fits on one screen, so there are no sides to switch. Bigger brackets (about 17+ players) split into Winners and Losers pages.</p>
+<p class="hint" id="brInfo" style="margin:10px 0 0">—</p>
+<div class="field" hidden="" id="brGroupRow" style="margin:12px 0 0"><label class="l">Pool</label><select class="f" id="brGroup"></select></div>
+<div class="field local-only" style="margin:12px 0 0"><label class="l" for="brTitle">Bracket title <small style="font-weight:400;opacity:.7">— shown with how many players are still in (“Top” is only used for the Top 8)</small></label><input class="f" id="brTitle" maxlength="40" placeholder="Tournament Bracket"/></div>
+<label class="toggle local-only" style="margin-top:12px"><input id="setAutoTop8" type="checkbox"/><span class="sw"></span> Switch to the Top 8 splash automatically when the event reaches Top 8</label>
+</div><div class="card share-card" hidden="" id="shareCard">
+<h2>Share &amp; export <span class="pill" id="shPill">Not shared</span><span class="spacer"></span><button class="btn sm ghost local-only" id="shOpen" title="Open the folder with this tournament's exported files">📂 Open folder</button></h2>
+<div class="sh-block">
+<label class="toggle"><input id="shLive" type="checkbox"/><span class="sw"></span><span><b>Live bracket page for viewers</b><small class="hint" style="display:block;margin:2px 0 0">A view-only page with a secret link: it updates by itself and lets people find their own name. Nobody can change anything from it.</small></span></label>
+<div hidden="" id="shLinkBox">
+<div class="inline sh-link"><input class="f" id="shLink" readonly="" spellcheck="false"/><button class="btn sm" id="shCopy">Copy link</button><a class="btn sm ghost" id="shVisit" rel="noopener" target="_blank">Open</a></div>
+<p class="hint" id="shWhere" style="margin:6px 0 0"></p>
+</div>
+</div>
+<div class="sh-block">
+<div class="inline" style="gap:8px;flex-wrap:wrap;align-items:center"><b class="sh-lbl">🏅 Top 8 standings</b><span class="spacer"></span>
+<button class="btn sm" id="shStand" title="Show the Top 8 standings splash on stream">Show on stream</button>
+<button class="btn sm local-only" id="shPng" title="Save the standings splash as a PNG picture">⬇ PNG</button><button class="btn sm local-only" id="shJpg" title="Save the standings splash as a JPG picture (smaller, for social media)">⬇ JPG</button></div>
+<p class="hint" id="shStandHint" style="margin:6px 0 0"></p>
+<div class="inline" hidden="" id="shPostRow" style="gap:8px;margin-top:8px;flex-wrap:wrap"><button class="btn sm" id="shPost" title="Copy a ready-made post with the Top 8 for X, Instagram or Discord">📋 Copy post text</button><span class="hint" style="margin:0">Pictures come in 16:9 and square (Instagram).</span></div>
+<label class="toggle local-only" style="margin-top:8px"><input id="shAuto" type="checkbox"/><span class="sw"></span> When the tournament ends, show the standings on stream and save them as pictures</label>
+</div>
+<div class="sh-block inline" style="gap:10px;flex-wrap:wrap;align-items:center">
+<span class="sh-lbl">Pictures on the bracket, Top 8 &amp; standings</span>
+<div class="seg" id="shPics"><button data-pics="avatar">👤 Profile pictures</button><button data-pics="character">🥋 Character art</button></div>
+<button class="btn sm ghost local-only" id="shCharImp" title="Pick a folder of pictures named after the characters — Fighter-One.png, Fighter-Two.png…">🗂 Import character art folder…</button><button class="btn sm ghost local-only" id="shCharImp2" title="Pick some pictures named after the characters">＋ Pictures</button><input accept="image/*" hidden="" id="shCharFiles" multiple="" type="file"/><input hidden="" id="shCharDir" multiple="" type="file" webkitdirectory=""/>
+<span class="hint" id="shCharN" style="margin:0"></span>
+</div>
+<p class="hint" hidden="" id="shOther" style="margin:4px 0 8px"></p>
+<div class="sh-files" id="shFiles"></div>
+<p class="hint sh-temp" id="shTemp"></p>
+</div><div class="card" id="ntfCard">
+<h2>🔔 Discord notifications <span class="spacer"></span><span class="pill" id="ntfPill">Off</span></h2>
+<p class="lead">Post match calls and results to a Discord channel, so players know when to get on stream or to their station. Players can also tap <b>🔔 Notify me</b> on the live bracket page.</p>
+<div class="inline local-only" style="gap:8px;flex-wrap:wrap"><input autocomplete="off" class="f" id="ntfUrl" placeholder="Discord webhook link — channel settings › Integrations › Webhooks" style="flex:1;min-width:240px" type="password"/><button class="btn" id="ntfSave">Save</button><button class="btn ghost" hidden="" id="ntfTest">Send a test</button><button class="btn ghost danger" hidden="" id="ntfDel">Remove</button></div>
+<div class="ntf-on" id="ntfOn"></div>
+<p class="hint" id="ntfLast" style="margin:8px 0 0"></p>
+</div><div class="card" id="latCard">
+<h2>Viewer latency <span class="live-tag" hidden="" id="latLive">LIVE</span><span class="spacer"></span><span class="pill" id="latPill">Nobody watching</span></h2>
+<p class="lead">How long each score update takes to show up for everyone who has your overlay open, including people you've sent the online link to.</p>
+<div class="lat-summary" hidden="" id="latSummary">
+<div><small>Slowest viewer</small><b id="latWorst">—</b></div>
+<div><small>Average</small><b id="latAvg">—</b></div>
+<div><small>Fastest</small><b id="latBest">—</b></div>
+</div>
+<div class="lat-list" id="latList"></div>
+<div class="inline" style="margin-top:12px;flex-wrap:wrap"><button class="btn" id="latTest">Send a test update</button><span class="hint" style="margin:0">Measures everyone right now without changing the scoreboard.</span></div>
+<p class="hint" style="margin-top:12px"><b>On screen</b> is the time from BeeboScore sending an update to it being drawn on that viewer's screen. <b>Ping</b> is the network round trip. Places come from each viewer's time zone (and country, when online). The app's own previews aren't counted.</p>
+</div><div class="card local-only">
+<h2>Security</h2>
+<div class="inline" style="justify-content:space-between;flex-wrap:wrap;margin-bottom:12px">
+<div><b id="sessCount">No devices signed in</b><div class="hint" style="margin:2px 0 0">Devices signed in with your remote-control password.</div></div>
+<button class="btn sm danger" id="signoutAll">Sign out all devices</button>
+</div>
+<label class="toggle"><input id="setLanNoPw" type="checkbox"/><span class="sw"></span> Let phones and tablets on my Wi-Fi control the scoreboard without the password</label>
+<p class="hint lan-warn" hidden="" id="lanWarn">Phones and tablets on your Wi-Fi need a password to control BeeboScore — set a remote-control password above, or switch this on for a network you trust (home, not a venue).</p>
+<p class="hint">Remote devices can run the scoreboard, switch layouts and load matches. Only this PC can change the password, go online, edit or upload layouts, or change settings.</p>
+</div><a href="#" id="openOutput">open the folder</a><p class="hint local-only">Prefer OBS Text sources? Every value is also written to a <code>.txt</code> file — .</p><div class="modal" id="nameModal">
+<div class="dlg">
+<h3 id="nmTitle">New layout</h3>
+<div class="field"><label class="l">Layout name</label><input autocomplete="off" id="nmName" placeholder="my-layout" type="text"/></div>
+<div class="field" id="nmFromWrap"><label class="l">Start from</label><select class="f" id="nmFrom"></select></div>
+<div class="field" id="nmGameWrap"><label class="l">Game</label><select class="f" id="nmGame"></select></div>
+<p class="hint" id="nmHint"></p>
+<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
+<button class="btn" id="nmCancel">Cancel</button>
+<button class="btn primary" id="nmOk">Create</button>
+</div>
+</div>
+</div><div aria-labelledby="wizTitle" aria-modal="true" class="wiz" hidden="" id="wiz" role="dialog">
+<div class="wiz-box">
+<div class="wiz-steps" id="wizSteps"></div>
+<div class="wiz-body" id="wizBody"></div>
+<div class="wiz-foot"><button class="btn ghost" id="wizSkip">Skip setup</button><span class="spacer"></span><button class="btn ghost" id="wizBack">Back</button><button class="btn primary" id="wizNext">Next</button></div>
+</div>
+</div><div class="pmodal" hidden="" id="potatoModal">
+<div aria-labelledby="potatoTitle" aria-modal="true" class="pm-box" role="dialog">
+<div class="pm-title" id="potatoTitle">Potato mode</div>
+<div class="pm-body">
+<p id="potatoLead"></p>
+<ul id="potatoList"></ul>
+</div>
+<div class="pm-btns"><button class="btn primary" id="potatoGo">Restart now</button><button class="btn" id="potatoCancel">Cancel</button></div>
+</div>
+</div><div class="pv-snd" id="pvSnd" title="Preview volume — only what you hear here; the stream has its own in Settings › Sound">
+<button aria-label="Mute the preview" class="btn sm ghost icon-btn" id="pvMute">🔊</button>
+<input aria-label="Preview volume" id="pvVol" max="100" min="0" step="5" type="range"/><b id="pvVolV">60%</b>
+<small id="pvSndTag">preview</small>
+</div><div class="picker"><label for="gamePick">Game</label><select id="gamePick" title="Pick the game — the scoreboard layout follows it"></select></div><div class="inline local-only" style="margin:0 0 12px;gap:8px;flex-wrap:wrap"><a class="btn sm ghost" href="/selftest?run" id="selfTest" rel="noopener" target="_blank">🩺 Run the self-test</a><button class="btn sm ghost" id="wizAgain">🧭 Run the first-time setup again</button></div></div><script src="/static/keys.js"></script>
+<script src="/static/panel.js"></script>
+<script src="/static/report-panel.js"></script><script src="/static/overlay-toggle.js"></script><script src="/static/maker-panel.js"></script><script src="/static/prototype-note.js"></script>
+</body>
+</html>

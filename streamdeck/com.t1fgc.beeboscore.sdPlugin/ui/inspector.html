@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>BeeboScore</title>
+<style>
+  /* matches the Stream Deck property inspector look */
+  body { margin: 0; padding: 10px 14px 14px 10px; background: #2d2d2d; color: #d8d8d8; font: 9pt "Segoe UI", -apple-system, "Helvetica Neue", Arial, sans-serif; -webkit-user-select: none; user-select: none; }
+  .row { display: flex; align-items: center; min-height: 32px; margin: 2px 0; }
+  .row > label { flex: none; width: 100px; text-align: right; padding-right: 12px; color: #969696; }
+  .row > .v { flex: 1; min-width: 0; }
+  select, input[type=text] { width: 100%; height: 26px; box-sizing: border-box; background: #3d3d3d; color: #d8d8d8; border: none; border-radius: 0; padding: 0 6px; font: inherit; outline: none; }
+  select:focus, input:focus { outline: 1px solid #5a5a5a; }
+  .check { display: flex; align-items: center; gap: 6px; color: #d8d8d8; }
+  .status { display: flex; align-items: center; gap: 8px; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: #c0392b; flex: none; }
+  .dot.on { background: #2fd17a; }
+  .muted { color: #969696; font-size: 8pt; line-height: 1.4; }
+  button { height: 26px; background: #3d3d3d; color: #d8d8d8; border: none; padding: 0 10px; font: inherit; cursor: pointer; }
+  button:hover { background: #4a4a4a; }
+  .hide { display: none !important; }
+  hr { border: 0; border-top: 1px solid #3d3d3d; margin: 10px 0; }
+</style>
+</head>
+<body>
+  <div class="row" id="rowSide"><label>Player</label><div class="v"><select id="side"><option value="1">Player 1</option><option value="2">Player 2</option></select></div></div>
+  <div class="row" id="rowMode"><label>Key press</label><div class="v"><select id="mode">
+    <option value="tapHold">Tap +1 · hold −1</option><option value="add">Add 1</option><option value="subtract">Subtract 1</option></select></div></div>
+  <div class="row" id="rowLayoutMode"><label>Switch to</label><div class="v"><select id="lmode">
+    <option value="next">Next layout for this game</option><option value="any">Next layout (any game)</option><option value="specific">A specific layout…</option></select></div></div>
+  <div class="row" id="rowLayout"><label>Layout</label><div class="v"><select id="layout"></select></div></div>
+  <div class="row" id="rowFKind"><label>Shows</label><div class="v"><select id="fkind"><option value="fboard">The board (teams / Death Battle / standings)</option><option value="fvs">Team VS</option><option value="fwin">Champion</option></select></div></div>
+  <div class="row" id="rowSound"><label>Press to</label><div class="v"><select id="smode"><option value="toggle">Turn sound on / off</option><option value="up">Louder (+10%)</option><option value="down">Quieter (−10%)</option></select></div></div>
+  <div class="row" id="rowScreen"><label>Screen</label><div class="v"><select id="screen"></select></div></div>
+  <div class="row" id="rowBSide"><label>Press to</label><div class="v"><select id="bside">
+    <option value="toggle">Flip Winners ⇄ Losers</option><option value="L">Show the Losers side</option><option value="W">Show the Winners side</option></select></div></div>
+  <div class="row" id="rowWho"><label>Who won</label><div class="v"><select id="who"><option value="streamer">I won (+1 for me)</option><option value="viewer">The viewer won (+1 for them)</option></select></div></div>
+  <div class="row" id="rowHold"><label></label><div class="v"><label class="check"><input type="checkbox" id="hold"> Hold the key to reset (prevents accidents)</label></div></div>
+  <div class="row" id="rowNote"><label></label><div class="v muted" id="note"></div></div>
+  <hr>
+  <div class="row"><label>BeeboScore</label><div class="v status"><span class="dot" id="dot"></span><span id="conn">Looking for BeeboScore…</span></div></div>
+  <div class="row"><label>Address</label><div class="v"><input type="text" id="address" placeholder="Automatic (this PC)" spellcheck="false"></div></div>
+  <div class="row"><label></label><div class="v" style="display:flex;gap:6px"><button id="retry">Reconnect</button><button id="open">Open BeeboScore</button></div></div>
+  <div class="row"><label></label><div class="v muted">Leave the address empty to find BeeboScore on this PC automatically (port 3300).</div></div>
+<script>
+let sock, uuid, action, settings = {}, globals = {}, layouts = [], screens = [];
+const $ = id => document.getElementById(id);
+const kind = () => String(action || '').replace('com.t1fgc.beeboscore.', '');
+const send = (event, extra) => sock && sock.readyState === 1 && sock.send(JSON.stringify({ event, ...extra }));
+function show() {
+  const k = kind();
+  $('rowSide').classList.toggle('hide', !['score', 'player', 'loser'].includes(k));
+  $('rowMode').classList.toggle('hide', k !== 'score');
+  $('rowLayoutMode').classList.toggle('hide', k !== 'layout');
+  $('rowLayout').classList.toggle('hide', !(k === 'layout' && settings.mode === 'specific'));
+  $('rowHold').classList.toggle('hide', k !== 'reset');
+  $('rowScreen').classList.toggle('hide', k !== 'screen');
+  $('rowSound').classList.toggle('hide', k !== 'sound'); $('smode').value = settings.smode || 'toggle';
+  $('rowFKind').classList.toggle('hide', k !== 'fsplash'); $('fkind').value = settings.kind || 'fboard';
+  $('screen').innerHTML = screens.length ? screens.map(o => `<option value="${o.id}">${o.name}</option>`).join('') : `<option value="">${settings.screenName || 'No screens in the active layout'}</option>`;
+  if (settings.screen) $('screen').value = settings.screen;
+  $('rowBSide').classList.toggle('hide', k !== 'bracketside');
+  $('rowWho').classList.toggle('hide', k !== 'viewerresult');
+  const notes = {
+    score: 'On a Stream Deck + dial: turn to change the score, press to add 1.',
+    player: 'Opens a pop-up in BeeboScore to type a name or pick from your start.gg entrants and past players. Tab switches player.',
+    nextmatch: 'Loads the next match from your start.gg stream queue (or the next open match) with scores at 0–0.',
+    clear: 'Clears both players for the next set.',
+    vs: 'Shows or hides the VS intro. The key lights up while it is on stream.',
+    bracket: 'Shows or hides the full-screen bracket from start.gg. Once the event reaches Top 8 it shows the Top 8 splash instead (you can turn that off in BeeboScore).',
+    top8: 'Shows or hides the Top 8 splash. The key lights up while it is on stream.',
+    postlink: 'Posts the live bracket page link in Twitch chat, so viewers can follow the bracket and find their next match. Lights up purple when it can post: the live bracket page is on (Bracket tab › Share & export), BeeboScore is online, and Twitch is signed in.',
+    standings: 'Shows or hides the Top 8 standings splash — 1st to 8th place, with profile pictures or character art (Bracket tab › Share & export). It says STANDINGS once there are results, and lights up while it is on stream. BeeboScore also shows it by itself when a tournament ends.',
+    victory: 'Shows or hides the full-screen victory splash for the set winner. It lights up gold while it is on stream. BeeboScore can also show it by itself when a set ends (Settings › Scoreboard).',
+    bracketside: 'Big brackets show Winners and Losers on separate pages that take turns (set the timing in BeeboScore). This key jumps to a side right away and restarts the timer. If the bracket is not on stream, it brings it up on that side. The lit tab shows the side on stream.',
+    bracketrefresh: 'Fetches the latest matches and results from start.gg right now.',
+    overlay: 'Hides the whole overlay in OBS during downtime (it fades out). Press again to bring it back. Turns red while the overlay is hidden.',
+    sggreport: 'Sends the finished set to start.gg (the match must come from your start.gg event). Lights up when there is a result to send.',
+    latency: 'Shows how many viewers have your overlay open and how many milliseconds the last update took to reach the slowest one. Press it to send a test update.',
+    undo: 'Steps back one change, like Ctrl+Z in the app.',
+    viewernext: 'Twitch viewer matches: brings up the next viewer in the queue and plays the viewer VS splash. Shows who is next and how many are waiting.',
+    viewerresult: 'Twitch viewer matches: counts a game for you or the viewer. Tap +1, hold to take one back. Put one key for each side.',
+    viewerqueue: 'Twitch viewer matches: opens or closes the queue. While it is open, chat can type !join. Green = open.',
+    viewersplash: 'Twitch viewer matches: shows or hides the streamer vs viewer splash for the current match.',
+    autoscore: 'Autoscore (experimental): turns automatic scoring on or off. Dark red = off, green = watching a game. When it asks you to confirm a point, the key turns amber and pressing it adds the point.',
+    autoscoreundo: 'Autoscore (experimental): takes back the last point Autoscore added.',
+    autoscoreconfirm: 'Autoscore (experimental): in “Ask me first” mode, adds the point it found. Amber when there is one waiting.',
+    autoscoreresync: 'Autoscore (experimental): forgets what it saw and waits for the next 0–0 board. Use it after fixing the score by hand mid-game.',
+    viewersidebar: 'Twitch viewer matches: slides the “how to join” sidebar off screen or back on. Lit = on screen.',
+    fnext: 'Game formats: shows the battle score (2–1, 5 left…). Turns green when a set is won — press to confirm the result and load the next match.',
+    fundo: 'Game formats: takes back the last recorded result.',
+    fsplash: 'Game formats: shows or hides a format splash. Lit while on stream.',
+    screen: 'Shows or hides one of the active layout’s designer screens (Starting soon, BRB, Top 8, lower thirds…). Lit = on stream.',
+  };
+  $('note').textContent = notes[k] || '';
+  $('rowNote').classList.toggle('hide', !notes[k]);
+  $('side').value = String(settings.side || 1);
+  $('mode').value = k === 'score' ? (settings.mode || 'tapHold') : 'tapHold';
+  if (k === 'layout') $('lmode').value = settings.mode || 'next';
+  $('hold').checked = !!settings.hold;
+  $('bside').value = settings.bside || 'toggle';
+  $('who').value = settings.who === 'viewer' ? 'viewer' : 'streamer';
+  $('layout').innerHTML = layouts.map(o => `<option value="${o.name}">${(o.game ? o.game + ' — ' : '') + o.title}</option>`).join('');
+  if (settings.layout) $('layout').value = settings.layout;
+  $('address').value = globals.address || '';
+}
+function save(patch) { settings = { ...settings, ...patch }; send('setSettings', { context: uuid, payload: settings }); show(); }
+$('side').onchange = e => save({ side: Number(e.target.value) });
+$('mode').onchange = e => save({ mode: e.target.value });
+$('bside').onchange = e => save({ bside: e.target.value });
+$('who').onchange = e => save({ who: e.target.value });
+$('lmode').onchange = e => save({ mode: e.target.value, layout: settings.layout || (layouts[0] && layouts[0].name) });
+$('layout').onchange = e => save({ layout: e.target.value });
+$('fkind').onchange = e => save({ kind: e.target.value });
+$('smode').onchange = e => save({ smode: e.target.value });
+$('screen').onchange = e => { const o = screens.find(x => x.id === e.target.value); save({ screen: e.target.value, screenName: o ? o.name : '' }); };
+$('hold').onchange = e => save({ hold: e.target.checked });
+$('address').onchange = e => {
+  let v = e.target.value.trim(); if (v && !/^https?:\/\//.test(v)) v = 'http://' + v;
+  globals = { ...globals, address: v.replace(/\/+$/, '') }; send('setGlobalSettings', { context: uuid, payload: globals });
+  $('conn').textContent = 'Connecting…';
+};
+$('retry').onclick = () => { $('conn').textContent = 'Connecting…'; send('sendToPlugin', { action, context: uuid, payload: { refresh: true } }); };
+$('open').onclick = () => send('sendToPlugin', { action, context: uuid, payload: { openApp: true } });
+
+// Stream Deck calls this when the property inspector opens
+function connectElgatoStreamDeckSocket(port, inUUID, registerEvent, info, actionInfo) {
+  uuid = inUUID;
+  const ai = JSON.parse(actionInfo || '{}');
+  action = ai.action; settings = (ai.payload && ai.payload.settings) || {};
+  if (kind() === 'score' && !settings.side) settings.side = 1;
+  show();
+  sock = new WebSocket('ws://127.0.0.1:' + port);
+  sock.onopen = () => { send(registerEvent, { uuid }); send('getGlobalSettings', { context: uuid }); };
+  sock.onmessage = e => {
+    const m = JSON.parse(e.data);
+    if (m.event === 'didReceiveGlobalSettings') { globals = (m.payload && m.payload.settings) || {}; show(); }
+    else if (m.event === 'didReceiveSettings') { settings = (m.payload && m.payload.settings) || {}; show(); }
+    else if (m.event === 'sendToPropertyInspector') {
+      const d = m.payload || {};
+      layouts = d.layouts || layouts; screens = d.screens || screens;
+      if (kind() === 'screen' && !settings.screen && screens.length) save({ screen: screens[0].id, screenName: screens[0].name });
+      $('dot').classList.toggle('on', !!d.online);
+      $('conn').textContent = d.online ? `Connected · v${d.version || ''} · ${String(d.address || '').replace(/^https?:\/\//, '')}` : 'BeeboScore not found — is the app open?';
+      show();
+    }
+  };
+}
+</script>
+</body>
+</html>
