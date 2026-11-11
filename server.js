@@ -2567,7 +2567,7 @@ iframe.next{opacity:0;pointer-events:none}</style></head><body>
       if (p === '/api/info') {
         return ok(res, {
           version: APP_VERSION, testBuild: !!opts.testBuild, publisher: 'Beebo', port: actualPort, urls: local ? lanUrls() : [], local, lan: isLan(req), cloud: CLOUD, desktop: !!opts.desktop,
-          whatsNew: local && config.seenVersion !== APP_VERSION,
+          whatsNew: local && config.seenVersion !== APP_VERSION, whatsNewSince: local ? String(config.seenVersion || '') : '',      // since: the version whose notes were last closed on this PC ('' = before 1.1.4, which had no notes)
           overlaysDir: local ? OVERLAYS_DIR : '', activeOverlay: config.activeOverlay, games: GAMES,
         });
       }

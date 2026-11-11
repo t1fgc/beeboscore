@@ -1155,7 +1155,20 @@
   }
   async function loadUpdate() { try { upd = await api('/api/update'); renderUpdate(); } catch {} }
   $('#updCheck').onclick = async () => { try { upd = await api('/api/update', { method: 'POST', body: { action: 'check' } }); renderUpdate(); } catch (e) { toast(e.message, true); } };
-  const installNow = async () => { if (dirty && !confirm('You have unsent changes. Restart and update anyway?')) return; try { await api('/api/update', { method: 'POST', body: { action: 'install' } }); toast('Restarting to update…'); } catch (e) { toast(e.message, true); } };
+  // Restart & update: the window is about to close and stay closed while the new exe unpacks itself (its own starting screen takes over
+  // after a second or so). Say so first, so a closed window is not the only sign that anything is happening.
+  const installNow = async () => {
+    if (dirty && !confirm('You have unsent changes. Restart and update anyway?')) return;
+    if ($('#updOver')) return;
+    const v = upd.newVersion || '', o = document.createElement('div'); o.id = 'updOver'; o.setAttribute('role', 'alertdialog'); o.setAttribute('aria-live', 'assertive');
+    o.style.cssText = 'position:fixed;inset:0;z-index:95;display:grid;place-items:center;padding:24px;background:rgba(4,5,9,.9);text-align:center';
+    o.innerHTML = `<div style="max-width:460px"><div style="font-size:22px;font-weight:800;color:var(--text)">Installing BeeboScore ${esc(v)}</div>`
+      + `<p style="margin:12px 0 0;font-size:15px;line-height:1.5;color:var(--text)">This window will close and BeeboScore will open again by itself. It can take up to 20 seconds.</p>`
+      + `<p style="margin:10px 0 0;font-size:13px;line-height:1.5;color:var(--muted)">If it does not open again, start BeeboScore-${esc(v)}.exe from the folder your current exe is in.</p></div>`;
+    document.body.appendChild(o);
+    await new Promise(r => setTimeout(r, 1800));
+    try { await api('/api/update', { method: 'POST', body: { action: 'install' } }); } catch (e) { o.remove(); toast(e.message, true); }
+  };
   $('#updInstall').onclick = installNow;
   $('#updBannerBtn').onclick = installNow;
   $('#updBannerLater').onclick = () => { store('updDismissed', upd.newVersion || ''); renderUpdate(); };

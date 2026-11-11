@@ -16,7 +16,10 @@ function createUpdater(app, opts = {}) {
   }
   const { net, shell } = require('electron');
 
-  /** close this copy, then start the new exe (it has to wait: both use the same port and the same data folder) */
+  /** close this copy, then start the new exe (it has to wait: both use the same port and the same data folder).
+   *  The portable exe is a small launcher that unpacks the app into a temp folder, runs it, and deletes that folder when the
+   *  app closes. The new exe unpacks into the same folder, so it must not start until the old launcher has finished deleting:
+   *  the script waits for this app AND for its launcher (this process's parent), each for up to 30 seconds. */
   function launch(file) {
     const env = { ...process.env };
     for (const k of Object.keys(env)) if (/^PORTABLE_EXECUTABLE_/i.test(k)) delete env[k];   // the new exe works out its own folder
@@ -24,10 +27,11 @@ function createUpdater(app, opts = {}) {
     if (process.platform !== 'win32') return fallback();
     try {
       const q = s => "'" + String(s).replace(/'/g, "''") + "'";
-      const script = `Wait-Process -Id ${process.pid} -ErrorAction SilentlyContinue; Start-Sleep -Milliseconds 500; Start-Process -FilePath ${q(file)} -WorkingDirectory ${q(path.dirname(file))}`;
+      const stub = process.env.PORTABLE_EXECUTABLE_FILE && process.ppid > 4 ? `Wait-Process -Id ${process.ppid} -Timeout 30 -ErrorAction SilentlyContinue; ` : '';      // only when a launcher started this copy
+      const script = `Wait-Process -Id ${process.pid} -Timeout 30 -ErrorAction SilentlyContinue; ${stub}Start-Sleep -Milliseconds 500; Start-Process -FilePath ${q(file)} -WorkingDirectory ${q(path.dirname(file))}`;
       const child = spawn('powershell.exe', ['-NoProfile', '-NonInteractive', '-WindowStyle', 'Hidden', '-Command', script], { detached: true, stdio: 'ignore', windowsHide: true, env });
       child.once('error', fallback);
-      child.once('spawn', () => { child.unref(); setTimeout(() => app.quit(), 250); });
+      child.once('spawn', () => { child.unref(); setTimeout(() => app.quit(), 250); });      // (the control panel has already been showing "Installing…" for a moment: see installNow in public/panel.js)
     } catch { fallback(); }
   }
 

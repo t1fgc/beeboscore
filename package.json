@@ -1,7 +1,7 @@
 {
   "name": "beeboscore",
   "productName": "BeeboScore",
-  "version": "1.1.4",
+  "version": "1.1.5",
   "description": "Barebones fighting game scoreboard: matches, start.gg events, go online, 11 layouts and Stream Deck keys.",
   "author": {
     "name": "Beebo"
@@ -70,7 +70,8 @@
     },
     "portable": {
       "artifactName": "BeeboScore-${version}.${ext}",
-      "unpackDirName": "BeeboScore"
+      "unpackDirName": "BeeboScore",
+      "splashImage": "desktop/splash.bmp"
     },
     "extraResources": [
       {

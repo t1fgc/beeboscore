@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.1.5
+
+### Improved
+
+- **A starting screen.** A small "BeeboScore: starting up" picture shows while the portable exe unpacks itself, from the moment it is started until the app's window opens. After **Restart & update** it takes the place of several seconds with nothing on screen.
+- **Restart & update says what it is doing.** Before the window closes, the app shows "Installing BeeboScore x.y.z", says it will open again by itself, and says what to do if it does not.
+- **A safer hand-over.** The new exe is not started until the old copy and its launcher have both finished closing, so the old copy's clean-up can no longer overlap with the new copy unpacking.
+- **What's new** lists the notes of every version you skipped, not only the newest. The button in Settings shows them all.
+
 ## 1.1.4
 
 ### New

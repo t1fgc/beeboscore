@@ -48,6 +48,7 @@ The exe is not code-signed by the build. If you sign your releases, sign this fi
 | `streamdeck/` | The Stream Deck plugin (built by `npm run build:streamdeck`) |
 | `tools/make-lite-panel.py` | Builds `public/index.html` |
 | `tools/logo/vs-logo.html` | The logo's source |
+| `desktop/splash.bmp`, `tools/splash/splash.html` | The starting screen shown while the exe unpacks itself (`portable.splashImage` in `package.json`), and its source |
 
 ## Rebuilding the control panel page
 

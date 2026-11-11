@@ -3,11 +3,19 @@
  * A window that opens once, the first time the app runs after it has been updated, listing what changed in this version.
  * Closing it tells the app (POST /api/whatsnew/seen) so it stays closed; "What's new" in Settings opens it again.
  * It only opens on the PC running the app, and never on a first-ever start.
- * When the version goes up, add its notes to NOTES below (the newest first).
+ * When the version goes up, add its notes to NOTES below (the newest first). Someone who skipped versions is shown the
+ * notes of each one they skipped; the button in Settings shows them all.
  */
 (() => {
   'use strict';
   const NOTES = {
+    '1.1.5': [
+      ['Improved', [
+        ['A starting screen', 'A small "BeeboScore: starting up" picture now shows while the exe unpacks itself, so you can see it is on its way. It also shows after Restart & update, in place of several seconds with nothing on screen.'],
+        ['Restart & update says what it is doing', 'Before the window closes, the app now tells you it is installing the new version and that it will open again by itself.'],
+        ['A safer hand-over', 'The new version now waits until the old one has completely finished closing before it starts.'],
+      ]],
+    ],
     '1.1.4': [                                           // everything since 1.0.0 (1.1.0 to 1.1.3 were test builds)
       ['New', [
         ['Ten new layouts', 'The Layout menu now has 11 layouts. Ember is the original (it was called Shattered). The ten new ones are Frostbite, Venom, Royal, Crimson, Gold Rush, Sakura, Tidal, Voltage, Chrome and Pastel. Each has its own bar shape, lettering, effects and animations, and its own VS Splash and Victory Splash. They all sit in the same place over the game as Ember.'],
@@ -49,6 +57,8 @@
 .wn-head p { margin: 4px 0 0; font-size: 13px; color: var(--muted); }
 .wn-body { padding: 4px 24px 8px; overflow-y: auto; min-height: 0; }
 .wn-body h3 { margin: 18px 0 2px; font-size: 13px; font-weight: 700; color: var(--accent); letter-spacing: 0; text-transform: none; }
+.wn-body h4.wn-ver { margin: 20px 0 -8px; padding-top: 14px; border-top: 1px solid var(--line-2); font-size: 15px; font-weight: 700; color: var(--text); }
+.wn-body h4.wn-ver:first-child { margin-top: 8px; padding-top: 0; border-top: 0; }
 .wn-body ul { list-style: none; margin: 0; padding: 0; }
 .wn-body li { padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 13.5px; line-height: 1.5; color: var(--muted); }
 .wn-body li:last-child { border-bottom: 0; }
@@ -58,13 +68,18 @@
 `;
   document.head.appendChild(css);
 
+  const num = v => String(v).split('.').map(n => parseInt(n, 10) || 0), newer = (a, b) => { const x = num(a), y = num(b); for (let i = 0; i < 3; i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) > (y[i] || 0); return false; };
+  /** the notes to show: this version's, and those of every version after `since` that this PC skipped (newest first) */
+  const versionsSince = (version, since) => Object.keys(NOTES).filter(v => !newer(v, version) && (v === version || !since || newer(v, since))).sort((a, b) => (newer(a, b) ? -1 : 1));
+  const sections = v => NOTES[v].map(([title, list]) => `<h3>${esc(title)}</h3><ul>${list.map(([b, t]) => `<li><b>${esc(b)}</b>${esc(t)}</li>`).join('')}</ul>`).join('');
   let openNow = null;
-  function show(version) {
+  function show(version, since) {
     if (openNow || !NOTES[version]) return;
+    const vs = versionsSince(version, since == null ? version : since);
     const back = document.createElement('div'); back.className = 'wn-back';
     back.innerHTML = `<div class="wn" role="dialog" aria-modal="true" aria-labelledby="wnTitle">
   <div class="wn-head"><h2 id="wnTitle">What's new in BeeboScore ${esc(version)}</h2><p>Your settings, layouts and start.gg sign-in carried over.</p></div>
-  <div class="wn-body">${NOTES[version].map(([title, list]) => `<h3>${esc(title)}</h3><ul>${list.map(([b, t]) => `<li><b>${esc(b)}</b>${esc(t)}</li>`).join('')}</ul>`).join('')}</div>
+  <div class="wn-body">${vs.length > 1 ? vs.map(v => `<h4 class="wn-ver">Version ${esc(v)}</h4>${sections(v)}`).join('') : sections(version)}</div>
   <div class="wn-foot"><button class="btn primary" id="wnClose">Got it</button></div>
 </div>`;
     const before = document.activeElement;
@@ -83,8 +98,8 @@
   fetch('/api/info').then(r => r.json()).then(info => {
     if (!info || !info.local || !NOTES[info.version]) return;
     const btn = document.getElementById('wnOpen');         // Settings → What's new
-    if (btn) { btn.hidden = false; btn.addEventListener('click', () => show(info.version)); }
-    if (info.whatsNew) show(info.version);
+    if (btn) { btn.hidden = false; btn.addEventListener('click', () => show(info.version, '')); }      // from Settings: every version's notes
+    if (info.whatsNew) show(info.version, info.whatsNewSince || '');                                       // after an update: what this PC has not seen yet
   }).catch(() => {});
   window.BeeboWhatsNew = { show, notes: NOTES };
 })();
