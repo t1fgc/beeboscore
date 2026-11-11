@@ -1,0 +1,13 @@
+{
+  "title": "Gold Rush",
+  "game": "Any game",
+  "description": "Solid gold: ingot plates with stamped slab lettering and showers of coins, vault doors for the VS Splash and a jackpot Victory Splash.",
+  "colors": [
+    "#ffd75e",
+    "#b47a09",
+    "#1c1203"
+  ],
+  "version": 1,
+  "family": "Gold Rush",
+  "order": 6
+}

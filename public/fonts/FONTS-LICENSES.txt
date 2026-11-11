@@ -6,7 +6,8 @@ SIL Open Font License 1.1 (https://openfontlicense.org):
   Saira Condensed, Chakra Petch (see OFL-Saira.txt, OFL-ChakraPetch.txt),
   Sedgwick Ave Display, Rubik Wet Paint, Black Ops One, Metal Mania, Russo One, Bungee, Fredoka,
   Rubik Bubbles, Patrick Hand, Comfortaa, Sniglet, Bangers, Racing Sans One, Teko, Audiowide,
-  Shojumaru, Cinzel, Kaushan Script, Yuji Syuku.
+  Shojumaru, Cinzel, Kaushan Script, Yuji Syuku,
+  Michroma, Creepster, Alfa Slab One, Playfair Display, Righteous, Orbitron, Exo 2.
 
 Apache License 2.0 (https://www.apache.org/licenses/LICENSE-2.0):
   Permanent Marker, Chewy.

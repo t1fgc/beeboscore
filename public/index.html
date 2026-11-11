@@ -129,7 +129,18 @@ body.mk-open .proto { margin: 14px 26px; }
 <div class="row">
 <div class="field"><label class="l">Event name</label><input autocomplete="off" data-path="event" type="text"/></div>
 </div>
+</div><div class="card" id="vsCard">
+<h2>VS Splash <span class="spacer"></span><button class="btn sm ghost" id="vsRefresh" title="Fetch the latest pictures and bracket records from start.gg">↻ start.gg</button><button class="btn vs-toggle" id="vsToggle">Show VS Splash</button></h2>
+<p class="hint" style="margin:-4px 0 12px">Covers the scoreboard with a player-vs-player splash in the layout's style. Players loaded from start.gg get their profile picture and bracket record (wins – losses in this event) automatically. To give a player a character image instead, use Splash pictures on the start.gg tab.</p>
+<div class="vsgrid">
+<div class="vsp p1"><div class="vsava"><img alt="" id="vsAva1"/><b id="vsIni1">1</b></div>
+<div class="vsf"><div class="row" style="margin:0"><div class="field"><label class="l">Wins</label><input autocomplete="off" data-path="p1.wins" inputmode="numeric" placeholder="—" type="text"/></div><div class="field"><label class="l">Losses</label><input autocomplete="off" data-path="p1.losses" inputmode="numeric" placeholder="—" type="text"/></div></div>
+<div class="field" style="margin:0"><label class="l">Picture URL</label><input autocomplete="off" data-path="p1.avatar" placeholder="Filled in from start.gg" type="text"/></div></div></div>
+<div class="vsp p2"><div class="vsava"><img alt="" id="vsAva2"/><b id="vsIni2">2</b></div>
+<div class="vsf"><div class="row" style="margin:0"><div class="field"><label class="l">Wins</label><input autocomplete="off" data-path="p2.wins" inputmode="numeric" placeholder="—" type="text"/></div><div class="field"><label class="l">Losses</label><input autocomplete="off" data-path="p2.losses" inputmode="numeric" placeholder="—" type="text"/></div></div>
+<div class="field" style="margin:0"><label class="l">Picture URL</label><input autocomplete="off" data-path="p2.avatar" placeholder="Filled in from start.gg" type="text"/></div></div></div>
 </div>
+<div class="local-only" id="vaRoot"></div></div>
 </section>
 <!-- ===================== BRACKET ===================== -->
 <section class="tab" data-tab="bracket">
@@ -168,7 +179,7 @@ body.mk-open .proto { margin: 14px 26px; }
 <div class="field" style="margin:0"><label class="l">Players for autocomplete</label>
 <div class="inline" style="height:40px"><b id="sggCount">—</b><button class="btn sm" id="sggReimport">Refresh</button></div></div>
 </div>
-</div>
+</div><div class="card local-only" id="picCard"><div id="picRoot"></div></div>
 <div class="card" hidden="" id="sggMine">
 <h2>My tournaments <span class="spacer"></span><button class="btn sm ghost" id="sggMineRefresh" title="Load the list again">↻</button></h2>
 <p class="hint" style="margin:-4px 0 10px">Tournaments you run on start.gg. <b>Pull players</b> loads one as your tournament: its players fill the name autocomplete and its bracket feeds the splash.</p>
@@ -232,7 +243,7 @@ body.mk-open .proto { margin: 14px 26px; }
 <section class="tab local-only" data-tab="maker"><div id="mkRoot"></div></section><!-- ===================== SETTINGS (this build: updates & about) ===================== -->
 <section class="tab local-only" data-tab="settings"><div class="card local-only" id="updCard">
 <h2>Updates &amp; about</h2>
-<div class="about"><img alt="" src="/favicon.ico"/><div style="flex:1;min-width:0"><b style="font-size:16px">BeeboScore</b><div class="hint" id="aboutText" style="margin:2px 0 0">Developed by Beebo</div></div></div>
+<div class="about"><img alt="" src="/favicon.ico"/><div style="flex:1;min-width:0"><b style="font-size:16px">BeeboScore</b><div class="hint" id="aboutText" style="margin:2px 0 0">Developed by Beebo</div></div><button class="btn ghost" hidden="" id="wnOpen">What's new</button></div>
 <div class="hint" hidden="" id="updUnsupported" style="margin-top:12px">Checking for updates works in the desktop app, on the PC that runs it.</div>
 <div id="updBody" style="margin-top:14px">
 <div class="inline" style="gap:14px;flex-wrap:wrap">
@@ -691,17 +702,6 @@ body.mk-open .proto { margin: 14px 26px; }
 <h2>Screens <span class="spacer"></span><button class="btn sm ghost" id="scrDesign" title="Open this layout in the Layout Designer">🎨 Design</button></h2>
 <p class="hint" style="margin:-4px 0 12px">This layout's extra screens, made in the Layout Designer — Starting soon, Be right back, Top 8, lower thirds… Click one to put it on stream, click again to take it off.</p>
 <div class="scr-btns" id="scrBtns"></div>
-</div><div class="card" id="vsCard">
-<h2>VS intro <span class="spacer"></span><button class="btn sm ghost" id="vsRefresh" title="Fetch the latest pictures and bracket records from start.gg">↻ start.gg</button><button class="btn vs-toggle" id="vsToggle">Show VS intro</button></h2>
-<p class="hint" style="margin:-4px 0 12px">Covers the scoreboard with a player-vs-player splash animated in the current layout's style. Players loaded from start.gg get their profile picture and bracket record (wins – losses in this event) automatically.</p>
-<div class="vsgrid">
-<div class="vsp p1"><div class="vsava"><img alt="" id="vsAva1"/><b id="vsIni1">1</b></div>
-<div class="vsf"><div class="row" style="margin:0"><div class="field"><label class="l">Wins</label><input autocomplete="off" data-path="p1.wins" inputmode="numeric" placeholder="—" type="text"/></div><div class="field"><label class="l">Losses</label><input autocomplete="off" data-path="p1.losses" inputmode="numeric" placeholder="—" type="text"/></div></div>
-<div class="field" style="margin:0"><label class="l">Picture URL</label><input autocomplete="off" data-path="p1.avatar" placeholder="Filled in from start.gg" type="text"/></div></div></div>
-<div class="vsp p2"><div class="vsava"><img alt="" id="vsAva2"/><b id="vsIni2">2</b></div>
-<div class="vsf"><div class="row" style="margin:0"><div class="field"><label class="l">Wins</label><input autocomplete="off" data-path="p2.wins" inputmode="numeric" placeholder="—" type="text"/></div><div class="field"><label class="l">Losses</label><input autocomplete="off" data-path="p2.losses" inputmode="numeric" placeholder="—" type="text"/></div></div>
-<div class="field" style="margin:0"><label class="l">Picture URL</label><input autocomplete="off" data-path="p2.avatar" placeholder="Filled in from start.gg" type="text"/></div></div></div>
-</div>
 </div><details class="card more" id="customCard">
 <summary>Custom fields</summary>
 <div id="customRows"></div>
@@ -867,6 +867,6 @@ body.mk-open .proto { margin: 14px 26px; }
 <small id="pvSndTag">preview</small>
 </div><div class="picker"><label for="gamePick">Game</label><select id="gamePick" title="Pick the game — the scoreboard layout follows it"></select></div><div class="inline local-only" style="margin:0 0 12px;gap:8px;flex-wrap:wrap"><a class="btn sm ghost" href="/selftest?run" id="selfTest" rel="noopener" target="_blank">🩺 Run the self-test</a><button class="btn sm ghost" id="wizAgain">🧭 Run the first-time setup again</button></div></div><script src="/static/keys.js"></script>
 <script src="/static/panel.js"></script>
-<script src="/static/report-panel.js"></script><script src="/static/overlay-toggle.js"></script><script src="/static/maker-panel.js"></script><script src="/static/prototype-note.js"></script>
+<script src="/static/report-panel.js"></script><script src="/static/overlay-toggle.js"></script><script src="/static/maker-panel.js"></script><script src="/static/prototype-note.js"></script><script src="/static/pic-editor.js"></script><script src="/static/player-pics.js"></script><script src="/static/whats-new.js"></script><script src="/static/vs-art.js"></script>
 </body>
 </html>

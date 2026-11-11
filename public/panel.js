@@ -254,13 +254,13 @@
 
   // ------------------------------------------------------------ VS intro
   async function toggleVS(show) {
-    try { server = await api('/api/vs', { method: 'POST', body: { show: show === undefined ? 'toggle' : show } }); renderVS(); toast(server.vs && server.vs.show ? 'VS intro on stream' : 'VS intro hidden'); }
+    try { server = await api('/api/vs', { method: 'POST', body: { show: show === undefined ? 'toggle' : show } }); renderVS(); toast(server.vs && server.vs.show ? 'VS Splash on stream' : 'VS Splash hidden'); }
     catch (e) { toast(e.message, true); }
   }
   function renderVS() {
     const on = !!(server && server.vs && server.vs.show);
     $('#vsToggle').classList.toggle('on', on);
-    $('#vsToggle').textContent = on ? 'Hide VS intro' : 'Show VS intro';
+    $('#vsToggle').textContent = on ? 'Hide VS Splash' : 'Show VS Splash';
     if (!draft) return;
     for (const n of [1, 2]) {
       const p = draft['p' + n] || {}, img = $('#vsAva' + n), src = String(p.avatar || '');
@@ -1206,7 +1206,7 @@
   // viewer matches from a keyboard shortcut (the Twitch tab has the buttons)
   const viewerKey = b => api('/api/remote/action', { method: 'POST', body: b }).catch(e => toast(e.message, true));
   // shared with the Twitch Stuff tab (twitch-panel.js)
-  window.BeeboPanel = { saveSettings: (b, m) => saveSettings(b, m), store: (k, v) => store(k, v), api, toast, esc, copy: (t, m) => copy(t, m), info: () => info, autocomplete: (i, fn) => setupAutocomplete(i, fn), state: () => server, showTab: n => showTab(n), overlays: () => overlays, players: () => players };
+  window.BeeboPanel = { saveSettings: (b, m) => saveSettings(b, m), store: (k, v) => store(k, v), api, toast, esc, copy: (t, m) => copy(t, m), info: () => info, autocomplete: (i, fn) => setupAutocomplete(i, fn), state: () => server, showTab: n => showTab(n), overlays: () => overlays, players: () => players, active: () => active };
 
   // ------------------------------------------------------------ realtime
   function handle(msg) {

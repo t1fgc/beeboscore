@@ -303,5 +303,21 @@
       else { startPolling(); setTimeout(connect, 15000); }
     };
   }
+  // ---- previews in the app (?demo=bar | vs | victory, e.g. "Preview the VS Splash"): this layout with the names that are on the scoreboard
+  // now, playing a set piece instead of following the stream. Nothing here reaches the app or the real overlay.
+  function demo(kind) {
+    let n = 0;
+    const push = st => onState({ ...st, updatedAt: Date.now() + (++n) });
+    fetch('/api/live?o=' + encodeURIComponent(OVERLAY || ''), { cache: 'no-store' }).then(r => r.json()).catch(() => ({})).then(d => {
+      const b = JSON.parse(JSON.stringify((d && d.state) || {}));
+      const at = (a, c) => ({ ...b, bestOf: 5, hidden: false, screen: '', format: null, splash: { show: '' }, vs: { show: false }, victory: { show: false, side: 0, n: 0 }, p1: { ...b.p1, score: a }, p2: { ...b.p2, score: c } });
+      if (kind === 'vs') return push({ ...at(0, 0), vs: { show: true } });
+      if (kind === 'victory') return push({ ...at(3, 1), victory: { show: true, side: 1, n: 1 } });
+      const steps = [[1, 1, 1700], [2, 1, 2600], [3, 1, 3800]];           // a game is taken → match point → the set is won, on a loop
+      let i = 0; const next = () => { const [a, c, ms] = steps[i++ % steps.length]; push(at(a, c)); setTimeout(next, ms); };
+      next();
+    });
+  }
+  if (q.get('demo')) { demo(q.get('demo')); return; }
   connect();
 })();

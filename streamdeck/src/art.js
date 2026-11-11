@@ -61,7 +61,7 @@ const art = {
   vs({ on = false, offline = false } = {}) {
     return on
       ? frame(`<text x="72" y="92" ${FONT} font-size="74" font-weight="900" font-style="italic" fill="${INK}" text-anchor="middle">VS</text>` + label('ON AIR', 128, 16, INK, 3), { bg: BEE, dim: offline })
-      : frame(`<text x="72" y="92" ${FONT} font-size="74" font-weight="900" font-style="italic" fill="none" stroke="#fff" stroke-width="3" text-anchor="middle">VS</text>` + label('VS INTRO', 128, 15, 'rgba(255,255,255,.7)', 2), { dim: offline });
+      : frame(`<text x="72" y="92" ${FONT} font-size="74" font-weight="900" font-style="italic" fill="none" stroke="#fff" stroke-width="3" text-anchor="middle">VS</text>` + label('VS SPLASH', 128, 15, 'rgba(255,255,255,.7)', 2), { dim: offline });
   },
   player({ side = 1, name = '', offline = false } = {}) {
     const c = sideColor(side), n = short(name || 'Set name', 12);

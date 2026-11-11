@@ -3680,7 +3680,7 @@ var require_art = __commonJS({
       nextmatch: ({ offline, label: l } = {}) => frame(`<g transform="translate(6,-12) scale(.92)">${ICONS.next(BEE)}</g>` + label(l || "NEXT MATCH", 130, 15), { dim: offline }),
       clear: ({ offline } = {}) => frame(`<g transform="translate(14,2) scale(.8)">${ICONS.clear("#fff")}</g>` + label("NEXT SET", 130, 16), { accent: BEE, dim: offline }),
       vs({ on = false, offline = false } = {}) {
-        return on ? frame(`<text x="72" y="92" ${FONT} font-size="74" font-weight="900" font-style="italic" fill="${INK}" text-anchor="middle">VS</text>` + label("ON AIR", 128, 16, INK, 3), { bg: BEE, dim: offline }) : frame(`<text x="72" y="92" ${FONT} font-size="74" font-weight="900" font-style="italic" fill="none" stroke="#fff" stroke-width="3" text-anchor="middle">VS</text>` + label("VS INTRO", 128, 15, "rgba(255,255,255,.7)", 2), { dim: offline });
+        return on ? frame(`<text x="72" y="92" ${FONT} font-size="74" font-weight="900" font-style="italic" fill="${INK}" text-anchor="middle">VS</text>` + label("ON AIR", 128, 16, INK, 3), { bg: BEE, dim: offline }) : frame(`<text x="72" y="92" ${FONT} font-size="74" font-weight="900" font-style="italic" fill="none" stroke="#fff" stroke-width="3" text-anchor="middle">VS</text>` + label("VS SPLASH", 128, 15, "rgba(255,255,255,.7)", 2), { dim: offline });
       },
       player({ side = 1, name = "", offline = false } = {}) {
         const c = sideColor(side), n = short(name || "Set name", 12);
@@ -3894,7 +3894,7 @@ var INFO = (() => {
     return {};
   }
 })();
-var VERSIONS = { plugin: INFO.plugin && INFO.plugin.version || (true ? "1.0.0.0" : ""), app: INFO.application && INFO.application.version || "" };
+var VERSIONS = { plugin: INFO.plugin && INFO.plugin.version || (true ? "1.1.0.0" : ""), app: INFO.application && INFO.application.version || "" };
 var CANDIDATES = ["http://127.0.0.1:3300", "http://127.0.0.1:3301", "http://127.0.0.1:3302"];
 var ws = null;
 var globals = { address: "" };

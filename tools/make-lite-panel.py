@@ -6,7 +6,7 @@ Everything else is moved into a hidden #liteAttic so the shared panel code still
 
   python tools/make-lite-panel.py <the full app's public/index.html> public/index.html
 Running it on a panel it already built (public/index.html itself) is fine too: the stripping is skipped and only
-the steps that are still missing (Layout picker, Overlay maker, Settings, prototype notice, wording) are applied."""
+the steps that are still missing (Layout picker, Overlay maker, Settings, prototype notice, VS Splash card, Splash pictures, wording) are applied."""
 import re, sys
 from bs4 import BeautifulSoup
 src, out = sys.argv[1], sys.argv[2]
@@ -79,6 +79,54 @@ def proto_note():
     else: soup.head.append(BeautifulSoup('<style id="liteStyle">' + PROTO_CSS + '</style>', 'html.parser'))
     if not soup.select_one('#protoNote'): soup.select_one('main').insert(0, BeautifulSoup(PROTO_HTML, 'html.parser'))
     if not soup.select_one('script[src="/static/prototype-note.js"]'): soup.select('script[src]')[-1].insert_after(BeautifulSoup('<script src="/static/prototype-note.js"></script>', 'html.parser'))
+
+def vs_card():
+    """Matches tab: the VS Splash card (its button, each player's record and profile picture link) comes back out of the
+    attic and goes last on the tab. This build calls it the VS Splash everywhere."""
+    card = soup.select_one('#vsCard')
+    if not card.find_parent(id='liteAttic'): return
+    soup.select('main > section.tab[data-tab="match"] > .card')[-1].insert_after(card.extract())
+    h2 = card.find('h2'); h2.contents[0].replace_with('VS Splash ')
+    card.select_one('#vsToggle').string = 'Show VS Splash'
+    card.select_one('p.hint').string = ("Covers the scoreboard with a player-vs-player splash in the layout's style. Players loaded from start.gg get their "
+                                        "profile picture and bracket record (wins – losses in this event) automatically. To give a player a character image "
+                                        "instead, use Splash pictures on the start.gg tab.")
+
+def pics_card():
+    """start.gg tab: Splash pictures — per player, the start.gg profile picture or an uploaded character image for the
+    VS Splash and Victory Splash. public/player-pics.js builds the card into #picRoot. Only on the PC running the app."""
+    if soup.select_one('#picRoot'): return
+    soup.select_one('#sggEventRow').find_parent('div', class_='card').insert_after(BeautifulSoup('<div class="card local-only" id="picCard"><div id="picRoot"></div></div>', 'html.parser'))
+    soup.select('script[src]')[-1].insert_after(BeautifulSoup('<script src="/static/player-pics.js"></script>', 'html.parser'))
+
+def pic_editor():
+    """The picture window (crop, remove a green screen) that opens when a character image is chosen: public/pic-editor.js,
+    loaded before the Splash pictures card that uses it."""
+    if soup.select_one('script[src="/static/pic-editor.js"]'): return
+    soup.select_one('script[src="/static/player-pics.js"]').insert_before(BeautifulSoup('<script src="/static/pic-editor.js"></script>', 'html.parser'))
+
+def no_colours():
+    """1.1.0 – 1.1.2 had a "Colours" button beside the Layout menu (colour palettes for one layout). Each palette became a
+    layout of its own in 1.1.3, so the button and its two scripts go."""
+    for el in soup.select('#palBtn, script[src="/static/palettes.js"], script[src="/static/palette-panel.js"]'): el.decompose()
+
+def vs_art():
+    """Matches tab, VS Splash card: your own pictures for the VS Splash (a name bar and a header) and the lettering colours
+    that go with a custom name bar. public/vs-art.js builds it into #vaRoot. Only on the PC running the app."""
+    if not soup.select_one('#vaRoot'):
+        soup.select_one('#vsCard').append(BeautifulSoup('<div class="local-only" id="vaRoot"></div>', 'html.parser'))
+    if not soup.select_one('script[src="/static/vs-art.js"]'):
+        soup.select('script[src]')[-1].insert_after(BeautifulSoup('<script src="/static/vs-art.js"></script>', 'html.parser'))
+
+def whats_new():
+    """What's new: a window that opens once after an update (public/whats-new.js), and a button for it in Settings, beside
+    the app's name (that part of the card shows wherever the app runs; public/whats-new.js unhides the button)."""
+    about = soup.select_one('#updCard .about')
+    if not soup.select_one('#wnOpen'): about.append(BeautifulSoup('<button class="btn ghost" hidden id="wnOpen">What\'s new</button>', 'html.parser'))
+    btn = soup.select_one('#wnOpen')
+    if btn.parent is not about: about.append(btn.extract())
+    if not soup.select_one('script[src="/static/whats-new.js"]'):
+        soup.select('script[src]')[-1].insert_after(BeautifulSoup('<script src="/static/whats-new.js"></script>', 'html.parser'))
 
 def settings_tab():
     """Settings: in this build it's one card — the app's version and "Check for updates". The card comes back out of the
@@ -158,6 +206,12 @@ layout_picker()
 maker_tab()
 settings_tab()
 proto_note()
+vs_card()
+pics_card()
+pic_editor()
+whats_new()
+no_colours()
+vs_art()
 html = str(soup).replace('>Bracket</a> tab', '>start.gg</a> tab')
 for pattern, new in SCRUB: html = re.sub(pattern, new, html)
 open(out, 'w').write(html)

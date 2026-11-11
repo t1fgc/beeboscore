@@ -10,7 +10,7 @@
   };
   const LABELS = {
     p1Up: 'Player 1 score +', p1Down: 'Player 1 score −', p2Up: 'Player 2 score +', p2Down: 'Player 2 score −',
-    update: 'Update (send to stream)', swap: 'Swap sides', undo: 'Undo', resetScores: 'Reset scores to 0–0', vsToggle: 'Show / hide VS intro',
+    update: 'Update (send to stream)', swap: 'Swap sides', undo: 'Undo', resetScores: 'Reset scores to 0–0', vsToggle: 'Show / hide VS Splash',
     bracketToggle: 'Show / hide bracket splash', top8Toggle: 'Show / hide Top 8 splash', bracketRefresh: 'Refresh the bracket from start.gg', bracketSide: 'Bracket: switch Winners / Losers side', victoryToggle: 'Show / hide the victory splash',
     viewerNext: 'Viewer matches: next viewer', viewerWin: 'Viewer matches: I won a game', viewerLose: 'Viewer matches: the viewer won a game',
     viewerQueue: 'Viewer matches: open / close the queue', viewerSplash: 'Viewer matches: show / hide the VS splash', viewerSidebar: 'Viewer matches: show / hide the sidebar',

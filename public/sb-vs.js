@@ -43,6 +43,14 @@
 #sb-vs .vs-art img{position:absolute;bottom:0;height:100%;width:auto;max-width:none;display:none}
 #sb-vs .vs-s1 .vs-art img{left:0}#sb-vs .vs-s2 .vs-art img{right:0}
 #sb-vs .vs-art.vs-has-art img{display:block}#sb-vs .vs-art.vs-has-art .vs-ghost{display:none}
+/* a player set to "character image": the picture is centred in the player's half, and the small profile frame steps aside for it */
+#sb-vs .vs-side[data-pic="art"] .vs-art img{left:50%;right:auto;transform:translateX(-50%)}
+#sb-vs .vs-side[data-pic="art"] .vs-art.vs-has-art~.vs-ava{display:none}
+/* …and with the frame gone, that player's team, name and record sit in the middle of their name plate */
+#sb-vs .vs-side[data-pic="art"] .vs-art.vs-has-art~.vs-info{align-items:center;text-align:center}
+#sb-vs.vs-st-shattered .vs-side[data-pic="art"] .vs-art.vs-has-art~.vs-info{grid-template-columns:1fr;grid-template-areas:"team" "name" "sub" "rec";justify-items:center;padding:0 0 10px 0}
+#sb-vs.vs-st-shattered .vs-side[data-pic="art"] .vs-art.vs-has-art~.vs-info .vs-name,#sb-vs.vs-st-shattered .vs-side[data-pic="art"] .vs-art.vs-has-art~.vs-info .vs-rec,#sb-vs.vs-st-shattered .vs-side[data-pic="art"] .vs-art.vs-has-art~.vs-info .vs-sub{justify-self:center}
+#sb-vs.vs-st-shattered .vs-s1[data-pic="art"] .vs-art.vs-has-art~.vs-info{padding-left:20px}#sb-vs.vs-st-shattered .vs-s2[data-pic="art"] .vs-art.vs-has-art~.vs-info{padding-right:20px}
 #sb-vs .vs-ghost{position:absolute;top:70px;white-space:nowrap;font:700 300px/1 var(--fn);text-transform:uppercase;color:var(--ink);opacity:.07;letter-spacing:-4px}
 #sb-vs .vs-s1 .vs-ghost{left:50px}#sb-vs .vs-s2 .vs-ghost{right:50px}
 #sb-vs .vs-s1 .vs-face{background:linear-gradient(90deg,color-mix(in srgb,var(--c1) 85%,#000),color-mix(in srgb,var(--c1) 45%,#000))}
@@ -219,7 +227,7 @@
 #sb-vs.vs-st-shattered .vs-plate::before{content:'';position:absolute;top:0;bottom:0;left:0;width:420px;transform:translateX(-440px);will-change:transform;
   background:linear-gradient(105deg,transparent 25%,rgba(255,255,255,.08) 50%,transparent 75%)}
 #sb-vs.vs-st-shattered .vs-plate::after{content:'';position:absolute;left:0;top:0;width:220px;height:3px;background:linear-gradient(90deg,transparent,#ffb36b,#fff3e2,#ffb36b,transparent);box-shadow:0 0 14px #ff5a1f;transform:translateX(-240px);will-change:transform}
-#sb-vs.vs-st-shattered .vs-plate i{position:absolute;top:14px;font:700 15px var(--fu);letter-spacing:3px;color:var(--ac)}
+#sb-vs.vs-st-shattered .vs-plate i{position:absolute;top:13px;font:700 17px var(--fu);letter-spacing:3px;color:var(--ac)}
 #sb-vs.vs-st-shattered .vs-s1 .vs-plate i{right:70px}#sb-vs.vs-st-shattered .vs-s2 .vs-plate i{left:70px}
 /* avatar: a shard of glass with a molten rim */
 #sb-vs.vs-st-shattered .vs-ava{width:272px;height:272px;border-radius:0;box-shadow:none;background:linear-gradient(160deg,#ffd0a0,#ff5a1f 45%,#a3180a);
@@ -229,11 +237,12 @@
 #sb-vs.vs-st-shattered .vs-s2 .vs-ava{clip-path:polygon(0 6%,86% 0,100% 88%,10% 100%)}
 #sb-vs.vs-st-shattered .vs-s2 .vs-ava img,#sb-vs.vs-st-shattered .vs-s2 .vs-ava .vs-ini{clip-path:polygon(0 6%,86% 0,100% 88%,10% 100%)}
 /* text */
-#sb-vs.vs-st-shattered .vs-info{display:grid;grid-template-columns:auto 1fr;grid-template-areas:"team team" "name name" "sub rec";gap:2px 22px;padding:0 0 18px 30px;align-items:center}
+#sb-vs.vs-st-shattered .vs-info{display:grid;grid-template-columns:auto 1fr;grid-template-areas:"team team" "name name" "sub rec";gap:2px 22px;padding:0 0 18px 30px;align-items:center;
+  min-height:180px;align-content:center}   /* as tall as the name plate, so a name on its own sits in the middle of the plate, not on its floor */
 #sb-vs.vs-st-shattered .vs-s2 .vs-info{grid-template-columns:1fr auto;grid-template-areas:"team team" "name name" "rec sub";padding:0 30px 18px 0;justify-items:end}
 #sb-vs.vs-st-shattered .vs-s2 .vs-name{justify-self:end}
-#sb-vs.vs-st-shattered .vs-team{grid-area:team;font:800 32px var(--fn);letter-spacing:2px;color:var(--ac)}
-#sb-vs.vs-st-shattered .vs-name{grid-area:name;justify-self:start;font:italic 800 112px/1.02 var(--fn);letter-spacing:1px;text-transform:uppercase;padding-right:8px;text-shadow:none;max-width:100%;overflow:visible;
+#sb-vs.vs-st-shattered .vs-team{grid-area:team;font:800 32px/1 var(--fn);letter-spacing:2px;color:var(--ac)}   /* line-height 1: with a team, a name and a record the stack still starts inside the plate */
+#sb-vs.vs-st-shattered .vs-name{grid-area:name;justify-self:start;font:italic 800 112px/1.02 var(--fn);letter-spacing:1px;text-transform:uppercase;padding-right:.17em;margin-right:-.17em;text-shadow:none;max-width:calc(100% + .17em);overflow:visible;
   background:linear-gradient(180deg,#fff 0%,#e9ebf0 40%,#8f939d 52%,#d9dce3 76%,#fff 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 4px 0 rgba(0,0,0,.75))}
 #sb-vs.vs-st-shattered .vs-sub{grid-area:sub;font:600 20px var(--fu);letter-spacing:4px;color:var(--sub)}
 #sb-vs.vs-st-shattered .vs-flag{width:44px;height:29px;border-radius:2px;box-shadow:0 0 0 1px rgba(255,255,255,.2)}
@@ -246,7 +255,7 @@
 #sb-vs.vs-st-shattered .vs-rec .vs-w .vs-n{color:#fff}#sb-vs.vs-st-shattered .vs-rec .vs-l .vs-n{color:#ffb36b}
 #sb-vs.vs-st-shattered .vs-rec i{font-size:15px;letter-spacing:2px;color:var(--ac);opacity:1}
 #sb-vs.vs-st-shattered .vs-rec .vs-sep{display:none}
-#sb-vs.vs-st-shattered .vs-rec small{font:600 13px var(--fu);letter-spacing:3px;color:var(--sub);max-width:90px;line-height:1.1}
+#sb-vs.vs-st-shattered .vs-rec small{font:600 15px var(--fu);letter-spacing:2.5px;color:#b9bdc8;max-width:104px;line-height:1.1}
 /* the fault line + cracks around the VS */
 #sb-vs .vs-sh-svg{display:none}
 #sb-vs.vs-st-shattered .vs-sh-svg{display:block;position:absolute;inset:0;width:1920px;height:1080px;z-index:2;overflow:visible;pointer-events:none}
@@ -625,6 +634,32 @@
   root.innerHTML = `<div class="vs-stage"><div class="vs-bg"></div>${side(1)}${side(2)}<svg class="vs-sh-svg" viewBox="0 0 1920 1080"></svg><div class="vs-sh-hot"><svg class="vs-sh-svg" viewBox="560 290 800 500"></svg></div>`
     + `<div class="vs-mid"><div class="vs-sh-ball"></div><div class="vs-mark"><i class="vs-g1" aria-hidden="true">VS</i><i class="vs-g2" aria-hidden="true">VS</i><span>VS</span></div><div class="vs-round"></div></div><div class="vs-cut"></div></div>`
     + `<div class="vs-sh-embers"></div><canvas class="vs-sh-cv" width="1920" height="1080"></canvas><div class="vs-fx"></div><div class="vs-flash"></div>`;
+  // ---- custom VS Splash pictures (Matches tab → VS Splash): a picture as the name bar (920 × 250) and a header across
+  // the top (1920 × 200), with lettering colours that suit the name bar (state.vsArt). They are kept in data attributes:
+  // the root's class list is rewritten every time the splash shows or hides.
+  const hdr = document.createElement('img'); hdr.className = 'vs-hdr'; hdr.alt = ''; root.appendChild(hdr);
+  const artCss = document.createElement('style');
+  artCss.textContent = `
+#sb-vs .vs-hdr{position:absolute;left:0;top:0;width:1920px;height:200px;object-fit:cover;display:none;z-index:2}
+#sb-vs[data-hdr] .vs-hdr{display:block}
+#sb-vs[data-hdr].vs-st-shattered .vs-round{top:-322px}#sb-vs[data-hdr].vs-st-oni .vs-round{top:-316px}
+#sb-vs[data-bar] .vs-plate{display:block!important;position:absolute;bottom:92px;width:920px;height:250px;z-index:-1;overflow:hidden;clip-path:none!important;box-shadow:none!important;background:var(--vs-bar) center/cover no-repeat!important}
+#sb-vs[data-bar] .vs-s1 .vs-plate{left:30px!important}#sb-vs[data-bar] .vs-s2 .vs-plate{right:30px!important}
+#sb-vs[data-bar][data-mirror] .vs-s2 .vs-plate{scale:-1 1}
+#sb-vs[data-bar] .vs-plate::before,#sb-vs[data-bar] .vs-plate::after,#sb-vs[data-bar] .vs-plate i{display:none!important}
+#sb-vs[data-bar][data-scrim] .vs-plate::before{display:block!important;content:'';position:absolute;left:1%;top:3%;width:98%;height:94%;transform:none!important;animation:none!important;background:radial-gradient(ellipse 50% 50% at center,var(--vs-scrim) 0,var(--vs-scrim) 62%,transparent 100%)!important;box-shadow:none!important}
+#sb-vs[data-bar] .vs-name{background:none!important;-webkit-text-fill-color:var(--vs-ink)!important;color:var(--vs-ink)!important;filter:none!important;text-shadow:var(--vs-edge)!important}
+#sb-vs[data-bar] .vs-team,#sb-vs[data-bar] .vs-sub,#sb-vs[data-bar] .vs-rec i{color:var(--vs-accent)!important;text-shadow:var(--vs-edge)!important}
+#sb-vs[data-bar] .vs-rec .vs-n,#sb-vs[data-bar] .vs-rec small{color:var(--vs-ink)!important;text-shadow:none!important}
+#sb-vs[data-bar] .vs-rec .vs-w,#sb-vs[data-bar] .vs-rec .vs-l{background:var(--vs-chip)!important;clip-path:none!important;box-shadow:none!important;border-radius:6px}`;
+  document.head.appendChild(artCss);
+  function customArt(a) {
+    a = a || {};
+    const flag = (k, on) => { if (on) root.dataset[k] = '1'; else delete root.dataset[k]; };
+    flag('bar', a.bar); flag('mirror', a.bar && a.mirror !== false); flag('scrim', a.bar && a.scrim); flag('hdr', a.header);
+    for (const [k, v] of [['--vs-bar', a.bar ? `url("${String(a.bar).replace(/["\\]/g, '')}")` : ''], ['--vs-ink', a.ink], ['--vs-accent', a.accent], ['--vs-edge', a.edge], ['--vs-scrim', a.scrimColor], ['--vs-chip', a.chip]]) { if (a.bar && v) root.style.setProperty(k, v); else root.style.removeProperty(k); }
+    if (a.header) { if (hdr.getAttribute('src') !== a.header) hdr.src = a.header; } else hdr.removeAttribute('src');
+  }
   const mount = () => document.body.appendChild(root);
   document.body ? mount() : addEventListener('DOMContentLoaded', mount);
   const $ = (sel, el = root) => el.querySelector(sel);
@@ -865,12 +900,13 @@
     for (const n of [1, 2]) {
       const el = $('.vs-s' + n), nm = $('.vs-name', el), gh = $('.vs-ghost', el);
       if (nm.dataset.txt != null) nm.textContent = nm.dataset.txt;   // measure the real name, not a decoding scramble
-      fit(nm, $('.vs-info', el).clientWidth - 60);
+      fit(nm, $('.vs-info', el).clientWidth - 60, .3);          // a very long name gets smaller rather than cut off
       if (gh.dataset.fitFor !== gh.textContent) { gh.dataset.fitFor = gh.textContent; fit(gh, GHOST_MAX, .15); }
     }
     if (style === 'oni' || style === 'shattered') {        // matching name sizes, like a title card
-      const a = $('.vs-s1 .vs-name'), b = $('.vs-s2 .vs-name'), m = Math.min(parseFloat(getComputedStyle(a).fontSize), parseFloat(getComputedStyle(b).fontSize));
-      a.style.fontSize = b.style.fontSize = m + 'px';
+      // …but only as far as it still looks right: next to a very long name, a short one stays big (at least 72% of its own size)
+      const a = $('.vs-s1 .vs-name'), b = $('.vs-s2 .vs-name'), fa = parseFloat(getComputedStyle(a).fontSize), fb = parseFloat(getComputedStyle(b).fontSize), m = Math.min(fa, fb);
+      a.style.fontSize = Math.max(m, fa * .72) + 'px'; b.style.fontSize = Math.max(m, fb * .72) + 'px';
     }
   }
   function fit(el, max, min = .45) {
@@ -888,7 +924,8 @@
       $('.vs-name', el).dataset.txt = $('.vs-name', el).textContent;
       $('.vs-ghost', el).textContent = p.name || ('Player ' + n);
       const art = $('.vs-art', el), artImg = $('.vs-art img', el), artSrc = String(p.splashArt || p.characterArt || '');
-      if (artImg.dataset.src !== artSrc) {            // full character splash art (a future patch fills this in)
+      el.dataset.pic = p.pic === 'art' && artSrc ? 'art' : '';                 // 'art': an uploaded character image instead of the profile picture
+      if (artImg.dataset.src !== artSrc) {            // full character splash art
         artImg.dataset.src = artSrc; art.classList.remove('vs-has-art');
         if (artSrc) { artImg.onload = () => art.classList.add('vs-has-art'); artImg.onerror = () => art.classList.remove('vs-has-art'); artImg.src = artSrc; }
         else artImg.removeAttribute('src');
@@ -966,6 +1003,7 @@
   let first = true;
   addEventListener('scoreboard', e => {
     const s = e.detail || {};
+    customArt(s.vsArt);
     fill(s);
     // a game format draws its own VS for every match (sb-format.js) — this one steps aside
     const want = !!(s.vs && s.vs.show) && !(typeof window.__SB_FORMAT_VS === 'function' && window.__SB_FORMAT_VS(s));

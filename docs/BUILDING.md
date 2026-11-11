@@ -35,7 +35,16 @@ The exe is not code-signed by the build. If you sign your releases, sign this fi
 | `server.js`, `lib/` | The local server: state, layouts, start.gg, Go online, Stream Deck |
 | `public/` | The control panel and the scripts overlays load |
 | `public/maker-panel.js`, `public/maker-overlay.html` | The Overlay maker and the animated template its layouts use |
-| `overlays/shattered/` | The built-in layout |
+| `public/player-pics.js` | Splash pictures: profile picture or uploaded character image, per player |
+| `public/pic-editor.js` | The window that opens on a chosen character image: crop, and remove a green-screen background |
+| `public/whats-new.js` | The "What's new" window shown once after an update, and its notes for each version |
+| `public/sb-vs.js`, `public/sb-victory.js` | The VS Splash and Victory Splash that every layout loads |
+| `public/vs-art.js` | Your own VS Splash pictures (name bar, header) and the lettering colours matched to a name bar |
+| `public/el/elemental.js` | What the ten elemental layouts share: the page, name fitting, particles, VS Splash and Victory Splash |
+| `public/el/themes.js`, `themes-2.js`, `themes-3.js` | What each of the ten is made of: shapes, lettering, colours, effects, animations |
+| `overlays/shattered/` | Ember, the original layout (the folder keeps its first name) |
+| `overlays/frostbite/` … `overlays/pastel/` | The ten elemental layouts: each page only names its theme |
+| `tools/make-elemental-layouts.js` | Writes those ten folders |
 | `streamdeck/` | The Stream Deck plugin (built by `npm run build:streamdeck`) |
 | `tools/make-lite-panel.py` | Builds `public/index.html` |
 | `tools/logo/vs-logo.html` | The logo's source |
@@ -65,4 +74,4 @@ If the Stream Deck icons change, raise `Version` in `streamdeck/manifest.templat
 
 - App: `version` in `package.json` (and `package-lock.json` — `npm version 1.1.0 --no-git-tag-version` sets both).
 - Stream Deck plugin: `Version` in `streamdeck/manifest.template.json`. Raise it whenever the plugin changes.
-- Built-in layout: `version` in `overlays/shattered/overlay.json`. Raise it whenever its `index.html` changes, so copies people haven't edited are upgraded.
+- Built-in layouts: `version` in each `overlays/<name>/overlay.json` (for the ten elemental layouts, `VERSION` in `tools/make-elemental-layouts.js`). Raise it whenever the layout's `index.html` changes, so copies people haven't edited are upgraded. Changes to `public/el/*.js` need no version: those files are served by the app.

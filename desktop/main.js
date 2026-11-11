@@ -1,6 +1,6 @@
 'use strict';
 /*
- * BeeboScore, developed by Beebo — the barebones scoreboard: Matches, start.gg, Go online, the Shattered layout,
+ * BeeboScore, developed by Beebo — the barebones scoreboard: Matches, start.gg, Go online, 11 layouts,
  * the Overlay maker and Stream Deck keys. Portable: keeps its data next to the exe, uses its own port (3300),
  * and only looks for an update when you ask it to (Settings › Check for updates).
  */

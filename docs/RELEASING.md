@@ -28,13 +28,15 @@ If the repository already has files in it, clone it first and copy this project'
 ## Each release
 
 1. Set the new version: `npm version 1.1.0 --no-git-tag-version`
-2. Add a section to `CHANGELOG.md`, and a `docs/release-notes/1.1.0.md` (copy the last one).
+2. Add a section to `CHANGELOG.md`, a `docs/release-notes/1.1.0.md` (copy the last one), and the version's notes to `NOTES` in `public/whats-new.js`. Those notes are the "What's new" window people see the first time the new version starts.
 3. Commit, then tag and push:
+
    ```bash
    git commit -am "BeeboScore 1.1.0"
    git tag v1.1.0
    git push origin main --tags
    ```
+
 4. Get the exe, one of two ways:
    - **GitHub builds it.** Pushing the tag starts the *Build release draft* workflow (`.github/workflows/release.yml`). When it finishes there is a **draft** release with `BeeboScore-1.1.0.exe` attached and the release notes filled in.
    - **You build it.** Run `npm run dist` and create the release yourself on the Releases page, attaching `dist/BeeboScore-1.1.0.exe`.
@@ -50,6 +52,7 @@ If it says "No releases have been published yet", check the three points at the 
 
 ## Notes
 
+- A layout that comes with the app has to be listed in `.gitignore`: `/overlays/*` is ignored (that is where layouts you make while running from source go), with an exception line for each built-in folder. A new built-in layout that is not listed there never reaches GitHub, and the exe GitHub builds would be missing it.
 - The update check uses GitHub's public API without signing in, which allows about 60 checks an hour from one internet address. That is far more than the button needs.
 - The app never shows the repository's address. It is set in one place: `RELEASES` in `lib/portable-update.js`. Change it there if the repository ever moves.
 - The download is checked against the size and SHA-256 that GitHub publishes for the file, so replace a file by deleting it from the release and uploading the new one — don't edit a published release's exe after people have started updating.

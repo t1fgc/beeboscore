@@ -44,13 +44,28 @@
 #sb-victory .vc-ava img{display:none}#sb-victory .vc-ava.vc-has-img img{display:block}#sb-victory .vc-ava.vc-has-img .vc-ini{display:none}
 #sb-victory .vc-ava .vc-ini{display:grid;place-items:center;font:italic 800 150px/1 var(--fn)}
 #sb-victory .vc-info{min-width:0;display:flex;flex-direction:column;gap:4px}
+/* the winner's character image (a player set to "character image" instead of their profile picture): a tall panel on the
+   left, with the title, name and score moved into the right-hand part of the screen and the small frame hidden */
+#sb-victory .vc-pic{position:absolute;left:40px;bottom:0;width:860px;height:1010px;display:none}
+#sb-victory .vc-pic img{position:absolute;left:50%;bottom:0;height:100%;width:auto;max-width:none;transform:translateX(-50%);
+  -webkit-mask:linear-gradient(0deg,transparent 0,#000 22%);mask:linear-gradient(0deg,transparent 0,#000 22%);filter:drop-shadow(0 0 34px rgba(246,196,83,.32))}
+#sb-victory[data-pic="art"] .vc-pic{display:block}
+#sb-victory[data-pic="art"] .vc-ava{display:none}
+#sb-victory[data-pic="art"] .vc-card{left:1390px;max-width:940px}
+#sb-victory[data-pic="art"] .vc-round{left:1390px}
+#sb-victory[data-pic="art"] .vc-title{left:880px;right:20px}
+#sb-victory[data-pic="art"].vc-in .vc-pic{animation:vc-pic-in .7s .45s cubic-bezier(.2,.9,.3,1) both}
+@keyframes vc-pic-in{from{opacity:0;transform:translateX(-90px)}to{opacity:1;transform:none}}
 #sb-victory .vc-team{font:800 34px var(--fn);letter-spacing:3px;text-transform:uppercase}
 #sb-victory .vc-team:empty{display:none}
 #sb-victory .vc-name,#sb-victory .vc-n2{font:italic 800 150px/1.02 var(--fn);text-transform:uppercase;white-space:nowrap;letter-spacing:1px;padding-right:10px}
 #sb-victory .vc-line{display:flex;align-items:center;gap:26px;margin-top:6px;font:600 26px var(--fu);letter-spacing:3px;text-transform:uppercase}
 #sb-victory .vc-score{display:flex;align-items:baseline;gap:14px;padding:6px 22px 4px;font:800 54px/1 var(--fn)}
 #sb-victory .vc-score i{font-style:normal;opacity:.6}
-#sb-victory .vc-def em{font-style:normal;font-weight:700}
+#sb-victory .vc-def em{font-style:normal;font-weight:700;display:inline-block;max-width:640px;overflow:hidden;text-overflow:ellipsis;vertical-align:bottom}
+#sb-victory .vc-line,#sb-victory .vc-def{white-space:nowrap}
+#sb-victory .vc-round{max-width:1560px}#sb-victory .vc-round .vc-event{min-width:0;overflow:hidden;text-overflow:ellipsis}#sb-victory .vc-round .vc-rnd{flex:none}
+#sb-victory[data-pic="art"] .vc-round{max-width:960px}#sb-victory[data-pic="art"] .vc-def em{max-width:440px}
 
 /* =================================== SHATTERED: obsidian, gold light, ember cracks =================================== */
 #sb-victory.vc-st-shattered .vc-bg{background:radial-gradient(ellipse 55% 50% at 50% 42%,rgba(246,196,83,.30),transparent 70%),radial-gradient(ellipse 80% 40% at 50% 112%,rgba(255,90,31,.32),transparent 70%),#040406}
@@ -58,9 +73,6 @@
   -webkit-mask:radial-gradient(circle at 50% 40%,#000 0,transparent 62%);mask:radial-gradient(circle at 50% 40%,#000 0,transparent 62%)}
 #sb-victory.vc-st-shattered.vc-show .vc-rays{animation:vc-spin 40s linear infinite}
 @keyframes vc-spin{to{transform:rotate(360deg)}}
-#sb-victory.vc-st-shattered .vc-art path{fill:none;stroke-linecap:round;stroke-linejoin:round}
-#sb-victory.vc-st-shattered .vc-art .vc-c1{stroke:#ffcf6e;stroke-width:2.2;opacity:.85;filter:drop-shadow(0 0 6px #f6a53a)}
-#sb-victory.vc-st-shattered .vc-art .vc-c2{stroke:#ff7a3a;stroke-width:1.2;opacity:.5}
 #sb-victory.vc-st-shattered .vc-ghost{color:#f6c453}
 #sb-victory.vc-st-shattered .vc-round{color:#d9dce4;background:linear-gradient(180deg,#17181d,#050507);clip-path:polygon(22px 0,100% 0,calc(100% - 22px) 100%,0 100%);box-shadow:inset 0 2px 0 #f6c453,inset 0 0 0 1px rgba(246,196,83,.3)}
 #sb-victory.vc-st-shattered .vc-round .vc-event{color:#f6c453}
@@ -78,8 +90,6 @@
 #sb-victory.vc-st-shattered.vc-in .vc-bg{animation:vc-fade .35s both}
 #sb-victory.vc-st-shattered.vc-in .vc-rays{animation:vc-fade 1s .3s both,vc-spin 40s linear infinite}
 #sb-victory.vc-st-shattered.vc-in .vc-flash{animation:vc-flash .42s .38s ease-out both}
-#sb-victory.vc-st-shattered.vc-in .vc-art path{stroke-dasharray:1;animation:vc-draw .5s .42s cubic-bezier(.3,.7,.3,1) both}
-#sb-victory.vc-st-shattered.vc-in .vc-art .vc-c2{animation-delay:.55s}
 #sb-victory.vc-st-shattered.vc-in .vc-title{animation:vc-slam .7s .36s cubic-bezier(.2,.9,.3,1.35) both}
 #sb-victory.vc-st-shattered.vc-in .vc-card{animation:vc-rise .65s .75s cubic-bezier(.2,.9,.3,1.15) both}
 #sb-victory.vc-st-shattered.vc-in .vc-round{animation:vc-drop .5s .95s cubic-bezier(.2,.9,.3,1.2) both}
@@ -185,6 +195,7 @@ html.sb-potato #sb-victory *,html.sb-potato #sb-victory{animation:none!important
   const root = document.createElement('div');
   root.id = 'sb-victory'; root.className = 'vc-st-' + style; root.setAttribute('aria-hidden', 'true');
   root.innerHTML = `<div class="vc-bg"></div><div class="vc-rays"></div><svg class="vc-art" viewBox="0 0 1920 1080"></svg><svg class="vc-frame" viewBox="0 0 1920 1080"><path class="f2" d="M70,40H1850L1880,70V1010L1850,1040H70L40,1010V70Z"/><path class="f1" d="M60,28H1860L1892,60V1020L1860,1052H60L28,1020V60Z"/></svg><div class="vc-f2w"><svg class="vc-frame vc-frame2" viewBox="0 0 1920 1080"><path class="f1" d="M60,28H1860L1892,60V1020L1860,1052H60L28,1020V60Z"/></svg></div><div class="vc-kanji">勝</div><div class="vc-ghost"></div>
+    <div class="vc-pic"><img alt=""></div>
     <div class="vc-round"><span class="vc-event"></span><span class="vc-rnd"></span></div>
     <div class="vc-title"><div class="vc-t1" aria-hidden="true"><span>VICTORY</span></div><div class="vc-t2" aria-hidden="true"><span>VICTORY</span></div><span class="vc-tm">VICTORY</span></div>
     <div class="vc-card"><div class="vc-ava"><img alt=""><b class="vc-ini"></b></div>
@@ -198,15 +209,8 @@ html.sb-potato #sb-victory *,html.sb-potato #sb-victory{animation:none!important
   const rng = seed => () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
   (function art() {
     const r = rng(style === 'oni' ? 808 : 4747), svg = $('.vc-art');
-    if (style === 'shattered') {                 // ember cracks racing out from behind the title
-      let d1 = '', d2 = '';
-      for (let i = 0; i < 16; i++) {
-        const a = (i + r() * .6) / 16 * Math.PI * 2; let x = 960, y = 300, d = 'M960,300';
-        for (let j = 0; j < 5; j++) { x += Math.cos(a) * (90 + r() * 120) + (r() - .5) * 50; y += Math.sin(a) * (60 + r() * 90) + (r() - .5) * 40; d += `L${x | 0},${y | 0}`; }
-        if (i % 3) d2 += `<path class="vc-c2" pathLength="1" d="${d}"/>`; else d1 += `<path class="vc-c1" pathLength="1" d="${d}"/>`;
-      }
-      svg.innerHTML = d2 + d1;
-    } else {                                      // a rough ink brush stroke under the card, plus splatter
+    if (style === 'shattered') return;           // Ember: nothing is drawn behind the title (crack lines raced out from it until 1.1.3)
+    {                                             // Oni: a rough ink brush stroke under the card, plus splatter
       let top = [], bot = [];
       for (let i = 0; i <= 40; i++) {
         const x = -40 + i * 50, w = 54 + Math.sin(i / 40 * Math.PI) * 46 + (r() - .5) * 22;
@@ -306,9 +310,14 @@ html.sb-potato #sb-victory *,html.sb-potato #sb-victory{animation:none!important
       img.dataset.src = src; ava.classList.remove('vc-has-img');
       if (src) { img.onload = () => ava.classList.add('vc-has-img'); img.onerror = () => ava.classList.remove('vc-has-img'); img.src = src; } else img.removeAttribute('src');
     }
+    const pic = $('.vc-pic img'), psrc = p.pic === 'art' ? String(p.splashArt || '') : '';        // the winner's uploaded character image, if they use one
+    if (pic.dataset.src !== psrc) {
+      pic.dataset.src = psrc; delete root.dataset.pic;
+      if (psrc) { pic.onload = () => { root.dataset.pic = 'art'; if (root.classList.contains('vc-show')) refit(); }; pic.onerror = () => { delete root.dataset.pic; }; pic.src = psrc; } else pic.removeAttribute('src');
+    }
     if (root.classList.contains('vc-show')) refit();
   }
-  function refit() { const n = $('.vc-name'); n.textContent = n.dataset.txt || n.textContent; fit(n, 1180); fit($('.vc-ghost'), 1840); fit($('.vc-tm'), 1800); $$('.vc-t1 span,.vc-t2 span').forEach(e => e.style.fontSize = $('.vc-tm').style.fontSize); }
+  function refit() { const n = $('.vc-name'); n.textContent = n.dataset.txt || n.textContent; const art = root.dataset.pic === 'art'; fit(n, art ? 900 : 1180); fit($('.vc-ghost'), 1840); fit($('.vc-tm'), art ? 980 : 1800); $$('.vc-t1 span,.vc-t2 span').forEach(e => e.style.fontSize = $('.vc-tm').style.fontSize); }
   { const n = $('.vc-name'), n2 = $('.vc-n2'), sync = () => { n2.textContent = n.textContent; n2.style.fontSize = n.style.fontSize; };
     new MutationObserver(sync).observe(n, { childList: true, characterData: true, subtree: true, attributes: true, attributeFilter: ['style'] }); }
 

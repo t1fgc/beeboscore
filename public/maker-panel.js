@@ -706,7 +706,7 @@ section.tab[data-tab="maker"] { max-width: none; gap: 0; }
           <div class="mk-row" style="margin-top:10px"><button class="mk-btn sm" id="mkMirror" title="Copy P1's spots to P2, flipped">Mirror P1 to P2</button><button class="mk-btn sm" id="mkReplace" title="Put every spot back where the maker first placed it">Place them again</button></div>
         </div>
         <div class="mk-tray"><h2>Effects</h2><div class="mk-fx" id="mkFx"></div>
-          <div class="mk-field"><span>Set winner</span><select id="mkVic"><option value="own">This layout's own banner</option><option value="shattered">Shattered splash</option><option value="off">Nothing</option></select></div></div>
+          <div class="mk-field"><span>Set winner</span><select id="mkVic"><option value="own">This layout's own banner</option><option value="shattered">Ember splash</option><option value="off">Nothing</option></select></div></div>
       </div>
     </div>
     <div class="mk-save"><button class="mk-btn go" id="mkSaveLive">Save and go live</button><button class="mk-btn" id="mkSave">Save layout</button><span class="note" id="mkNote"></span></div>

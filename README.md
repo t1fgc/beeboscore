@@ -12,9 +12,9 @@ Developed by Beebo
 
 </div>
 
-![The Shattered overlay showing a match](docs/images/overlay-shattered.png)
+![The Ember layout showing a match](docs/images/overlay-shattered.png)
 
-> **This is a prototype build.** A new build is on the way later in 2026 — see [What's coming](#whats-coming).
+> **This is a prototype build.** A new build is on the way later in 2026. See [What's coming](#whats-coming).
 
 ---
 
@@ -49,12 +49,82 @@ The app keeps everything it saves in a **`BeeboScore Data`** folder next to the 
 ![The control panel](docs/images/control-panel.png)
 
 ### Matches
+
 Names, scores, round, format and event on one screen. **+ / −** on each score, Swap, Reset, Undo, and a losers **[L]** mark. Changes go live when you press **Update**, or straight away in **Live** mode.
 
-### Shattered, the built-in layout
-One animated layout for every fighting game: dark obsidian with ember light along the top of the screen. It sparks when a game is taken, glows at match point, turns the winner gold and plays a victory splash when the set ends.
+### 11 layouts
+
+Pick one from the **Layout** menu at the top of the app. It changes in OBS straight away. Every layout is made for any fighting game and sits in the same place along the top of the screen, clear of the game's timer, round counters and portraits.
+
+![The 11 layouts](docs/images/layouts.png)
+
+| Layout | What it is made of |
+| --- | --- |
+| **Ember** | The original (called Shattered until 1.1.2): dark obsidian with ember light. The winner turns gold and the loser's plate cracks. |
+| **Frostbite** | Ice: frosted plates with icicles and drifting snow. |
+| **Venom** | Toxic slime: dripping plates, bubbles and horror lettering. |
+| **Royal** | Velvet banners with gold trim, and a crown for the winner. |
+| **Crimson** | Forged steel: blade-shaped plates with a red edge and brush lettering. |
+| **Gold Rush** | Gold ingots with stamped lettering and showers of coins. |
+| **Sakura** | Paper plates, a blossom branch and falling petals. |
+| **Tidal** | Deep-water glass with a moving waterline, bubbles and splashes. |
+| **Voltage** | Circuit plates with a lightning edge, arcs and sparks. |
+| **Chrome** | Mirror-polished capsules with moving reflections. |
+| **Pastel** | Candy-coloured clouds, rounded lettering, stars and confetti. |
+
+Each layout has its own bar shape, lettering, effects and animations: an intro, a reaction when a game is taken, a match-point state, and a winner and a loser when the set ends. Each also has its own VS Splash and Victory Splash.
+
+In every layout the score sits in a solid box with at least 7:1 contrast and stays that way for the player who lost.
+
+The ten new layouts never draw over the game's health bars, round counters, timer or portraits. Their shapes end at the bar's bottom edge, their glows stop there, and their effects stay inside the bar. The burst when a game or a set is won is the only thing that goes past it, for about a second.
+
+### VS Splash and Victory Splash
+
+Press **Show VS Splash** on the Matches tab (or **Ctrl + I**) for a full-screen player-vs-player splash before a set. When a set ends, the Victory Splash shows the winner and the final score. Every layout has its own.
+
+![VS Splash and Victory Splash in different layouts](docs/images/splashes.jpg)
+
+### Your own VS Splash pictures
+
+In the **VS Splash** card on the Matches tab you can add pictures of your own. They show on the VS Splash in every layout.
+
+| Picture | Where it goes | Best size |
+| --- | --- | --- |
+| **Name bar** | Behind each player's name | **920 × 250** |
+| **Header** | Across the top of the splash | **1920 × 200** |
+
+PNG, WebP or JPG. A picture of another size is scaled and cropped to fit.
+
+A layout's own lettering colours are made for its own name bar and could blend into your picture. So when you choose a name bar, the app looks at the picture where the names sit and picks lettering that reads on it:
+
+- light or dark names, whichever stands out more
+- a tint of the picture's own colour for the team tag and record
+- a soft backing behind the lettering when the picture is busy, with a note telling you so
+
+**Pick my own** lets you choose the two colours yourself. If they are hard to read on the picture, the card warns you. **Preview the VS Splash** plays the splash in the card before you put it on stream.
+
+![Your own VS Splash pictures](docs/images/vs-pictures.png)
+
+### Splash pictures
+
+On the **start.gg** tab, choose what each player shows on both splashes:
+
+- **Profile picture:** their start.gg profile picture in a small frame. This is the default.
+- **Character image:** a picture you upload for that player, shown as a large panel. The small frame is hidden for them.
+
+The best size for a character image is **900 × 1080** (a tall picture). PNG, WebP and JPG all work, and it does not have to be a PNG.
+
+When you choose a picture, a window opens before anything is saved:
+
+- **Crop:** drag the box or its corners to choose the part to keep. It can hold the shape of the splash panel for you.
+- **Remove a green screen:** a picture taken in front of a green or blue screen has its background removed. You can pick the colour to remove from the picture, and set how much is removed and how soft the edge is.
+
+The result is saved as a PNG with a see-through background, sized to fit the panel. Your original file is not changed.
+
+To give a picture to someone who is not on the scoreboard, type their name in **Find a player**. Names complete as you type. Pictures are matched to the player's name, so they carry over from event to event.
 
 ### Overlay maker
+
 Drop in a finished **PNG** overlay and get an animated layout back.
 
 ![The Overlay maker](docs/images/overlay-maker.png)
@@ -66,16 +136,22 @@ Drop in a finished **PNG** overlay and get an animated layout back.
 - Save it, and it appears in the **Layout** menu at the top of the app. The picture never leaves your PC.
 
 ### start.gg
+
 Sign in, load your event, and pull its players and matches onto the scoreboard. Names autocomplete as you type, and results can be sent back to start.gg when a set ends.
 
 ### Stream
+
 Copy the OBS link, or press **Go online** for a public overlay link and a password-protected remote control you can open on a phone. It uses a free Cloudflare tunnel; you can also use your own tunnel for an address that stays the same.
 
 ### Stream Deck
-The plugin comes inside the app: **File → Install Stream Deck Plugin**. Eleven keys: player score (tap +1, hold −1), reset, swap, undo, losers [L], show / hide overlay, switch layout, set player, next match, report result to start.gg and refresh start.gg matches. Needs Stream Deck 6.4 or newer.
+
+The plugin comes inside the app: **File → Install Stream Deck Plugin**. Twelve keys: player score (tap +1, hold −1), reset, swap, undo, losers [L], show / hide overlay, VS Splash, switch layout, set player, next match, report result to start.gg and refresh start.gg matches. Needs Stream Deck 6.4 or newer.
 
 ### Settings → Check for updates
+
 The app only looks for a new version when you press **Check for updates**. If there is one, **Download update** saves the new exe next to the one you're running, and **Restart & update** switches over to it. Your `BeeboScore Data` folder is used by both, so nothing is lost. Delete the old exe whenever you like.
+
+The first time a new version starts, a **What's new** window lists what changed. You can open it again from Settings.
 
 ---
 

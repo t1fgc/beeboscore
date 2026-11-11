@@ -56,8 +56,8 @@
     if (!up) { clearTimeout(coverT); coverT = 0; setCovered(false); }
   }).observe(H, { attributes: true, attributeFilter: ['class'] });
   const st = document.createElement('style');
-  st.textContent = 'html.sb-covered body>:not(#sb-vs):not(#sb-victory):not(#sb-bracket){visibility:hidden!important}'
-    + 'html.sb-covered body>:not(#sb-vs):not(#sb-victory):not(#sb-bracket),html.sb-covered body>:not(#sb-vs):not(#sb-victory):not(#sb-bracket) *{animation-play-state:paused!important}';
+  st.textContent = 'html.sb-covered body>:not(#sb-vs):not(#sb-victory):not(#sb-bracket):not(#el-vs):not(#el-vic){visibility:hidden!important}'
+    + 'html.sb-covered body>:not(#sb-vs):not(#sb-victory):not(#sb-bracket):not(#el-vs):not(#el-vic),html.sb-covered body>:not(#sb-vs):not(#sb-victory):not(#sb-bracket):not(#el-vs):not(#el-vic) *{animation-play-state:paused!important}';
   (document.head || H).appendChild(st);
   const check = () => setIdle(document.hidden || obsHidden);
   const onObs = e => { obsHidden = !(e && e.detail && e.detail.visible); check(); };

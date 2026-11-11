@@ -118,8 +118,68 @@ function start(opts = {}) {
   };
   const DEFAULT_SETTINGS = { autoSwitchLayout: true, autoUpdate: true, updateRepo: '', lanNoPassword: false, refreshOnReset: true, shortcuts: {}, potatoMode: false, autoTop8: true, sdAutoUpdate: true, bracketRefresh: '20', bracketPage: '14', uiTheme: 'classic', autoVictory: true, victoryHold: '8', soundOn: false, soundVolume: '80', obsVolume: false, followFormat: true, showAutoscore: false, bracketTitle: '', bracketPics: 'avatar', autoStandings: true, vtHeadsUp: true, lightFx: false, setupDone: true, sggReport: 'ask' };
 
-  let state = mergeDeep(structuredClone(DEFAULT_STATE), readJSON(STATE_FILE, {}));
+  // What overlays are sent is the state plus things worked out fresh each time (liveState, withPics): each player's
+  // splash picture, the custom VS Splash pictures, sound, the next matches… The control panel sends its whole copy back
+  // on Update, so those must never be taken in as state: a picture kept that way would outlive the choice that made it
+  // (switching back to the profile picture, or removing a name bar, would then change nothing on stream).
+  // ('palette' is from 1.1.0 – 1.1.2, which had colour palettes: a state file from those builds may still carry one.)
+  const DERIVED = ['palette', 'vsArt', 'snd', 'upcoming', 'top8', 'twitch', 'fv'];
+  function stripDerived(s) {
+    if (!s || typeof s !== 'object') return s;
+    for (const k of DERIVED) delete s[k];
+    for (const k of ['p1', 'p2']) if (s[k] && typeof s[k] === 'object') { delete s[k].splashArt; delete s[k].pic; }
+    return s;
+  }
+  let state = stripDerived(mergeDeep(structuredClone(DEFAULT_STATE), readJSON(STATE_FILE, {})));      // (also cleans a state file an earlier build wrote them into)
   state.game = DEFAULT_STATE.game;   // this build has no game picker: one set of layouts for every fighting game (older builds saved a game name here)
+
+  // ------------------------------------------------------------ splash pictures (per player)
+  // Each player shows either their start.gg profile picture (the small frame) or a character image uploaded for them
+  // (a large panel) on the VS Splash and the Victory Splash. Uploads live in <data>/player-art; the choice is kept by name.
+  const PICS_DIR = path.join(DATA_DIR, 'player-art'), PICS_FILE = path.join(DATA_DIR, 'player-art.json'), VSART_DIR = path.join(DATA_DIR, 'vs-art');
+  const PIC_RULES = { width: 900, height: 1080, minWidth: 200, minHeight: 240, maxSide: 4096, maxBytes: 8 * 1024 * 1024, types: ['PNG', 'WebP', 'JPG'] };
+  let pics = readJSON(PICS_FILE, {});                    // { "<name, lower case>": { name, file, type, w, h, size, at, use: 'art' | 'profile' } }
+  const picKey = n => String(n || '').trim().toLowerCase();
+  const picUrl = a => (a && a.file ? '/player-art/' + a.file : '');
+  const picsList = () => Object.values(pics).map(a => ({ name: a.name, use: a.use === 'art' ? 'art' : 'profile', url: picUrl(a), w: a.w || 0, h: a.h || 0, size: a.size || 0, at: a.at || 0 })).sort((a, b) => a.name.localeCompare(b.name));
+  /** the state as overlays see it: a player set to "character image" gets splashArt (the picture) and pic: 'art' */
+  function withPics(s) {
+    let out = s;
+    for (const k of ['p1', 'p2']) {
+      const a = s[k] && s[k].name ? pics[picKey(s[k].name)] : null;
+      if (a && a.use === 'art' && a.file) { if (out === s) out = { ...s }; out[k] = { ...s[k], splashArt: picUrl(a), pic: 'art' }; }
+    }
+    const va = vsArtLive();                               // custom VS Splash pictures (a name bar, a header) and the lettering colours that go with them
+    if (va) { if (out === s) out = { ...s }; out.vsArt = va; }
+    return out;
+  }
+  function picsChanged() {
+    saveLater(PICS_FILE, () => pics, 0); broadcast('playerArt', picsList());
+    state.updatedAt = Date.now(); broadcast('state', liveState());         // a new stamp, or overlays treat it as the update they already have
+  }
+  /** what kind of picture is this, really? (by its bytes, not its name) → { type, ext, w, h } or null */
+  function imageInfo(b) {
+    if (b.length > 24 && b.readUInt32BE(0) === 0x89504e47 && b.readUInt32BE(4) === 0x0d0a1a0a && b.toString('latin1', 12, 16) === 'IHDR') return { type: 'image/png', ext: 'png', w: b.readUInt32BE(16), h: b.readUInt32BE(20) };
+    if (b.length > 30 && b.toString('latin1', 0, 4) === 'RIFF' && b.toString('latin1', 8, 12) === 'WEBP') {
+      const kind = b.toString('latin1', 12, 16);
+      if (kind === 'VP8X') return { type: 'image/webp', ext: 'webp', w: 1 + b.readUIntLE(24, 3), h: 1 + b.readUIntLE(27, 3) };
+      if (kind === 'VP8 ') return { type: 'image/webp', ext: 'webp', w: b.readUInt16LE(26) & 0x3fff, h: b.readUInt16LE(28) & 0x3fff };
+      if (kind === 'VP8L') { const v = b.readUInt32LE(21); return { type: 'image/webp', ext: 'webp', w: 1 + (v & 0x3fff), h: 1 + ((v >> 14) & 0x3fff) }; }
+      return null;
+    }
+    if (b.length > 4 && b[0] === 0xff && b[1] === 0xd8) {                       // JPEG: walk the segments to the frame header
+      let i = 2;
+      while (i + 9 < b.length) {
+        if (b[i] !== 0xff) { i++; continue; }
+        const m = b[i + 1];
+        if (m === 0xff) { i++; continue; }
+        if (m >= 0xc0 && m <= 0xcf && m !== 0xc4 && m !== 0xc8 && m !== 0xcc) return { type: 'image/jpeg', ext: 'jpg', w: b.readUInt16BE(i + 7), h: b.readUInt16BE(i + 5) };
+        if (m === 0xd8 || m === 0x01 || (m >= 0xd0 && m <= 0xd7)) { i += 2; continue; }
+        i += 2 + b.readUInt16BE(i + 2);
+      }
+    }
+    return null;
+  }
   const ASSET_DIR = path.join(DATA_DIR, 'assets'), ASSET_INDEX = path.join(ASSET_DIR, 'index.json');
   const assetList = () => { const l = readJSON(ASSET_INDEX, []); return Array.isArray(l) ? l : []; };
   let upcoming = [];                        // next matches on start.gg (not saved; the panel keeps it fresh)
@@ -137,7 +197,7 @@ function start(opts = {}) {
     const t8 = top8View(), ch = (config.twitch && config.twitch.channel) || '', fv = state.format ? FMT.view(state.format) : null;
     if (fv) fv.pending = formatPending;
     const snd = { on: config.settings.soundOn === true, vol: config.settings.obsVolume ? 100 : soundVol() };   // obsVolume: full level out, the OBS mixer sets it     // stream sound (Settings › Sound) — off by default
-    return { ...state, snd, ...(upcoming.length ? { upcoming } : {}), ...(t8 ? { top8: t8 } : {}), ...(ch ? { twitch: { channel: ch } } : {}), ...(fv ? { fv } : {}) };
+    return { ...withPics(state), snd, ...(upcoming.length ? { upcoming } : {}), ...(t8 ? { top8: t8 } : {}), ...(ch ? { twitch: { channel: ch } } : {}), ...(fv ? { fv } : {}) };
   };
   const soundVol = () => Math.max(0, Math.min(100, Math.round(Number(config.settings.soundVolume ?? 80)) || 0));
   // ------------------------------------------------------------ game formats (lib/format.js): team battles, Death Battle, KOTH, leagues
@@ -217,8 +277,46 @@ function start(opts = {}) {
     }
     return { ok: true, fv: state.format ? FMT.view(state.format) : null };
   }
+  // "What's new": shown once after the app has been updated. A copy that starts with no settings yet has nothing to be told.
+  const HAD_SETTINGS = fs.existsSync(CONFIG_FILE) || fs.existsSync(STATE_FILE);
   let config = { activeOverlay: 'shattered', startgg: {}, ...readJSON(CONFIG_FILE, {}) };
   config.startgg = config.startgg || {};
+  if (!HAD_SETTINGS) config.seenVersion = APP_VERSION;
+  // ------------------------------------------------------------ custom VS Splash pictures (every layout)
+  // A name bar (behind each player's name: 920 × 250) and a header (across the top: 1920 × 200). The files live in
+  // <data>/vs-art. The lettering on a custom name bar takes colours that suit the picture: the control panel works them
+  // out from the picture itself when it is uploaded (config.vsArt.fit), or the user picks their own (auto: false).
+  delete config.palette; delete config.palettePrev;      // colour palettes (1.1.0 – 1.1.2) became layouts of their own
+  const hexOr = (v, d) => (/^#[0-9a-f]{6}$/i.test(String(v || '')) ? String(v).toLowerCase() : d);
+  const lumOf = h => { const c = [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) / 255).map(v => (v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4))); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; };
+  function cleanVsArt(a) {
+    a = a && typeof a === 'object' ? a : {};
+    const pic = x => (x && typeof x === 'object' && /^(bar|header)-\d+\.(png|webp|jpg)$/.test(String(x.file || '')) ? { file: x.file, w: Number(x.w) || 0, h: Number(x.h) || 0, at: Number(x.at) || 0 } : null);
+    const f = a.fit && typeof a.fit === 'object' ? a.fit : {};
+    return { bar: pic(a.bar), header: pic(a.header), mirror: a.mirror !== false, auto: a.auto !== false, ink: hexOr(a.ink, '#ffffff'), accent: hexOr(a.accent, '#ffd75e'), scrim: !!a.scrim,
+      fit: { ink: hexOr(f.ink, '#ffffff'), accent: hexOr(f.accent, '#ffd75e'), scrim: !!f.scrim, busy: !!f.busy, contrast: Math.max(0, Math.min(21, Number(f.contrast) || 0)) } };
+  }
+  config.vsArt = cleanVsArt(config.vsArt);
+  const VSART_RULES = { bar: { width: 920, height: 250 }, header: { width: 1920, height: 200 }, maxBytes: 8 * 1024 * 1024, maxSide: 4096, types: ['PNG', 'WebP', 'JPG'] };
+  const vsArtUrl = x => (x && x.file ? '/vs-art/' + x.file : '');
+  /** for the control panel */
+  const vsArtView = () => { const a = config.vsArt; return { bar: a.bar ? { url: vsArtUrl(a.bar), w: a.bar.w, h: a.bar.h } : null, header: a.header ? { url: vsArtUrl(a.header), w: a.header.w, h: a.header.h } : null, mirror: a.mirror, auto: a.auto, ink: a.ink, accent: a.accent, scrim: a.scrim, fit: a.fit, rules: VSART_RULES, live: vsArtLive() }; };
+  /** for overlays (state.vsArt): the pictures and the lettering colours, ready to use; null when no picture is set */
+  function vsArtLive() {
+    const a = config.vsArt; if (!a || (!a.bar && !a.header)) return null;
+    const out = { bar: vsArtUrl(a.bar), header: vsArtUrl(a.header), mirror: a.mirror };
+    if (a.bar) {
+      const ink = a.auto ? a.fit.ink : a.ink, light = lumOf(ink) > 0.4;      // light lettering gets a dark edge and backing, dark lettering a light one
+      Object.assign(out, { ink, accent: a.auto ? a.fit.accent : a.accent, scrim: a.auto ? a.fit.scrim : a.scrim,
+        edge: light ? '0 3px 0 rgba(0,0,0,.85),0 0 16px rgba(0,0,0,.75)' : '0 2px 0 rgba(255,255,255,.85),0 0 16px rgba(255,255,255,.7)',
+        scrimColor: light ? 'rgba(0,0,0,.62)' : 'rgba(255,255,255,.68)', chip: light ? 'rgba(0,0,0,.6)' : 'rgba(255,255,255,.66)' });
+    }
+    return out;
+  }
+  function vsArtChanged() {
+    saveConfig(); broadcast('vsArt', vsArtView());
+    state.updatedAt = Date.now(); broadcast('state', liveState());         // a new stamp, so overlays take it as a new update
+  }
   // ------------------------------------------------------------ start.gg sign-in (lib/sggauth.js): tokens sealed on disk, never sent to a browser
   const sggVault = sggauth.createVault({ dir: DATA_DIR, secure: opts.secureStore });
   // Discord channel notifications (lib/notify.js): the webhook link is sealed like the start.gg tokens
@@ -374,6 +472,7 @@ setInterval(function(){fetch('/api/potato',{cache:'no-store'}).then(function(r){
 
   const history = []; // previous states, for Undo
   function setState(next, { replace = false, undo = false, keepPages = false } = {}) {
+    stripDerived(next);
     if (!undo) {
       const snap = JSON.stringify({ ...state, updatedAt: 0 });
       if (!history.length || history[history.length - 1].snap !== snap) history.push({ snap, at: Date.now() });
@@ -1351,8 +1450,11 @@ setInterval(function(){fetch('/api/potato',{cache:'no-store'}).then(function(r){
       .map(d => {
         const dir = path.join(OVERLAYS_DIR, d.name);
         const meta = readJSON(path.join(dir, 'overlay.json'), {});
+        // a layout that comes with the app keeps the app's name and place in the list, even when its page was edited (so an edited copy from an older build is not left with an old name)
+        const own = path.resolve(BUNDLE_DIR, 'overlays') !== path.resolve(OVERLAYS_DIR) ? readJSON(path.join(BUNDLE_DIR, 'overlays', d.name, 'overlay.json'), null) : null;
+        if (own && own.title) { meta.title = own.title; meta.family = own.family || own.title; meta.order = own.order; if (!isEdited(d.name)) { meta.description = own.description; meta.colors = own.colors; } }
         return {
-          name: d.name,
+          name: d.name, order: Number(meta.order) || 999,
           title: meta.title || d.name.replace(/[-_]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
           game: meta.maker ? 'Any game' : (meta.game || guessGame(d.name)),   // layouts from the Overlay maker are for every game, whatever an older build wrote
           description: meta.description || '',
@@ -1366,7 +1468,7 @@ setInterval(function(){fetch('/api/potato',{cache:'no-store'}).then(function(r){
           modified: fs.statSync(path.join(dir, 'index.html')).mtimeMs,
         };
       })
-      .sort((a, b) => a.game.localeCompare(b.game) || a.title.localeCompare(b.title));
+      .sort((a, b) => a.game.localeCompare(b.game) || a.order - b.order || a.title.localeCompare(b.title));
     return listOverlays();
   }
   function overlaySound(dir) {          // the layout's sound pack (sb-sound.js) — for the panel's sound test and preview
@@ -2148,6 +2250,18 @@ iframe.next{opacity:0;pointer-events:none}</style></head><body>
       // Twitch Stuff overlays (OBS Browser Sources) + what they show
       if (p === '/twitch/sidebar' || p === '/twitch/vs') return serveFile(req, res, path.join(PUBLIC_DIR, p === '/twitch/vs' ? 'twitch-vs.html' : 'twitch-sidebar.html'));
       if (p === '/api/twitch/live' && method === 'GET') return ok(res, viewersPublic());
+      if (p.startsWith('/vs-art/') && method === 'GET') {
+        const name = path.basename(p), m = /^(?:bar|header)-\d+\.(png|webp|jpg)$/.exec(name), f = path.join(VSART_DIR, name);
+        if (!m || !fs.existsSync(f)) return send(res, 404, 'No picture', 'text/plain; charset=utf-8');
+        res.writeHead(200, { 'Content-Type': { png: 'image/png', webp: 'image/webp', jpg: 'image/jpeg' }[m[1]], 'Content-Length': fs.statSync(f).size, 'Cache-Control': 'public, max-age=31536000, immutable', 'X-Content-Type-Options': 'nosniff' });
+        return fs.createReadStream(f).pipe(res);
+      }
+      if (p.startsWith('/player-art/') && method === 'GET') {
+        const name = path.basename(p), m = /^[a-f0-9]{16}-\d+\.(png|webp|jpg)$/.exec(name), f = path.join(PICS_DIR, name);
+        if (!m || !fs.existsSync(f)) return send(res, 404, 'No picture', 'text/plain; charset=utf-8');
+        res.writeHead(200, { 'Content-Type': { png: 'image/png', webp: 'image/webp', jpg: 'image/jpeg' }[m[1]], 'Content-Length': fs.statSync(f).size, 'Cache-Control': 'public, max-age=31536000, immutable', 'X-Content-Type-Options': 'nosniff' });
+        return fs.createReadStream(f).pipe(res);
+      }
       if (p === '/twitch/art' && method === 'GET') {
         const f = artFile(), a = config.twitch.art;
         if (!f || !fs.existsSync(f)) return send(res, 404, 'No picture', 'text/plain; charset=utf-8');
@@ -2188,7 +2302,7 @@ iframe.next{opacity:0;pointer-events:none}</style></head><body>
       }
       if (p === '/api/live') {
         const o = safeName(url.searchParams.get('o') || '');
-        return ok(res, { state, active: config.activeOverlay, rev: revs[o] || 0 });
+        return ok(res, { state: withPics(state), active: config.activeOverlay, rev: revs[o] || 0 });
       }
       if (p === '/api/state' && method === 'GET') return ok(res, liveState());
       if (p === '/api/upcoming' && method === 'POST') {        // the next matches (from the panel's start.gg list), for designer "Upcoming" lists
@@ -2445,14 +2559,15 @@ iframe.next{opacity:0;pointer-events:none}</style></head><body>
         if (localOnly()) return;
         return ok(res, await selftest.run({ APP_VERSION, opts, DATA_DIR, BACKUP_DIR, sggVault, actualPort, potato, potatoRender, latency, tunnel, sggHas, sggTok, startgg, chat, config }));
       }
-      if (p === '/api/whatsnew' && method === 'GET') {        // the newest changelog section, for the "What's new" card
-        let md = ''; try { md = fs.readFileSync(path.join(BUNDLE_DIR, 'CHANGELOG.md'), 'utf8'); } catch {}
-        const m = md.match(/\n### ([^\n]+)\n([\s\S]*?)(?=\n### |\n## |$)/);
-        return ok(res, m ? { version: APP_VERSION, title: m[1].trim(), items: m[2].split('\n').reduce((out, l) => { if (/^- /.test(l)) out.push(l.slice(2).trim()); else if (/^\s+- /.test(l) && out.length) out[out.length - 1] += (/:$/.test(out[out.length - 1]) ? ' ' : '; ') + l.replace(/^\s+- /, '').trim(); return out; }, []).slice(0, 16) } : { version: APP_VERSION, title: '', items: [] });
+      if (p === '/api/whatsnew/seen' && method === 'POST') {  // the "What's new" window was closed: don't open it again for this version
+        if (localOnly()) return;
+        if (config.seenVersion !== APP_VERSION) { config.seenVersion = APP_VERSION; saveConfig(); }
+        return ok(res, { ok: true });
       }
       if (p === '/api/info') {
         return ok(res, {
           version: APP_VERSION, testBuild: !!opts.testBuild, publisher: 'Beebo', port: actualPort, urls: local ? lanUrls() : [], local, lan: isLan(req), cloud: CLOUD, desktop: !!opts.desktop,
+          whatsNew: local && config.seenVersion !== APP_VERSION,
           overlaysDir: local ? OVERLAYS_DIR : '', activeOverlay: config.activeOverlay, games: GAMES,
         });
       }
@@ -2531,7 +2646,7 @@ iframe.next{opacity:0;pointer-events:none}</style></head><body>
         writeJSON(CONFIG_FILE, r.config);
         ok(res, { restored: true, layouts: r.layouts, assets: r.assets, restarting: !!opts.restart });
         if (opts.restart) setTimeout(() => opts.restart(), 600);
-        else { config = { activeOverlay: 'shattered', startgg: {}, ...r.config }; players = readJSON(PLAYERS_FILE, []); }
+        else { config = { activeOverlay: 'shattered', startgg: {}, ...r.config }; config.vsArt = cleanVsArt(config.vsArt); players = readJSON(PLAYERS_FILE, []); }
         return;
       }
       if (p === '/api/settings') {
@@ -2580,6 +2695,39 @@ iframe.next{opacity:0;pointer-events:none}</style></head><body>
           players = players.filter(x => x.name !== name);
           saveLater(PLAYERS_FILE, () => players, 0);
           return ok(res, allPlayers());
+        }
+      }
+
+      // ---------- splash pictures: start.gg profile picture, or an uploaded character image, per player ----------
+      if (p === '/api/player-art') {
+        if (method === 'GET') return ok(res, { items: picsList(), rules: PIC_RULES });
+        if (localOnly()) return;
+        if (method === 'POST') {                         // the picture is the request body; ?name= says whose it is
+          const who = String(url.searchParams.get('name') || '').trim().slice(0, 80), key = picKey(who);
+          if (!key) return fail(res, 400, 'Pick a player first.');
+          const buf = await readBody(req, PIC_RULES.maxBytes).catch(() => null);
+          if (!buf) return fail(res, 413, 'That picture is over 8 MB. Save it smaller and try again.');
+          const info = imageInfo(buf);
+          if (!info) return fail(res, 400, 'Use a PNG, WebP or JPG picture.');
+          if (info.w < PIC_RULES.minWidth || info.h < PIC_RULES.minHeight) return fail(res, 400, `That picture is ${info.w} × ${info.h}. It needs to be at least ${PIC_RULES.minWidth} × ${PIC_RULES.minHeight}; ${PIC_RULES.width} × ${PIC_RULES.height} looks best.`);
+          if (info.w > PIC_RULES.maxSide || info.h > PIC_RULES.maxSide) return fail(res, 400, `That picture is ${info.w} × ${info.h}. Keep each side under ${PIC_RULES.maxSide} px; ${PIC_RULES.width} × ${PIC_RULES.height} is plenty.`);
+          fs.mkdirSync(PICS_DIR, { recursive: true });
+          const at = Date.now(), file = `${crypto.createHash('sha1').update(key).digest('hex').slice(0, 16)}-${at}.${info.ext}`, old = pics[key];
+          fs.writeFileSync(path.join(PICS_DIR, file), buf);
+          if (old && old.file) { try { fs.unlinkSync(path.join(PICS_DIR, path.basename(old.file))); } catch {} }
+          pics[key] = { name: who, file, type: info.type, w: info.w, h: info.h, size: buf.length, at, use: 'art' };     // uploading a picture means: use it
+          picsChanged(); return ok(res, { items: picsList(), item: picsList().find(x => picKey(x.name) === key) });
+        }
+        const b = await readJSONBody(req), key = picKey(b && b.name), cur = pics[key];
+        if (method === 'PATCH') {                        // which picture this player uses
+          const use = b.use === 'art' ? 'art' : 'profile';
+          if (use === 'art' && !(cur && cur.file)) return fail(res, 400, 'Upload a character image for this player first.');
+          if (cur) { cur.use = use; picsChanged(); }
+          return ok(res, { items: picsList() });
+        }
+        if (method === 'DELETE') {
+          if (cur) { if (cur.file) { try { fs.unlinkSync(path.join(PICS_DIR, path.basename(cur.file))); } catch {} } delete pics[key]; picsChanged(); }
+          return ok(res, { items: picsList() });
         }
       }
 
@@ -2726,6 +2874,35 @@ iframe.next{opacity:0;pointer-events:none}</style></head><body>
         if (localOnly()) return;
         tunnel.stop();
         return ok(res, tunnel.status);
+      }
+
+      // ---------- custom VS Splash pictures: a name bar and a header ----------
+      if (p === '/api/vs-art') {
+        if (method === 'GET') return ok(res, vsArtView());
+        if (localOnly()) return;
+        const kind = url.searchParams.get('kind') === 'header' ? 'header' : 'bar', a = config.vsArt;
+        const drop = k => { if (a[k] && a[k].file) { try { fs.unlinkSync(path.join(VSART_DIR, path.basename(a[k].file))); } catch {} } a[k] = null; };
+        if (method === 'POST') {                         // the picture is the request body; ?kind=bar|header
+          const buf = await readBody(req, VSART_RULES.maxBytes).catch(() => null);
+          if (!buf) return fail(res, 413, 'That picture is over 8 MB. Save it smaller and try again.');
+          const info = imageInfo(buf), want = VSART_RULES[kind];
+          if (!info) return fail(res, 400, 'Use a PNG, WebP or JPG picture.');
+          if (info.w > VSART_RULES.maxSide || info.h > VSART_RULES.maxSide) return fail(res, 400, `That picture is ${info.w} × ${info.h}. Keep each side under ${VSART_RULES.maxSide} px; ${want.width} × ${want.height} is the size it is shown at.`);
+          fs.mkdirSync(VSART_DIR, { recursive: true });
+          const at = Date.now(), file = `${kind}-${at}.${info.ext}`;
+          fs.writeFileSync(path.join(VSART_DIR, file), buf);
+          drop(kind); a[kind] = { file, w: info.w, h: info.h, at };
+          if (kind === 'bar') a.auto = true;             // a new name bar starts with lettering fitted to it
+          vsArtChanged(); return ok(res, vsArtView());
+        }
+        if (method === 'PATCH') {                        // lettering colours, mirroring, and what the panel worked out from the picture
+          const b = await readJSONBody(req) || {};
+          config.vsArt = cleanVsArt({ ...a, ...(typeof b.mirror === 'boolean' ? { mirror: b.mirror } : {}), ...(typeof b.auto === 'boolean' ? { auto: b.auto } : {}), ...(b.ink ? { ink: b.ink } : {}), ...(b.accent ? { accent: b.accent } : {}),
+            ...(typeof b.scrim === 'boolean' ? { scrim: b.scrim } : {}), ...(b.fit && typeof b.fit === 'object' ? { fit: b.fit } : {}) });
+          vsArtChanged(); return ok(res, vsArtView());
+        }
+        if (method === 'DELETE') { drop(kind); vsArtChanged(); return ok(res, vsArtView()); }
+        return fail(res, 405, 'Use GET, POST, PATCH or DELETE.');
       }
 
       // ---------- overlays ----------

@@ -6,9 +6,9 @@
 <meta name="sb-vs" content="shattered">
 <meta name="sb-victory" content="shattered">
 <meta name="sb-format" content="splash">
-<title>Shattered</title>
+<title>Ember</title>
 <!--
-  SHATTERED.  1920 x 1080, transparent. One layout for every fighting game.
+  EMBER (the layout named Shattered until 1.1.2).  1920 x 1080, transparent. One layout for every fighting game.
 
   A dark obsidian frame that runs along the top of the HUD, wraps over and around the
   game's round-win circles (never covering them), and leaves the timer and portraits clear.
@@ -18,7 +18,8 @@
     • Ember currents run along the frame edge.
     • Taking a game: shockwave + sparks from the score.
     • Facing elimination (opponent one game away): hairline cracks glow in the plate.
-    • Set over: the loser's plate cracks and flashes, and stays fractured (glowing cracks, dimmed glass).
+    • Set over: the loser's plate cracks and flashes, and stays fractured (glowing cracks, dimmed glass; its name
+      and score stay readable).
       The winner's plate lights up in gold. Then the victory splash takes the screen.
       Reset the scores (or load the next match) and the cracks seal up.
 
@@ -58,6 +59,9 @@
   .sb-ready #frame .comet { opacity: .95; transition: opacity .6s 1.2s; }
   #frame .edge.dead { stroke: var(--ember-deep); opacity: .35; animation: smolder 2.4s ease-in-out infinite; }
   #frame .edge.champ { stroke: #fff1c2; stroke-width: 2.6; filter: url(#glow) drop-shadow(0 0 6px #f6c453); transition: stroke .5s; }
+  /* the light that runs round each plate follows it: gold on the winner's, nearly out on the loser's */
+  #frame .comet.champ { stroke: #fff1c2; }
+  #frame .comet.dead { opacity: .22 !important; }
   @keyframes smolder { 50% { opacity: .15; } }
 
   /* ================= plates ================= */
@@ -65,9 +69,13 @@
   .sb-ready .plate { opacity: 1; filter: none; }
   /* the loser's plate: fractured, dimmed glass that stays on screen */
   .plate.cracked .skin { filter: brightness(.55) saturate(.5); transition: filter .5s; }
-  .plate.cracked .who, .plate.cracked .score { opacity: .62; filter: saturate(.4); transition: opacity .5s, filter .5s; }
-  .plate.cracked .cracks path { opacity: .9; stroke: #ff6a2a; animation: smolder-crack 2.6s ease-in-out infinite; }
-  .plate.cracked .cracks path.outer { opacity: .55; stroke-width: .9; }
+  /* …but its lettering stays readable: the name keeps most of its light and a dark halo, and the score box stays solid,
+     so the final score never has cracks showing through it */
+  .plate.cracked .who { opacity: .82; filter: saturate(.45); transition: opacity .5s, filter .5s; }
+  .plate.cracked .name { filter: drop-shadow(0 2px 0 rgba(0,0,0,.7)) drop-shadow(0 0 5px rgba(0,0,0,.95)); }
+  .plate.cracked .score { filter: saturate(.45) brightness(.82); transition: filter .5s; }
+  .plate.cracked .cracks path { opacity: .8; stroke: #ff6a2a; animation: smolder-crack 2.6s ease-in-out infinite; }
+  .plate.cracked .cracks path.outer { opacity: .45; stroke-width: .9; }
   @keyframes smolder-crack { 50% { opacity: .35; } }
   /* the winner's plate: lit up in gold */
   /* winner: heavenly golden light pours down through the glass (not a flat gold fill) */
@@ -75,7 +83,7 @@
     background:
       linear-gradient(105deg, transparent 38%, rgba(255,255,255,.75) 50%, transparent 62%) no-repeat,
       repeating-linear-gradient(104deg, transparent 0 34px, rgba(255,240,190,.13) 34px 44px, transparent 44px 70px),
-      radial-gradient(ellipse 70% 170% at 50% -60%, rgba(255,250,228,.95), rgba(246,196,83,.55) 40%, rgba(217,154,43,.18) 70%, transparent 90%),
+      radial-gradient(ellipse 70% 170% at 50% -60%, rgba(255,250,228,.8), rgba(246,196,83,.42) 40%, rgba(217,154,43,.16) 70%, transparent 90%),
       linear-gradient(0deg, rgba(246,196,83,.35), transparent 40%);
     background-size: 260% 100%, 100% 100%, 100% 100%, 100% 100%; background-position: 140% 0, 0 0, 0 0, 0 0; }
   .plate.champ .gild { opacity: 1; animation: gild-glint 3.4s .4s ease-in-out infinite, gild-breathe 2.8s steps(20, jump-none) infinite; }
@@ -85,12 +93,14 @@
     background: radial-gradient(ellipse 48% 42% at 50% 40%, rgba(255,240,190,.75), rgba(246,196,83,.32) 50%, transparent 74%); }
   .halo.on { opacity: 1; animation: halo 3s ease-in-out infinite; }
   @keyframes halo { 50% { opacity: .65; transform: scaleX(1.03); } }
+  /* the lettering on the lit plate: a dark edge and a soft shadow under it, so it reads against the light */
+  .plate.champ .who { background: radial-gradient(ellipse 58% 82% at 50% 52%, rgba(28,20,7,.6), rgba(28,20,7,.28) 55%, transparent 78%); }
   .plate.champ .name { background: linear-gradient(180deg, #ffffff 0%, #fffaf0 40%, #ffe7a3 70%, #f6c453 100%); -webkit-background-clip: text; background-clip: text; color: transparent;
-    filter: drop-shadow(0 0 1px rgba(70,40,0,.95)) drop-shadow(0 0 8px rgba(255,226,140,.9)); animation: heavenly 2.6s steps(20, jump-none) infinite; }
-  @keyframes heavenly { 50% { filter: drop-shadow(0 0 1px rgba(70,40,0,.95)) drop-shadow(0 0 16px rgba(255,236,170,1)); } }
-  .plate.champ .team { color: #ffe7a3; text-shadow: 0 0 8px rgba(246,196,83,.9); }
-  .plate.champ .line2 { color: #fff1c2; text-shadow: 0 0 6px rgba(246,196,83,.9); }
-  .plate.champ .arm .lbl { color: #ffe7a3; }
+    filter: drop-shadow(0 0 1px rgba(40,22,0,1)) drop-shadow(0 2px 0 rgba(40,22,0,.85)) drop-shadow(0 0 7px rgba(255,226,140,.5)); animation: heavenly 2.6s steps(20, jump-none) infinite; }
+  @keyframes heavenly { 50% { filter: drop-shadow(0 0 1px rgba(40,22,0,1)) drop-shadow(0 2px 0 rgba(40,22,0,.85)) drop-shadow(0 0 13px rgba(255,236,170,.85)); } }
+  .plate.champ .team { color: #ffe7a3; text-shadow: 0 1px 0 rgba(40,22,0,.95), 0 0 2px rgba(40,22,0,.9), 0 0 8px rgba(246,196,83,.7); }
+  .plate.champ .line2 { color: #fff1c2; text-shadow: 0 1px 0 rgba(40,22,0,.95), 0 0 2px rgba(40,22,0,.9), 0 0 6px rgba(246,196,83,.7); }
+  .plate.champ .arm .lbl { color: #ffe7a3; text-shadow: 0 1px 0 rgba(40,22,0,.9); }
   .plate.champ .pip { border-color: #ffe7a3; background: rgba(255,226,140,.15); }
   .plate.champ .pip.on { background: linear-gradient(135deg, #fff, #fff1c2 40%, #c98a1c); border-color: #fff8e0; box-shadow: 0 0 10px rgba(255,236,170,.9); }
   .plate.champ.gold-in { animation: gold-in .8s ease-out; }
@@ -133,15 +143,18 @@
     filter: drop-shadow(0 2px 0 rgba(0,0,0,.7));
   }
   .ltag { flex: none; font: 700 13px/18px 'Chakra Petch', sans-serif; padding: 0 6px; background: var(--steel); color: #08080a; clip-path: polygon(4px 0, 100% 0, calc(100% - 4px) 100%, 0 100%); }
-  .line2 { font: 600 12px 'Chakra Petch', sans-serif; letter-spacing: 2.5px; text-transform: uppercase; color: var(--muted); height: 14px; line-height: 14px; }
-  .status { display: none; color: var(--ember); letter-spacing: 3px; }
-  .plate.matchpoint .status.mp { display: inline; animation: blink 1s steps(2) infinite; }
-  .plate.danger .status.dg { display: inline; color: var(--ember-deep); }
+  /* the small lettering (status line, event line, SET, 1P / 2P) is a size up from the first design and never darker
+     than the accent colour: it is the first thing to go soft when a stream is compressed */
+  .line2 { font: 600 13px 'Chakra Petch', sans-serif; letter-spacing: 2.2px; text-transform: uppercase; color: var(--steel); height: 15px; line-height: 15px; }
+  .line2 > span:first-child { opacity: .78; }
+  .status { display: none; color: var(--ember); font-weight: 700; letter-spacing: 2.6px; }
+  .plate.matchpoint .status.mp { display: inline; color: var(--ember-hot); animation: blink 1s steps(2) infinite; }
+  .plate.danger .status.dg { display: inline; }
   .plate.champ .status.win { display: inline; color: var(--ember-hot); }
   .plate.matchpoint.danger .status.mp, .plate.matchpoint.danger .status.dg { display: none; }
   .plate.matchpoint.danger .status.fin { display: inline; color: var(--ember-hot); animation: blink 1s steps(2) infinite; }
   .plate.champ .status.mp, .plate.champ .status.dg, .plate.champ .status.fin { display: none; }
-  @keyframes blink { 50% { opacity: .35; } }
+  @keyframes blink { 50% { opacity: .45; } }
 
   /* score */
   .score {
@@ -151,7 +164,7 @@
     clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
   }
   .score .num { font: 700 38px/1 'Chakra Petch', sans-serif; color: #fff; text-shadow: 0 0 14px rgba(255,90,31,.55); display: inline-block; }
-  .score .side { position: absolute; top: 3px; font: 700 9px 'Chakra Petch', sans-serif; letter-spacing: 1px; color: var(--ember); }
+  .score .side { position: absolute; top: 2px; font: 700 10px 'Chakra Petch', sans-serif; letter-spacing: 1px; color: var(--ember-hot); }
   .p1 .score .side { left: 11px; }
   .p2 .score .side { right: 11px; }
   .score.hit { animation: scorehit .7s ease-out; }
@@ -173,7 +186,7 @@
 
   /* arm over the round circles: set pips */
   .arm { position: absolute; top: 0; display: flex; align-items: center; justify-content: center; gap: 8px; }
-  .arm .lbl { font: 700 9px 'Chakra Petch', sans-serif; letter-spacing: 2.5px; color: var(--ash); }
+  .arm .lbl { font: 700 10px 'Chakra Petch', sans-serif; letter-spacing: 2.2px; color: var(--muted); }
   .pips { display: flex; gap: 7px; }
   .p2 .pips { flex-direction: row-reverse; }
   .pip { width: 11px; height: 11px; transform: rotate(45deg); border: 1.5px solid #4a4d57; background: #0a0a0d; transition: all .35s; }
@@ -188,10 +201,12 @@
   /* ================= centre tag ================= */
   .center { position: absolute; top: 0; opacity: 0; transition: opacity .5s .7s; z-index: 2; }
   .sb-ready .center { opacity: 1; }
-  .center .in { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; padding-top: 3px; }
-  .meta { font: 700 11px 'Chakra Petch', sans-serif; letter-spacing: 2px; text-transform: uppercase; color: var(--ember); white-space: nowrap; max-width: 92%; overflow: hidden; display: flex; gap: 7px; }
-  .meta .dot { color: var(--ash); }
-  .round { margin-top: 2px; font-weight: 800; font-style: italic; font-size: 23px; letter-spacing: 1px; text-transform: uppercase; color: #fff; white-space: nowrap; max-width: 86%; overflow: hidden; text-overflow: ellipsis; padding-right: 3px; }
+  .center .in { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; padding-top: 2px; }
+  .meta { font: 700 12px/15px 'Chakra Petch', sans-serif; letter-spacing: 1.7px; text-transform: uppercase; color: var(--ember); white-space: nowrap; max-width: 92%; overflow: hidden; display: flex; gap: 7px; }
+  .meta .dot { color: var(--muted); }
+  .meta > span { flex: none; }
+  .meta.long > span:first-child { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }   /* too long even at the smallest size: the event ends in … */
+  .round { margin-top: 1px; line-height: 25px; font-weight: 800; font-style: italic; font-size: 23px; letter-spacing: 1px; text-transform: uppercase; color: #fff; white-space: nowrap; max-width: 86%; overflow: hidden; text-overflow: ellipsis; padding-right: 3px; }
   .center.gf .round { background: linear-gradient(180deg, #fff1df, #ffb36b 50%, #ff5a1f); -webkit-background-clip: text; background-clip: text; color: transparent; }
 
   /* ================= sparks ================= */
@@ -468,7 +483,7 @@
       plate.classList.remove('flash');
       plate.classList.add('cracked');
       plate.querySelectorAll('.cracks path').forEach(p => p.getAnimations().forEach(a => a.cancel()));
-      $('edge' + side).classList.add('dead');
+      $('edge' + side).classList.add('dead'); $('comet' + side).classList.add('dead');
       burst(plateX(side) + O.x, O.y, 70, 1.05);
     }, 760);
   }
@@ -476,7 +491,7 @@
   function seal(side, tok) {
     const plate = plates[side];
     plate.classList.remove('cracked');
-    $('edge' + side).classList.remove('dead');
+    $('edge' + side).classList.remove('dead'); $('comet' + side).classList.remove('dead');
     void plate.offsetWidth;                            // restart the reform animation
     plate.classList.add('reform');
     const { O } = fracture(side);
@@ -489,7 +504,7 @@
     if (instant) {                                     // first load: jump straight to the right look
       want[side] = cracked; token[side]++; cleanup(side);
       plate.classList.toggle('cracked', cracked);
-      $('edge' + side).classList.toggle('dead', cracked);
+      $('edge' + side).classList.toggle('dead', cracked); $('comet' + side).classList.toggle('dead', cracked);
       return;
     }
     if (want[side] === cracked) return;
@@ -526,7 +541,7 @@
   function fitAll() {
     document.querySelectorAll('.plate .name').forEach(el => fit(el, 36, 20));
     document.querySelectorAll('.round').forEach(el => fit(el, 23, 14));
-    document.querySelectorAll('.center .meta').forEach(el => { el.style.letterSpacing = '2px'; fit(el, 11, 8); if (el.scrollWidth > el.clientWidth + 1) el.style.letterSpacing = '.5px'; });
+    document.querySelectorAll('.center .meta').forEach(el => { el.classList.remove('long'); el.style.letterSpacing = '1.7px'; fit(el, 12, 9); if (el.scrollWidth > el.clientWidth + 1) el.style.letterSpacing = '.5px'; el.classList.toggle('long', el.scrollWidth > el.clientWidth + 1); });
   }
   if (document.fonts) { document.fonts.ready.then(fitAll); document.fonts.addEventListener('loadingdone', fitAll); }
 
@@ -550,6 +565,7 @@
       const wasChamp = plate.classList.contains('champ');
       plate.classList.toggle('champ', winner === side);
       $('edge' + side).classList.toggle('champ', winner === side);
+      $('comet' + side).classList.toggle('champ', winner === side);
       $('halo' + side).classList.toggle('on', winner === side);
       if (!first && winner === side && !wasChamp) {     // just won: the plate lights up in gold
         plate.classList.remove('gold-in'); void plate.offsetWidth; plate.classList.add('gold-in');
