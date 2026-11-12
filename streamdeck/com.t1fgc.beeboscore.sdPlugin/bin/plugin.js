@@ -3894,7 +3894,7 @@ var INFO = (() => {
     return {};
   }
 })();
-var VERSIONS = { plugin: INFO.plugin && INFO.plugin.version || (true ? "1.1.0.0" : ""), app: INFO.application && INFO.application.version || "" };
+var VERSIONS = { plugin: INFO.plugin && INFO.plugin.version || (true ? "1.1.1.0" : ""), app: INFO.application && INFO.application.version || "" };
 var CANDIDATES = ["http://127.0.0.1:3300", "http://127.0.0.1:3301", "http://127.0.0.1:3302"];
 var ws = null;
 var globals = { address: "" };

@@ -71,7 +71,19 @@ function saveBounds() {
   try { fs.mkdirSync(path.dirname(WINDOW_FILE), { recursive: true }); fs.writeFileSync(WINDOW_FILE, JSON.stringify({ ...win.getNormalBounds(), maximized: win.isMaximized() })); } catch {}
 }
 
+// A short record of every start and every update hand-over: BeeboScore Data/update.log (the last 40 lines).
+// It is what to look at when "Restart & update" closed the app and the new version did not come up.
+function updateLog(msg) {
+  try {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+    const f = path.join(DATA_DIR, 'update.log'); let old = ''; try { old = fs.readFileSync(f, 'utf8'); } catch {}
+    const lines = old.split('\n').filter(Boolean).slice(-39); lines.push(`${new Date().toISOString()}  ${app.getVersion()}  ${msg}`);
+    fs.writeFileSync(f, lines.join('\n') + '\n');
+  } catch {}
+}
+
 if (!app.requestSingleInstanceLock()) {
+  updateLog('another copy of BeeboScore is already running, so this one closed');
   app.quit();
 } else {
   app.on('second-instance', () => { if (win) { if (win.isMinimized()) win.restore(); win.show(); win.focus(); } });
@@ -79,7 +91,7 @@ if (!app.requestSingleInstanceLock()) {
 }
 
 async function boot() {
-  updater = createUpdater(app, { dir: PORTABLE_DIR });
+  updater = createUpdater(app, { dir: PORTABLE_DIR, log: updateLog });
   try {
     const sdPlugin = SD_PLUGIN = app.isPackaged ? path.join(process.resourcesPath, 'streamdeck', 'com.t1fgc.beeboscore.streamDeckPlugin')
       : path.join(__dirname, '..', 'streamdeck', 'dist', 'com.t1fgc.beeboscore.streamDeckPlugin');
@@ -108,6 +120,7 @@ async function boot() {
     } catch (e) { try { fs.writeFileSync(out, JSON.stringify({ error: String(e && e.message || e) })); } catch {} }
     app.isQuitting = true; if (srv) srv.close(); app.exit(code); return;
   }
+  updateLog(`started on port ${srv.port}`);
   buildMenu();
   createWindow();
 }
@@ -123,7 +136,20 @@ function createWindow() {
     webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true, spellcheck: false, backgroundThrottling: false, autoplayPolicy: 'no-user-gesture-required' },   // sound: the preview plays without a click first. Autoscore keeps watching while the window is minimised
   });
   win.loadURL(`http://localhost:${srv.port}/`);
-  win.once('ready-to-show', () => { if (b && b.maximized) win.maximize(); win.show(); });   // only if you left it maximised last time
+  win.once('ready-to-show', () => {
+    if (b && b.maximized) win.maximize();                 // only if you left it maximised last time
+    win.show();
+    // When the app is started by "Restart & update" (or by anything else that is not a click), Windows opens the window
+    // BEHIND whatever is in front and only flashes its taskbar button, which looks as if the app never came back.
+    // Holding it on top for a moment puts it in view; if Windows still will not give it the keyboard, the taskbar button flashes.
+    if (process.platform === 'win32') {
+      try {
+        win.setAlwaysOnTop(true); win.moveTop(); win.focus();
+        setTimeout(() => { if (!win) return; win.setAlwaysOnTop(false); if (!win.isFocused()) { win.flashFrame(true); win.once('focus', () => { if (win) win.flashFrame(false); }); } }, 600);
+      } catch {}
+    }
+    updateLog('window shown');
+  });
   let t = null;
   const remember = () => { clearTimeout(t); t = setTimeout(saveBounds, 500); };
   win.on('resize', remember); win.on('move', remember); win.on('close', saveBounds);

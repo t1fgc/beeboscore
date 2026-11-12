@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.1.7
+
+### Fixed
+
+- **The window comes back after an update.** A window opened by Restart & update is not opened by a click, so Windows could put it behind whatever was in front and only flash its taskbar button. The app now brings its window to the front when it starts.
+- The hand-over waits a little longer (1.5 seconds) after the old copy closes before starting the new exe.
+
+### Changed
+
+- **Stream Deck: the VS Splash key is now named "Show / hide VS Splash"** (plugin 1.1.1), so it sits next to "Show / hide overlay" in the Stream Deck app's list and is easier to find. It works as before: one press shows the splash, the next hides it, and the key lights up while the splash is on stream.
+
+### New
+
+- **`update.log`** in the `BeeboScore Data` folder: one line each time the app starts, shows its window, or hands over to a new version (the last 40 lines are kept). Nothing in it leaves your PC.
+
 ## 1.1.6
 
 ### Fixed

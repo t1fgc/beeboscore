@@ -21,6 +21,7 @@ function createUpdater(app, opts = {}) {
    *  app closes. The new exe unpacks into the same folder, so it must not start until the old launcher has finished deleting:
    *  the script waits for this app AND for its launcher (this process's parent), each for up to 30 seconds. */
   function launch(file) {
+    const log = typeof opts.log === 'function' ? opts.log : () => {};
     const env = { ...process.env };
     for (const k of Object.keys(env)) if (/^PORTABLE_EXECUTABLE_/i.test(k)) delete env[k];   // the new exe works out its own folder
     const fallback = () => { try { shell.showItemInFolder(file); } catch {} };               // couldn't hand over: show the new exe instead
@@ -28,11 +29,12 @@ function createUpdater(app, opts = {}) {
     try {
       const q = s => "'" + String(s).replace(/'/g, "''") + "'";
       const stub = process.env.PORTABLE_EXECUTABLE_FILE && process.ppid > 4 ? `Wait-Process -Id ${process.ppid} -Timeout 30 -ErrorAction SilentlyContinue; ` : '';      // only when a launcher started this copy
-      const script = `Wait-Process -Id ${process.pid} -Timeout 30 -ErrorAction SilentlyContinue; ${stub}Start-Sleep -Milliseconds 500; Start-Process -FilePath ${q(file)} -WorkingDirectory ${q(path.dirname(file))}`;
+      const script = `Wait-Process -Id ${process.pid} -Timeout 30 -ErrorAction SilentlyContinue; ${stub}Start-Sleep -Milliseconds 1500; Start-Process -FilePath ${q(file)} -WorkingDirectory ${q(path.dirname(file))}`;      // 1.5 s: time for this copy's helper processes to let go of the unpacked files
+      log(`Restart & update: handing over to ${path.basename(file)} (this app is process ${process.pid}, its launcher ${process.env.PORTABLE_EXECUTABLE_FILE ? process.ppid : 'none'})`);
       const child = spawn('powershell.exe', ['-NoProfile', '-NonInteractive', '-WindowStyle', 'Hidden', '-Command', script], { detached: true, stdio: 'ignore', windowsHide: true, env });
-      child.once('error', fallback);
+      child.once('error', e => { log(`the hand-over could not start: ${e && e.message}`); fallback(); });
       child.once('spawn', () => { child.unref(); setTimeout(() => app.quit(), 250); });      // (the control panel has already been showing "Installing…" for a moment: see installNow in public/panel.js)
-    } catch { fallback(); }
+    } catch (e) { log(`the hand-over failed: ${e && e.message}`); fallback(); }
   }
 
   return createPortableUpdater({

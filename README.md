@@ -145,7 +145,7 @@ Copy the OBS link, or press **Go online** for a public overlay link and a passwo
 
 ### Stream Deck
 
-The plugin comes inside the app: **File → Install Stream Deck Plugin**. Twelve keys: player score (tap +1, hold −1), reset, swap, undo, losers [L], show / hide overlay, VS Splash, switch layout, set player, next match, report result to start.gg and refresh start.gg matches. Needs Stream Deck 6.4 or newer.
+The plugin comes inside the app: **File → Install Stream Deck Plugin**. Twelve keys: player score (tap +1, hold −1), reset, swap, undo, losers [L], show / hide overlay, show / hide VS Splash, switch layout, set player, next match, report result to start.gg and refresh start.gg matches. Needs Stream Deck 6.4 or newer.
 
 ### Settings → Check for updates
 

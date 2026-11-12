@@ -9,6 +9,13 @@
 (() => {
   'use strict';
   const NOTES = {
+    '1.1.7': [
+      ['Fixed', [
+        ['The window comes back after an update', 'After Restart & update, the new version\'s window now comes to the front. Before, Windows could open it behind your other windows, so it looked as if the app had not come back.'],
+        ['Stream Deck: Show / hide VS Splash', 'The VS Splash key is now listed as "Show / hide VS Splash", next to "Show / hide overlay", so it is easier to find. One press shows the splash, the next hides it, and the key lights up while it is on stream. The app updates the plugin for you; if the key is missing, use File → Install Stream Deck Plugin.'],
+        ['A record of each update', 'The app keeps a short update.log in its BeeboScore Data folder: when it started, and when it handed over to a new version. It helps work out what happened if an update ever does not reopen the app.'],
+      ]],
+    ],
     '1.1.6': [
       ['Fixed', [
         ['Wording', 'Typos, punctuation and a few unclear sentences were fixed in the app and its guides. Nothing else changed.'],

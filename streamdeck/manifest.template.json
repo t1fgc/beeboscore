@@ -1,7 +1,7 @@
 {
   "$schema": "https://schemas.elgato.com/streamdeck/plugins/manifest.json",
   "Name": "BeeboScore",
-  "Version": "1.1.0.0",
+  "Version": "1.1.1.0",
   "Author": "Beebo",
   "Description": "Run the BeeboScore fighting game scoreboard from your Stream Deck: live score keys, reset, swap sides, undo, losers [L], and start.gg: next match, set player, report results and refresh.",
   "UUID": "com.t1fgc.beeboscore",
@@ -132,9 +132,9 @@
     },
     {
       "UUID": "com.t1fgc.beeboscore.vs",
-      "Name": "VS Splash",
+      "Name": "Show / hide VS Splash",
       "Icon": "imgs/actions/vs",
-      "Tooltip": "Shows the VS Splash over the scoreboard; press again to hide it.",
+      "Tooltip": "Shows the VS Splash over the scoreboard; press again to hide it. The key lights up while the splash is on stream.",
       "States": [
         {
           "Image": "imgs/keys/vs-off",
