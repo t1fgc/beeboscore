@@ -179,7 +179,7 @@
         $('lock').checked = st.lock; $('keyOn').checked = st.key.on; $('keyColor').value = hex(st.key.color); $('tol').value = st.key.tol; $('soft').value = st.key.soft; $('spill').checked = st.key.spill;
         $('keyBox').classList.toggle('pe-off', !st.key.on);
         $('pick').textContent = st.pick ? 'Click the background…' : 'Pick from the picture'; pic.classList.toggle('pick', st.pick);
-        $('keyNote').textContent = st.key.on ? (screen && hex(st.key.color) === hex(screen) ? `This looks like a ${screen[2] > screen[1] ? 'blue' : 'green'}-screen picture, so its background is already removed. Untick to keep it.` : 'The checked squares show what will be see-through.') : 'For a picture taken in front of a green (or blue) screen.';
+        $('keyNote').textContent = st.key.on ? (screen && hex(st.key.color) === hex(screen) ? `This looks like a ${screen[2] > screen[1] ? 'blue' : 'green'}-screen picture, so its background is already removed. Untick to keep it.` : 'The chequered squares show what will be see-through.') : 'For a picture taken in front of a green (or blue) screen.';
       }
 
       // ---- crop: move, resize (corners keep the panel's shape when it's locked)

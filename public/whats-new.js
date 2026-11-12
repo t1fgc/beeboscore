@@ -9,6 +9,11 @@
 (() => {
   'use strict';
   const NOTES = {
+    '1.1.6': [
+      ['Fixed', [
+        ['Wording', 'Typos, punctuation and a few unclear sentences were fixed in the app and its guides. Nothing else changed.'],
+      ]],
+    ],
     '1.1.5': [
       ['Improved', [
         ['A starting screen', 'A small "BeeboScore: starting up" picture now shows while the exe unpacks itself, so you can see it is on its way. It also shows after Restart & update, in place of several seconds with nothing on screen.'],

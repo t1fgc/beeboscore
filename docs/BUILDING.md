@@ -14,7 +14,7 @@ npm start            # the desktop app
 npm run server       # only the server; then open http://localhost:3300
 ```
 
-Run from source, the app writes its data into the project folder (`data/`, `output/`, and new layouts under `overlays/`). Those are in `.gitignore`.
+When it is run from source, the app writes its data into the project folder (`data/`, `output/`, and new layouts under `overlays/`). Those are in `.gitignore`.
 
 ## Build the exe
 

@@ -1247,7 +1247,7 @@ setInterval(function(){fetch('/api/potato',{cache:'no-store'}).then(function(r){
         const on = !!(state.victory && state.victory.show), want = b.show === undefined || b.show === 'toggle' ? !on : !!b.show;
         if (!want) { if (on) setState({ victory: { show: false } }, { undo: true }); break; }
         const w = winnerOf(state);
-        if (!w) throw new Error('Nobody has won the set yet — the victory splash shows the set winner.');
+        if (!w) throw new Error('Nobody has won the set yet — the Victory Splash shows the set winner.');
         if (!on) showVictory(w);
         break;
       }

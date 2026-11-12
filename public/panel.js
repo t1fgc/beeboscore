@@ -867,7 +867,7 @@
     $('#sggSignedOut').hidden = on; $('#sggSignedIn').hidden = !on;
     if (on) { $('#sggUser').textContent = (a.user && a.user.name) || 'start.gg account'; $('#sggAva').src = (a.user && a.user.avatar) || ''; $('#sggUserSub').textContent = `Signed in with start.gg · ${a.protection === 'os' ? 'protected by Windows' : 'encrypted on this PC'}`; }
     $('#sggSignin').disabled = !!a.waiting; $('#sggSignin').lastChild.textContent = a.waiting ? 'Waiting for start.gg…' : 'Sign in with start.gg';
-    $('#sggSigninHint').innerHTML = a.ready ? 'Opens start.gg in your browser — if you’re already signed in there, it’s one click. Your sign-in stays encrypted on this PC and never leaves BeeboScore. Sign out any time.'
+    $('#sggSigninHint').innerHTML = a.ready ? 'Opens start.gg in your browser — if you’re already signed in there, it’s one click. Your sign-in stays encrypted on this PC and never leaves BeeboScore. Sign out at any time.'
       : 'Sign-in needs a start.gg app — open <b>Advanced</b> below to add one, or use an API token.';
     if (document.activeElement !== $('#sggAppId')) $('#sggAppId').value = a.clientId || '';
     $('#sggAppSecret').placeholder = a.hasSecret ? '•••••• (saved)' : a.builtIn ? 'built in' : '';
@@ -1063,8 +1063,8 @@
     const b = $('nav.rail button[data-tab="autoscore"]'); if (b) b.hidden = !on;
     if (!on && $('main .tab[data-tab="autoscore"].on')) showTab('match');
   }
-  $('#setAutoVictory').onchange = e => saveSettings({ autoVictory: e.target.checked }, e.target.checked ? 'The victory splash will show when a set ends' : 'The victory splash only shows when you ask');
-  $('#setVictoryHold').onchange = e => saveSettings({ victoryHold: e.target.value }, e.target.value === '0' ? 'The victory splash stays up until you hide it' : `The victory splash hides after ${e.target.value} s`);
+  $('#setAutoVictory').onchange = e => saveSettings({ autoVictory: e.target.checked }, e.target.checked ? 'The Victory Splash will show when a set ends' : 'The Victory Splash only shows when you ask');
+  $('#setVictoryHold').onchange = e => saveSettings({ victoryHold: e.target.value }, e.target.value === '0' ? 'The Victory Splash stays up until you hide it' : `The Victory Splash hides after ${e.target.value} s`);
   $('#setRefreshReset').onchange = e => saveSettings({ refreshOnReset: e.target.checked }, e.target.checked ? 'The overlay will refresh when scores are reset' : 'The overlay will no longer refresh on reset');
   // ------------------------------------------------------------ sound (sb-sound.js): stream on/off + volume here, the preview's own level under the preview
   var BS = window.BeeboSound;          // (var: the layout list can ask for the sound test before this line runs)
@@ -1193,7 +1193,7 @@
     const gf = /grand\s*final/i.test(st.round || '') && !/reset/i.test(st.round || '') && winner.loser && !loserP.loser;
     $('#winGF').hidden = !gf;
     const vOn = !!(st.victory && st.victory.show);
-    $('#winVictory').textContent = vOn ? '🏆 Hide victory splash' : '🏆 Victory splash'; $('#winVictory').classList.toggle('on', vOn);
+    $('#winVictory').textContent = vOn ? '🏆 Hide Victory Splash' : '🏆 Victory Splash'; $('#winVictory').classList.toggle('on', vOn);
     $('#winSub').textContent = gf ? 'The player from losers took Grand Finals — time for a bracket reset.' : "What's next?";
     const nx = nextSet();
     $('#winNextMatch').hidden = !nx || gf;
@@ -1206,7 +1206,7 @@
   $('#winScores').onclick = () => pushNow(d => { d.p1.score = 0; d.p2.score = 0; });
   $('#winGF').onclick = () => pushNow(d => { d.round = 'Grand Finals Reset'; d.p1.loser = true; d.p2.loser = true; d.p1.score = 0; d.p2.score = 0; }, 'Bracket reset! Both players marked [L]');
   async function toggleVictory(show) {
-    try { const r = await api('/api/victory', { method: 'POST', body: { show: show === undefined ? 'toggle' : show } }); server = r.state; renderWin(); toast(server.victory && server.victory.show ? 'Victory splash on stream' : 'Victory splash hidden'); }
+    try { const r = await api('/api/victory', { method: 'POST', body: { show: show === undefined ? 'toggle' : show } }); server = r.state; renderWin(); toast(server.victory && server.victory.show ? 'Victory Splash on stream' : 'Victory Splash hidden'); }
     catch (e) { toast(e.message, true); }
   }
   $('#winVictory').onclick = () => toggleVictory();

@@ -60,7 +60,7 @@ body.mk-open .proto { margin: 14px 26px; }
 <li><b>Multiple supported game formats:</b> Team Battle, KOTH, Death Battle and more</li>
 <li><b>Twitch integration</b> for Viewer Battles and Tournaments</li>
 <li><b>Bracket Generator</b> with custom overlays</li>
-<li><b>Layout Designer</b> with so many features creators will love to start creating their own overlays!</li>
+<li><b>Layout Designer</b>, packed with features for creators who want to make their own overlays</li>
 <li>And more!</li>
 </ul>
 </div>
@@ -75,7 +75,7 @@ body.mk-open .proto { margin: 14px 26px; }
 <div class="win-acts">
 <button class="btn primary" hidden="" id="winNextMatch">Load next match</button>
 <button class="btn primary" hidden="" id="winReport" title="Send this result to start.gg">📤 Report to start.gg</button>
-<button class="btn" id="winVictory" title="Show (or hide) the full-screen victory splash for the winner">🏆 Victory splash</button>
+<button class="btn" id="winVictory" title="Show (or hide) the full-screen Victory Splash for the winner">🏆 Victory Splash</button>
 <button class="btn" id="winClear">Next set: clear players</button>
 <button class="btn ghost" id="winScores">Just reset scores</button>
 </div>
@@ -152,7 +152,7 @@ body.mk-open .proto { margin: 14px 26px; }
 <div class="sgg-acct local-only" id="sggAcct">
 <div id="sggSignedOut">
 <button class="btn primary sgg-signin" id="sggSignin"><svg viewbox="0 0 24 24"><path d="M3 3h11v5H8v8H3zm7 5h11v13H10v-5h6V13h-6z"></path></svg>Sign in with start.gg</button>
-<p class="hint" id="sggSigninHint">Opens start.gg in your browser — if you're already signed in there, it's one click. Your sign-in stays encrypted on this PC and never leaves BeeboScore. Sign out any time.</p>
+<p class="hint" id="sggSigninHint">Opens start.gg in your browser — if you're already signed in there, it's one click. Your sign-in stays encrypted on this PC and never leaves BeeboScore. Sign out at any time.</p>
 </div>
 <div class="sgg-me" hidden="" id="sggSignedIn"><img alt="" id="sggAva"/><div><b id="sggUser"></b><small id="sggUserSub">Signed in with start.gg</small></div><button class="btn sm ghost" id="sggSignout">Sign out</button></div>
 <details class="sgg-adv" id="sggAdv"><summary>Advanced: start.gg app for sign-in</summary>
@@ -182,7 +182,7 @@ body.mk-open .proto { margin: 14px 26px; }
 </div><div class="card local-only" id="picCard"><div id="picRoot"></div></div>
 <div class="card" hidden="" id="sggMine">
 <h2>My tournaments <span class="spacer"></span><button class="btn sm ghost" id="sggMineRefresh" title="Load the list again">↻</button></h2>
-<p class="hint" style="margin:-4px 0 10px">Tournaments you run on start.gg. <b>Pull players</b> loads one as your tournament: its players fill the name autocomplete and its bracket feeds the splash.</p>
+<p class="hint" style="margin:-4px 0 10px">Tournaments you run on start.gg. <b>Pull players</b> loads one as your tournament: its players fill the name autocomplete, and its matches and bracket records are ready to use.</p>
 <div class="sgg-mine" id="sggMineList"><div class="hint">Loading…</div></div>
 </div>
 </div>
@@ -635,8 +635,8 @@ body.mk-open .proto { margin: 14px 26px; }
 <label class="toggle opt"><input id="setAutoSwitch" type="checkbox"/><span class="sw"></span><span class="opt-t"><b>Follow the game</b><small>Switch to that game’s layout when you change the game at the top.</small></span></label>
 <label class="toggle opt"><input id="setFollowFormat" type="checkbox"/><span class="sw"></span><span class="opt-t"><b>Follow the format</b><small>Pick a format (crew battle, Death Battle…) and the layout switches to that format’s version of the same look. Clear the format and it switches back.</small></span></label>
 <label class="toggle opt"><input id="setRefreshReset" type="checkbox"/><span class="sw"></span><span class="opt-t"><b>Refresh OBS on reset</b><small>Reload the overlay when scores go back to 0–0, so every set starts clean.</small></span></label>
-<label class="toggle opt"><input id="setAutoVictory" type="checkbox"/><span class="sw"></span><span class="opt-t"><b>Victory splash when a set ends</b><small>A moment after someone wins, the winner takes the whole screen. You can also show it from the win card, a shortcut or Stream Deck.</small></span></label>
-<div class="opt-row"><span class="opt-t"><b>Keep the victory splash up for</b><small>Then it hides by itself.</small></span>
+<label class="toggle opt"><input id="setAutoVictory" type="checkbox"/><span class="sw"></span><span class="opt-t"><b>Victory Splash when a set ends</b><small>A moment after someone wins, the winner takes the whole screen. You can also show it from the win card, a shortcut or Stream Deck.</small></span></label>
+<div class="opt-row"><span class="opt-t"><b>Keep the Victory Splash up for</b><small>Then it hides by itself.</small></span>
 <select class="f local-only" id="setVictoryHold" style="width:auto"><option value="5">5 seconds</option><option value="8">8 seconds</option><option value="12">12 seconds</option><option value="20">20 seconds</option><option value="0">until I hide it</option></select></div>
 </div>
 </div>

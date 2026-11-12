@@ -60,7 +60,7 @@ Pick one from the **Layout** menu at the top of the app. It changes in OBS strai
 
 | Layout | What it is made of |
 | --- | --- |
-| **Ember** | The original (called Shattered until 1.1.2): dark obsidian with ember light. The winner turns gold and the loser's plate cracks. |
+| **Ember** | The original (called Shattered in 1.0.0): dark obsidian with ember light. The winner turns gold and the loser's plate cracks. |
 | **Frostbite** | Ice: frosted plates with icicles and drifting snow. |
 | **Venom** | Toxic slime: dripping plates, bubbles and horror lettering. |
 | **Royal** | Velvet banners with gold trim, and a crown for the winner. |
@@ -112,7 +112,7 @@ On the **start.gg** tab, choose what each player shows on both splashes:
 - **Profile picture:** their start.gg profile picture in a small frame. This is the default.
 - **Character image:** a picture you upload for that player, shown as a large panel. The small frame is hidden for them.
 
-The best size for a character image is **900 × 1080** (a tall picture). PNG, WebP and JPG all work, and it does not have to be a PNG.
+The best size for a character image is **900 × 1080** (a tall picture). PNG, WebP and JPG all work.
 
 When you choose a picture, a window opens before anything is saved:
 
@@ -149,7 +149,7 @@ The plugin comes inside the app: **File → Install Stream Deck Plugin**. Twelve
 
 ### Settings → Check for updates
 
-The app only looks for a new version when you press **Check for updates**. If there is one, **Download update** saves the new exe next to the one you're running, and **Restart & update** switches over to it. Your `BeeboScore Data` folder is used by both, so nothing is lost. Delete the old exe whenever you like.
+The app only looks for a new version when you press **Check for updates**. If there is one, **Download update** saves the new exe next to the one you're running, and **Restart & update** switches over to it. After **Restart & update** the app says it is installing, closes, shows a starting screen, and opens again by itself in 10 to 20 seconds. Your `BeeboScore Data` folder is used by both versions, so nothing is lost. Delete the old exe whenever you like.
 
 The first time a new version starts, a **What's new** window lists what changed. You can open it again from Settings.
 
@@ -162,7 +162,7 @@ The next build is planned for later in 2026 and will include:
 - **Multiple supported game formats:** Team Battle, KOTH, Death Battle and more
 - **Twitch integration** for Viewer Battles and Tournaments
 - **Bracket Generator** with custom overlays
-- **Layout Designer** with so many features creators will love to start creating their own overlays!
+- **Layout Designer**, packed with features for creators who want to make their own overlays
 - And more!
 
 ---
@@ -180,7 +180,7 @@ The next build is planned for later in 2026 and will include:
 - **Windows 10 or 11, 64-bit.**
 - The app uses port **3300**. If something else is using it, the app picks the next free port and shows it under **Help**; use that number in the OBS link.
 - Keep the app open while you stream. OBS shows the overlay from it.
-- The overlay looks blank in OBS? Check the app is running and the Browser source URL matches the one on the **Stream** tab.
+- The overlay looks blank in OBS? Check that the app is running and that the Browser source URL matches the one on the **Stream** tab.
 
 ---
 
@@ -201,6 +201,6 @@ More in [docs/BUILDING.md](docs/BUILDING.md). Publishing a release is in [docs/R
 
 ## Licence
 
-[MIT](LICENSE) © 2026 Beebo. The bundled fonts are under the SIL Open Font License; see [`public/fonts/FONTS-LICENSES.txt`](public/fonts/FONTS-LICENSES.txt).
+[MIT](LICENSE) © 2026 Beebo. The bundled fonts are under the SIL Open Font License or the Apache License 2.0; see [`public/fonts/FONTS-LICENSES.txt`](public/fonts/FONTS-LICENSES.txt).
 
 Found a bug? [Open an issue](https://github.com/t1fgc/beeboscore/issues).

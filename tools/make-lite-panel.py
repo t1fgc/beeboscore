@@ -64,7 +64,7 @@ PROTO_HTML = """<details class="proto" id="protoNote" open>
 <li><b>Multiple supported game formats:</b> Team Battle, KOTH, Death Battle and more</li>
 <li><b>Twitch integration</b> for Viewer Battles and Tournaments</li>
 <li><b>Bracket Generator</b> with custom overlays</li>
-<li><b>Layout Designer</b> with so many features creators will love to start creating their own overlays!</li>
+<li><b>Layout Designer</b>, packed with features for creators who want to make their own overlays</li>
 <li>And more!</li>
 </ul>
 </div>

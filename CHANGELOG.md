@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.6
+
+### Fixed
+
+- **Wording.** Typos, punctuation and a few unclear sentences in the app, the README and the guides. "Victory Splash" is written the same way everywhere.
+
 ## 1.1.5
 
 ### Improved
@@ -20,7 +26,7 @@
 - **Lettering matched to a custom name bar.** The app looks at the picture where the names sit and picks light or dark names, a tint of the picture's colour for the team tag and record, and a soft backing when the picture is busy. Pick my own swaps these for two colour pickers and warns when the colours are hard to read. Preview the VS Splash plays the result in the card.
 - **Splash pictures** (start.gg tab). For each player, choose what the VS Splash and Victory Splash show: their start.gg profile picture in the small frame, or a character image you upload, shown as a large panel. Best size 900 × 1080; PNG, WebP or JPG.
 - **Crop and green screen.** After you choose a character image, a window opens where you can crop it to the panel and remove a green-screen (or blue-screen) background before it is saved. The result is a PNG with a see-through background, sized to fit the panel.
-- **Find a player** in Splash pictures completes names as you type. The card now shows only the two players on the scoreboard, the player you looked up, and a short closed list of players who already have a character image, so it stays short for an event of any size.
+- **Find a player** in Splash pictures completes names as you type. The card now shows only the two players on the scoreboard, the player you looked up, and a short, collapsed list of players who already have a character image, so it stays short for an event of any size.
 - **VS Splash button** on the Matches tab, with each player's bracket record. Ctrl + I also toggles it.
 - **Victory Splash** shows the winner's character image as a large panel when they use one.
 - **Stream Deck: VS Splash key** (plugin 1.1.0).
