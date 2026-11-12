@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.1.8
+
+### Fixed
+
+- **Restart & update opens the new version.** On some PCs the app closed and the new version never opened. The hand-over used a hidden PowerShell window to wait for the old copy and then start the new exe, and that step did not run everywhere. The new exe is now started directly, the way a double-click starts it, and the old copy closes once it has started. This takes effect when updating *from* 1.1.8: the update *to* 1.1.8 is still carried out by the older version.
+- Each version now unpacks into a temp folder of its own (`BeeboScore-<version>`), so the new copy can start while the old one is still closing without the two touching each other's files. `tools/set-unpack-dir.js` sets the name before every build.
+
+### New
+
+- **A newer version already in the folder.** If a newer `BeeboScore-x.y.z.exe` is sitting next to the one you are running, **Check for updates** offers **Restart & update** into it without downloading anything. It is also used when the releases cannot be reached.
+
 ## 1.1.7
 
 ### Fixed

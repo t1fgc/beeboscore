@@ -9,6 +9,14 @@
 (() => {
   'use strict';
   const NOTES = {
+    '1.1.8': [
+      ['Fixed', [
+        ['Restart & update opens the new version', 'On some PCs the app closed after Restart & update and the new version never opened. The new version is now started directly, the same way a double-click starts it, instead of through a hidden helper that did not run everywhere. This takes effect when you update from 1.1.8 to a later version: the update to 1.1.8 itself is still done by the older version.'],
+      ]],
+      ['New', [
+        ['A newer version already in the folder', 'If a newer BeeboScore exe is already in the same folder as the one you are running, Check for updates offers to restart into it. Nothing is downloaded.'],
+      ]],
+    ],
     '1.1.7': [
       ['Fixed', [
         ['The window comes back after an update', 'After Restart & update, the new version\'s window now comes to the front. Before, Windows could open it behind your other windows, so it looked as if the app had not come back.'],

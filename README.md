@@ -149,7 +149,7 @@ The plugin comes inside the app: **File → Install Stream Deck Plugin**. Twelve
 
 ### Settings → Check for updates
 
-The app only looks for a new version when you press **Check for updates**. If there is one, **Download update** saves the new exe next to the one you're running, and **Restart & update** switches over to it. After **Restart & update** the app says it is installing, closes, shows a starting screen, and opens again by itself in 10 to 20 seconds. Your `BeeboScore Data` folder is used by both versions, so nothing is lost. Delete the old exe whenever you like.
+The app only looks for a new version when you press **Check for updates**. (If a newer BeeboScore exe is already in the same folder, it offers that one without downloading anything.) If there is one, **Download update** saves the new exe next to the one you're running, and **Restart & update** switches over to it. After **Restart & update** the app says it is installing, closes, shows a starting screen, and opens again by itself in 10 to 20 seconds. Your `BeeboScore Data` folder is used by both versions, so nothing is lost. Delete the old exe whenever you like.
 
 The first time a new version starts, a **What's new** window lists what changed. You can open it again from Settings.
 

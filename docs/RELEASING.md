@@ -50,7 +50,11 @@ Open an older copy of the app, go to **Settings**, and press **Check for updates
 
 What you should see after **Restart & update**: an "Installing BeeboScore x.y.z" message (when the copy you are updating from is 1.1.5 or newer), the window closing, the starting screen about a second later, then the new version's window with **What's new**. The whole thing takes 10 to 20 seconds. The old exe stays in the folder; it can be deleted.
 
-If the new version does not come up, look at `BeeboScore Data\update.log`. A good update ends with three lines: the old version "handing over", then the new version "started on port 3300" and "window shown". If the last line is the hand-over, the new exe never got as far as starting the app. If it says another copy was already running, the old copy had not closed yet.
+### Trying Restart & update without publishing anything
+
+Put a newer exe in the same folder as the one you are running (for example `BeeboScore-1.1.9.exe` next to `BeeboScore-1.1.8.exe`), open the older one, and press **Check for updates**. It offers **Restart & update** into the newer exe straight away. This is the quickest way to check the hand-over on a real PC.
+
+If the new version does not come up, look at `BeeboScore Data\update.log`. A good update ends with these lines: the old version saying the new exe "was started directly", then the new version "started by Restart & update", "started on port 3300" and "window shown". If the last line is the old version's, the new exe never got as far as starting the app. If it says another copy was already running, the old copy had not closed yet.
 
 If it says "No releases have been published yet", check the three points at the top of this page.
 

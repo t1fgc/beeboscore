@@ -16,25 +16,35 @@ function createUpdater(app, opts = {}) {
   }
   const { net, shell } = require('electron');
 
-  /** close this copy, then start the new exe (it has to wait: both use the same port and the same data folder).
-   *  The portable exe is a small launcher that unpacks the app into a temp folder, runs it, and deletes that folder when the
-   *  app closes. The new exe unpacks into the same folder, so it must not start until the old launcher has finished deleting:
-   *  the script waits for this app AND for its launcher (this process's parent), each for up to 30 seconds. */
+  /**
+   * "Restart & update": start the new exe, then close this copy.
+   *
+   * The new exe is started directly, the way a double-click starts it. (Until 1.1.7 a hidden PowerShell window waited for
+   * this copy to close and then started it; on some PCs that step never ran, and the app closed without coming back.)
+   * Starting it while this copy is still open is safe because:
+   *   · every version unpacks into a temp folder of its own (build.portable.unpackDirName is set per version by
+   *     tools/set-unpack-dir.js), so the new copy never unpacks over this one's files or has them deleted under it
+   *   · unpacking takes several seconds, and this copy closes 0.3 s after the new exe has started; the new copy also
+   *     waits for port 3300 and for the single-instance lock before it goes on (desktop/main.js, --after-update)
+   * If the exe cannot be started, Windows is asked to open it; if that fails too, its folder is shown.
+   */
   function launch(file) {
     const log = typeof opts.log === 'function' ? opts.log : () => {};
     const env = { ...process.env };
     for (const k of Object.keys(env)) if (/^PORTABLE_EXECUTABLE_/i.test(k)) delete env[k];   // the new exe works out its own folder
-    const fallback = () => { try { shell.showItemInFolder(file); } catch {} };               // couldn't hand over: show the new exe instead
-    if (process.platform !== 'win32') return fallback();
+    const name = path.basename(file);
+    let done = false;
+    const close = how => { if (done) return; done = true; log(`Restart & update: ${name} was started ${how}; this copy is closing`); setTimeout(() => app.quit(), 300); };
+    const viaWindows = why => {
+      log(`Restart & update: could not start ${name} directly (${why}); asking Windows to open it`);
+      Promise.resolve(shell.openPath(file)).then(err => { if (err) { log(`Restart & update: Windows could not open it either (${err}); showing its folder`); try { shell.showItemInFolder(file); } catch {} } else close('by Windows'); });
+    };
+    if (process.platform !== 'win32') { try { shell.showItemInFolder(file); } catch {} return; }
     try {
-      const q = s => "'" + String(s).replace(/'/g, "''") + "'";
-      const stub = process.env.PORTABLE_EXECUTABLE_FILE && process.ppid > 4 ? `Wait-Process -Id ${process.ppid} -Timeout 30 -ErrorAction SilentlyContinue; ` : '';      // only when a launcher started this copy
-      const script = `Wait-Process -Id ${process.pid} -Timeout 30 -ErrorAction SilentlyContinue; ${stub}Start-Sleep -Milliseconds 1500; Start-Process -FilePath ${q(file)} -WorkingDirectory ${q(path.dirname(file))}`;      // 1.5 s: time for this copy's helper processes to let go of the unpacked files
-      log(`Restart & update: handing over to ${path.basename(file)} (this app is process ${process.pid}, its launcher ${process.env.PORTABLE_EXECUTABLE_FILE ? process.ppid : 'none'})`);
-      const child = spawn('powershell.exe', ['-NoProfile', '-NonInteractive', '-WindowStyle', 'Hidden', '-Command', script], { detached: true, stdio: 'ignore', windowsHide: true, env });
-      child.once('error', e => { log(`the hand-over could not start: ${e && e.message}`); fallback(); });
-      child.once('spawn', () => { child.unref(); setTimeout(() => app.quit(), 250); });      // (the control panel has already been showing "Installing…" for a moment: see installNow in public/panel.js)
-    } catch (e) { log(`the hand-over failed: ${e && e.message}`); fallback(); }
+      const child = spawn(file, ['--after-update'], { cwd: path.dirname(file), detached: true, stdio: 'ignore', env });
+      child.once('error', e => viaWindows(e && e.message));
+      child.once('spawn', () => { child.unref(); close('directly'); });
+    } catch (e) { viaWindows(e && e.message); }
   }
 
   return createPortableUpdater({

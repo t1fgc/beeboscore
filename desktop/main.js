@@ -82,7 +82,14 @@ function updateLog(msg) {
   } catch {}
 }
 
-if (!app.requestSingleInstanceLock()) {
+// Started by "Restart & update": the copy that started this one closes a moment later. It is normally long gone by now
+// (unpacking takes seconds), but on a very fast PC it could still be letting go of the lock or the port: give it up to 8 s.
+const AFTER_UPDATE = process.argv.includes('--after-update');
+let gotLock = app.requestSingleInstanceLock();
+if (!gotLock && AFTER_UPDATE) { const nap = new Int32Array(new SharedArrayBuffer(4)); for (let i = 0; i < 32 && !gotLock; i++) { Atomics.wait(nap, 0, 0, 250); gotLock = app.requestSingleInstanceLock(); } }
+const portFree = port => new Promise(res => { const s = require('net').createServer(); s.once('error', () => res(false)); s.once('listening', () => s.close(() => res(true))); s.listen(port); });
+
+if (!gotLock) {
   updateLog('another copy of BeeboScore is already running, so this one closed');
   app.quit();
 } else {
@@ -91,6 +98,7 @@ if (!app.requestSingleInstanceLock()) {
 }
 
 async function boot() {
+  if (AFTER_UPDATE) { let waited = 0; while (waited < 8000 && !(await portFree(3300))) { await new Promise(r => setTimeout(r, 250)); waited += 250; } updateLog(`started by Restart & update${waited ? ` (waited ${waited} ms for the old copy to close)` : ''}`); }
   updater = createUpdater(app, { dir: PORTABLE_DIR, log: updateLog });
   try {
     const sdPlugin = SD_PLUGIN = app.isPackaged ? path.join(process.resourcesPath, 'streamdeck', 'com.t1fgc.beeboscore.streamDeckPlugin')
