@@ -4,7 +4,7 @@
  *
  * The animation style follows the layout. A layout can choose one explicitly with
  *   <meta name="sb-vs" content="shattered">     (or content="off" to never show the splash)
- * Styles: classic shattered oni iron devil dojo drive smash aether scroll comic slash stone
+ * Styles: classic shattered porcelain oni iron devil dojo drive smash aether scroll comic slash stone
  *         street glitch sky ki night broadcast arcade chrome
  * The splash always covers the whole 1920×1080 screen. Each side has an art area (.vs-art) for
  * full character splash art; until a picture is set it shows the player's name as a huge ghost.
@@ -23,6 +23,10 @@
     ['fatal-fury', 'street'], ['2xko', 'glitch'], ['gbvsr', 'sky'], ['dbfz', 'ki'], ['uni2', 'night'], ['vf5', 'broadcast'],
     ['kofxv', 'arcade'], ['mvc2', 'chrome']];
   if (!style) { const m = MAP.find(([k]) => NAME.includes(k)); style = m ? m[1] : 'classic'; }
+  // Porcelain is Ember's splash in white: the same moves (style "shattered"), with .vs-pc on top for the colours
+  const PC = style === 'porcelain';
+  if (PC) style = 'shattered';
+  const BASE = 'vs-st-' + style + (PC ? ' vs-pc' : '');
   const HEIGHT = 1080;
   const POTATO = () => document.documentElement.classList.contains('sb-potato') || !!window.__SB_POTATO;
 
@@ -363,6 +367,52 @@
 #sb-vs.vs-break .vs-sh-break path{animation:vs-sh-draw .15s ease-out forwards;filter:drop-shadow(0 0 6px #ff5a1f)}
 #sb-vs.vs-st-shattered.vs-out{animation:none}
 
+/* Porcelain: Ember's splash glazed white. Same slabs, fault line and break; dark lettering, ember-orange fire */
+#sb-vs.vs-st-shattered.vs-pc{--ac:#e2430c;--hot:#ff8a3d;--steel:#15171d;--sub:#6c7180}
+#sb-vs.vs-st-shattered.vs-pc .vs-bg{background:radial-gradient(ellipse 70% 55% at 50% 108%,rgba(255,90,31,.24),transparent 70%),radial-gradient(ellipse 40% 60% at 50% 50%,rgba(255,140,60,.12),transparent 70%),#dfe1e7}
+#sb-vs.vs-st-shattered.vs-pc .vs-face{background:
+  radial-gradient(ellipse 30% 60% at 50% 50%,rgba(255,110,40,.1),transparent 70%),
+  linear-gradient(158deg,transparent 0 31%,rgba(21,23,29,.05) 31% 31.2%,transparent 31.2% 64%,rgba(21,23,29,.04) 64% 64.15%,transparent 64.15%),
+  linear-gradient(24deg,transparent 0 47%,rgba(21,23,29,.04) 47% 47.15%,transparent 47.15%),
+  linear-gradient(180deg,#ffffff 0%,#f2f3f6 46%,#d6d9e0 100%)}
+#sb-vs.vs-st-shattered.vs-pc .vs-s1 .vs-face{box-shadow:inset -1px 0 0 rgba(226,67,12,.3)}
+#sb-vs.vs-st-shattered.vs-pc .vs-face::after{background:linear-gradient(0deg,rgba(255,90,31,.16),transparent)}
+#sb-vs.vs-st-shattered.vs-pc .vs-face::before{background:linear-gradient(105deg,transparent 30%,rgba(255,255,255,.85) 50%,transparent 70%)}
+#sb-vs.vs-st-shattered.vs-pc .vs-ghost{-webkit-text-stroke:2px rgba(21,23,29,.09);background:linear-gradient(180deg,rgba(21,23,29,.06),rgba(21,23,29,0) 75%);-webkit-background-clip:text;background-clip:text}
+#sb-vs.vs-st-shattered.vs-pc .vs-plate{background:linear-gradient(0deg,rgba(255,90,31,.18),transparent 60px),linear-gradient(180deg,#ffffff 0%,#f5f6f8 50%,#e2e4ea 100%);box-shadow:inset 0 0 0 1px rgba(226,67,12,.45),inset 0 -3px 0 rgba(21,23,29,.06)}
+#sb-vs.vs-st-shattered.vs-pc .vs-plate::before{background:linear-gradient(105deg,transparent 25%,rgba(255,170,110,.16) 50%,transparent 75%)}
+#sb-vs.vs-st-shattered.vs-pc .vs-plate::after{background:linear-gradient(90deg,transparent,#ff8a3d,#e2430c,#ff8a3d,transparent);box-shadow:0 0 10px rgba(255,90,31,.6)}
+#sb-vs.vs-st-shattered.vs-pc .vs-ava img,#sb-vs.vs-st-shattered.vs-pc .vs-ava .vs-ini{background:linear-gradient(160deg,#ffffff,#e1e3e9)}
+#sb-vs.vs-st-shattered.vs-pc .vs-ava .vs-ini{color:#15171d}
+#sb-vs.vs-st-shattered.vs-pc .vs-name{background:linear-gradient(180deg,#3a3e4a 0%,#15171d 45%,#000 55%,#2c2f39 100%);-webkit-background-clip:text;background-clip:text;filter:drop-shadow(0 4px 0 rgba(226,67,12,.2))}
+#sb-vs.vs-st-shattered.vs-pc .vs-flag{box-shadow:0 0 0 1px rgba(21,23,29,.25)}
+#sb-vs.vs-st-shattered.vs-pc .vs-rec .vs-w,#sb-vs.vs-st-shattered.vs-pc .vs-rec .vs-l{background:linear-gradient(180deg,#24262e,#0b0c10)}
+#sb-vs.vs-st-shattered.vs-pc .vs-rec small{color:#4a4e5a}
+#sb-vs.vs-st-shattered.vs-pc .vs-sh-ball{background:radial-gradient(circle,rgba(255,120,40,.32),rgba(255,90,31,.08) 40%,transparent 68%)}
+#sb-vs.vs-st-shattered.vs-pc .vs-sh-embers i{background:radial-gradient(circle,#ffb36b 0,#ff5a1f 32%,rgba(226,67,12,.45) 55%,transparent 72%)}
+#sb-vs.vs-st-shattered.vs-pc .vs-sh-glow{stroke:#ff5a1f;opacity:.14}
+#sb-vs.vs-st-shattered.vs-pc .vs-sh-glow2{stroke:#ff6a2a;opacity:.32}
+#sb-vs.vs-st-shattered.vs-pc .vs-sh-line{stroke:#e2430c}
+#sb-vs.vs-st-shattered.vs-pc .vs-sh-core{stroke:#ffd2a8}
+#sb-vs.vs-st-shattered.vs-pc .vs-sh-crack{stroke:#e2430c;opacity:.75}
+#sb-vs.vs-st-shattered.vs-pc .vs-sh-crack.vs-far{opacity:.4}
+#sb-vs.vs-st-shattered.vs-pc .vs-mark span{background:linear-gradient(180deg,#3a3e4a 0%,#15171d 38%,#000 47%,#ff8a3d 58%,#e2430c 78%,#a3180a 100%);-webkit-background-clip:text;background-clip:text;filter:drop-shadow(0 0 2px rgba(255,255,255,.9))}
+#sb-vs.vs-st-shattered.vs-pc .vs-g1{text-shadow:0 0 26px rgba(255,90,31,.7),0 0 64px rgba(255,140,60,.45);background:radial-gradient(closest-side,rgba(255,120,45,.22),rgba(255,120,45,.09) 40%,rgba(255,120,45,.03) 72%,rgba(255,120,45,0))}
+#sb-vs.vs-st-shattered.vs-pc .vs-round{color:#15171d;background:linear-gradient(180deg,#ffffff,#e3e5ea);box-shadow:inset 0 2px 0 #ff5a1f,inset 0 0 0 1px rgba(226,67,12,.35)}
+#sb-vs.vs-st-shattered.vs-pc .vs-flash{background:radial-gradient(circle at 50% 50%,#fff,rgba(255,190,140,.8) 24%,rgba(255,90,31,.35) 48%,transparent 68%)}
+#sb-vs.vs-pc .vs-sh-wave{border-color:#ff7a2a;box-shadow:0 0 18px rgba(255,90,31,.55),inset 0 0 14px rgba(255,90,31,.45)}
+#sb-vs.vs-st-shattered.vs-pc.vs-break .vs-sh-crack{stroke:#e2430c}
+#sb-vs.vs-pc .vs-sh-break path{stroke:#e2430c}
+#sb-vs.vs-pc .vs-sh-shard .vs-e{stroke:#ff7a2a}
+@keyframes vs-pc-in1{0%{transform:translateX(-70%);filter:brightness(.6) saturate(0);animation-timing-function:cubic-bezier(.6,0,1,.6)}
+  42%{transform:translateX(0);filter:brightness(1.15) saturate(.4);animation-timing-function:ease-out}48%{transform:translateX(-14px)}100%{transform:none;filter:none}}
+@keyframes vs-pc-in2{0%{transform:translateX(70%);filter:brightness(.6) saturate(0);animation-timing-function:cubic-bezier(.6,0,1,.6)}
+  42%{transform:translateX(0);filter:brightness(1.15) saturate(.4);animation-timing-function:ease-out}48%{transform:translateX(14px)}100%{transform:none;filter:none}}
+#sb-vs.vs-st-shattered.vs-pc.vs-in .vs-s1{animation-name:vs-pc-in1}
+#sb-vs.vs-st-shattered.vs-pc.vs-in .vs-s2{animation-name:vs-pc-in2}
+@keyframes vs-pc-ignite{from{opacity:0;transform:translateY(70px)}50%{opacity:1;transform:none;filter:saturate(1.6)}to{filter:none}}
+#sb-vs.vs-st-shattered.vs-pc.vs-in .vs-plate{animation-name:vs-pc-ignite}
+
 /* Iron: steel & gold plates drop and slam */
 #sb-vs.vs-st-iron{--c1:#b8142c;--c2:#1f4fbf;--ac:#ffcf6b;--fn:'Saira Condensed',sans-serif;--fu:'Chakra Petch',sans-serif;--fv:'Saira Condensed',sans-serif}
 #sb-vs.vs-st-iron .vs-bg{background:linear-gradient(180deg,#2a2d33,#0e0f12)}
@@ -599,7 +649,8 @@
   // Each style: what flies out at the moment the sides collide.
   const CLASH = {
     classic:   { at: 620, colors: ['#fff', '#ffc23d', '#e63950', '#2f8bff'], shape: 'spark', n: 34, shake: true },
-    shattered: { at: 420, colors: ['#ff9a3d', '#ffcf6b', '#fff1c1', '#c3132d'], shape: 'spark', n: 54, shake: true },
+    shattered: PC ? { at: 420, colors: ['#ff5a1f', '#e2430c', '#f6a13a', '#15171d'], shape: 'spark', n: 54, shake: true }
+                  : { at: 420, colors: ['#ff9a3d', '#ffcf6b', '#fff1c1', '#c3132d'], shape: 'spark', n: 54, shake: true },
     iron:      { at: 560, colors: ['#ffb347', '#ff6a00', '#fff1c1'], shape: 'spark', n: 48, shake: true },
     devil:     { at: 620, colors: ['#b26bff', '#e2c9ff', '#6d26e6'], shape: 'spark', n: 40, shake: false },
     dojo:   { at: 760, colors: ['#5fd0ff', '#c9f1ff', '#2a8cff'], shape: 'spark', n: 40, shake: false },
@@ -623,7 +674,7 @@
 
   // --------------------------------------------------------------------------- DOM
   const root = document.createElement('div');
-  root.id = 'sb-vs'; root.className = 'vs-st-' + style; root.setAttribute('aria-hidden', 'true');
+  root.id = 'sb-vs'; root.className = BASE; root.setAttribute('aria-hidden', 'true');
   const side = n => `<div class="vs-side vs-s${n}"><div class="vs-face"></div>
       <div class="vs-art"><img alt=""><div class="vs-ghost"></div></div><div class="vs-plate"><i>${n}P</i></div>
       <div class="vs-ava"><img alt=""><b class="vs-ini"></b></div>
@@ -712,11 +763,11 @@
     function tick(t) {                     // sparks only: runs for a second or two after an impact
       const dt = Math.min(.05, (t - last) / 1000 || .016); last = t;
       ctx.clearRect(0, 0, W, H);
-      ctx.globalCompositeOperation = 'lighter';
+      ctx.globalCompositeOperation = PC ? 'source-over' : 'lighter';   // added light vanishes on white
       sparks = sparks.filter(p => (p.life -= p.decay * dt) > 0);
       for (const p of sparks) {
         p.vy += 1100 * dt; p.vx *= .985; p.x += p.vx * dt; p.y += p.vy * dt;
-        ctx.strokeStyle = `rgba(255,${190 + 60 * p.life | 0},${150 * p.life | 0},${p.life})`; ctx.lineWidth = p.s;
+        ctx.strokeStyle = PC ? `rgba(${200 + 55 * p.life | 0},${60 + 90 * p.life | 0},${12 + 30 * p.life | 0},${p.life})` : `rgba(255,${190 + 60 * p.life | 0},${150 * p.life | 0},${p.life})`; ctx.lineWidth = p.s;
         ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x - p.vx * .03, p.y - p.vy * .03); ctx.stroke();
       }
       if (sparks.length) raf = requestAnimationFrame(tick);
@@ -825,7 +876,7 @@
               opacity: f < .6 ? 1 : 1 - (f - .6) / .4 }; }),
               { duration: T * 1000, delay: Math.min(200, dist * .2), fill: 'forwards' });
         }
-        box.insertAdjacentHTML('afterbegin', '<svg width="0" height="0" style="position:absolute"><defs><linearGradient id="vs-sh-glass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2a2b33"/><stop offset=".45" stop-color="#0d0e12"/><stop offset=".55" stop-color="#3a2a24"/><stop offset="1" stop-color="#050507"/></linearGradient></defs></svg>');
+        box.insertAdjacentHTML('afterbegin', '<svg width="0" height="0" style="position:absolute"><defs><linearGradient id="vs-sh-glass" x1="0" y1="0" x2="1" y2="1">' + (PC ? '<stop offset="0" stop-color="#ffffff"/><stop offset=".45" stop-color="#e9ebf0"/><stop offset=".55" stop-color="#ffe2cc"/><stop offset="1" stop-color="#c9cdd6"/>' : '<stop offset="0" stop-color="#2a2b33"/><stop offset=".45" stop-color="#0d0e12"/><stop offset=".55" stop-color="#3a2a24"/><stop offset="1" stop-color="#050507"/>') + '</linearGradient></defs></svg>');
         clearDebris(); debris = box; root.appendChild(box);
         root.classList.remove('vs-break'); root.classList.add('vs-broken', 'vs-clash');
         waves(2, 90);
@@ -994,11 +1045,11 @@
     shown = false;
     document.documentElement.classList.remove('sb-vs-on');
     if (HOOK.hide) HOOK.hide(instant || !root.classList.contains('vs-show') || POTATO());
-    if (instant || !root.classList.contains('vs-show') || POTATO()) { root.className = 'vs-st-' + style; return; }
-    if (HOOK.exit) { root.classList.remove('vs-in', 'vs-clash', 'vs-shake', 'vs-static'); HOOK.exit(later, () => { if (!shown) root.className = 'vs-st-' + style; }); return; }
+    if (instant || !root.classList.contains('vs-show') || POTATO()) { root.className = BASE; return; }
+    if (HOOK.exit) { root.classList.remove('vs-in', 'vs-clash', 'vs-shake', 'vs-static'); HOOK.exit(later, () => { if (!shown) root.className = BASE; }); return; }
     root.classList.remove('vs-in', 'vs-clash', 'vs-shake', 'vs-static');
     root.classList.add('vs-out');
-    later(() => { if (!shown) root.className = 'vs-st-' + style; }, 650);
+    later(() => { if (!shown) root.className = BASE; }, 650);
   }
   let first = true;
   addEventListener('scoreboard', e => {
@@ -1015,7 +1066,7 @@
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) return;
     if (shown && root.classList.contains('vs-in')) { clearTimers(); root.classList.remove('vs-in', 'vs-clash', 'vs-shake'); if (!HOOK.live) root.classList.add('vs-static'); if (HOOK.settle) HOOK.settle(); }
-    if (!shown && root.className !== 'vs-st-' + style) { clearTimers(); if (HOOK.hide) HOOK.hide(true); root.className = 'vs-st-' + style; }
+    if (!shown && root.className !== BASE) { clearTimers(); if (HOOK.hide) HOOK.hide(true); root.className = BASE; }
   });
   window.BeeboVS = { style, show: () => show(false), hide: () => hide(false) };
 })();

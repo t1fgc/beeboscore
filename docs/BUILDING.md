@@ -12,6 +12,7 @@
 npm install
 npm start            # the desktop app
 npm run server       # only the server; then open http://localhost:3300
+npm test             # the format engine's unit tests
 ```
 
 When it is run from source, the app writes its data into the project folder (`data/`, `output/`, and new layouts under `overlays/`). Those are in `.gitignore`.
@@ -38,13 +39,15 @@ The exe is not code-signed by the build. If you sign your releases, sign this fi
 | `public/player-pics.js` | Splash pictures: profile picture or uploaded character image, per player |
 | `public/pic-editor.js` | The window that opens on a chosen character image: crop, and remove a green-screen background |
 | `public/whats-new.js` | The "What's new" window shown once after an update, and its notes for each version |
-| `public/sb-vs.js`, `public/sb-victory.js` | The VS Splash and Victory Splash that every layout loads |
+| `public/sb-vs.js`, `public/sb-victory.js` | The VS Splash and Victory Splash that every layout loads (styles `shattered` for Ember, `porcelain` for Porcelain, chosen with `<meta name="sb-vs">` and `<meta name="sb-victory">`) |
 | `public/vs-art.js` | Your own VS Splash pictures (name bar, header) and the lettering colours matched to a name bar |
-| `public/el/elemental.js` | What the ten elemental layouts share: the page, name fitting, particles, VS Splash and Victory Splash |
-| `public/el/themes.js`, `themes-2.js`, `themes-3.js` | What each of the ten is made of: shapes, lettering, colours, effects, animations |
+| `lib/format.js`, `tests/engine.test.mjs` | The game-format engine (all seven formats; no I/O, no dependencies) and its unit tests |
+| `public/format-panel.js`, `public/match-format.js` | The Formats tab, and the Format menu and console on the Matches tab |
+| `public/panel-ask.js` | The panel's own "type something" window (the desktop app has no `prompt()`) |
+| `public/sb-format.js` | Formats on stream: the pieces on the player bars, the format bar, splashes, the format VS and every moment |
+| `public/beebo-icons.js` | The icon set the format pieces draw from (crown, star) |
 | `overlays/shattered/` | Ember, the original layout (the folder keeps its first name) |
-| `overlays/frostbite/` … `overlays/pastel/` | The ten elemental layouts: each page only names its theme |
-| `tools/make-elemental-layouts.js` | Writes those ten folders |
+| `overlays/porcelain/` | Porcelain, Ember glazed white, with its knocked-out-of-shape break (the ten elemental layouts were taken out in 1.3.0, to be reworked) |
 | `streamdeck/` | The Stream Deck plugin (built by `npm run build:streamdeck`) |
 | `tools/make-lite-panel.py` | Builds `public/index.html` |
 | `tools/logo/vs-logo.html` | The logo's source |
@@ -53,14 +56,14 @@ The exe is not code-signed by the build. If you sign your releases, sign this fi
 
 ## Rebuilding the control panel page
 
-`public/index.html` is generated. Its tabs, the prototype notice and the Settings card are added by `tools/make-lite-panel.py`:
+`public/index.html` is generated. Its tabs and the Settings card are added by `tools/make-lite-panel.py`:
 
 ```bash
 pip install beautifulsoup4
 python tools/make-lite-panel.py public/index.html public/index.html
 ```
 
-Running it on the page it already built is safe: it only adds what is missing. To change the prototype notice's text, edit `PROTO_HTML` in that script, delete the `<details id="protoNote">` block from `public/index.html`, and run it again.
+Running it on the page it already built is safe: it only adds what is missing. (Since 1.4.0 it also takes out the old prototype notice if a panel still has it.)
 
 ## Changing the logo
 
@@ -76,4 +79,4 @@ If the Stream Deck icons change, raise `Version` in `streamdeck/manifest.templat
 
 - App: `version` in `package.json` (and `package-lock.json` — `npm version 1.1.0 --no-git-tag-version` sets both).
 - Stream Deck plugin: `Version` in `streamdeck/manifest.template.json`. Raise it whenever the plugin changes.
-- Built-in layouts: `version` in each `overlays/<name>/overlay.json` (for the ten elemental layouts, `VERSION` in `tools/make-elemental-layouts.js`). Raise it whenever the layout's `index.html` changes, so copies people haven't edited are upgraded. Changes to `public/el/*.js` need no version: those files are served by the app.
+- Built-in layouts: `version` in each `overlays/<name>/overlay.json`. Raise it whenever the layout's `index.html` changes, so copies people haven't edited are upgraded. Changes to `public/el/*.js` need no version: those files are served by the app.

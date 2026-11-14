@@ -1,0 +1,324 @@
+{
+ "plugin": {
+  "Name": "BeeboScore Prototype",
+  "UUID": "com.t1fgc.beeboproto",
+  "Version": "1.4.0.0"
+ },
+ "layouts": {
+  "15": {
+   "name": "BeeboScore Prototype",
+   "cols": 5,
+   "rows": 3,
+   "keys": {
+    "0,0": {
+     "UUID": "com.t1fgc.beeboproto.score",
+     "Name": "Player score",
+     "Settings": {
+      "side": 1,
+      "mode": "tapHold"
+     },
+     "States": 1
+    },
+    "1,0": {
+     "UUID": "com.t1fgc.beeboproto.undo",
+     "Name": "Undo",
+     "Settings": {},
+     "States": 1
+    },
+    "2,0": {
+     "UUID": "com.t1fgc.beeboproto.reset",
+     "Name": "Reset scores",
+     "Settings": {},
+     "States": 1
+    },
+    "3,0": {
+     "UUID": "com.t1fgc.beeboproto.swap",
+     "Name": "Swap sides",
+     "Settings": {},
+     "States": 1
+    },
+    "4,0": {
+     "UUID": "com.t1fgc.beeboproto.score",
+     "Name": "Player score",
+     "Settings": {
+      "side": 2,
+      "mode": "tapHold"
+     },
+     "States": 1
+    },
+    "0,2": {
+     "UUID": "com.t1fgc.beeboproto.overlay",
+     "Name": "Show / hide overlay",
+     "Settings": {},
+     "States": 2
+    },
+    "1,2": {
+     "UUID": "com.t1fgc.beeboproto.vs",
+     "Name": "Show / hide VS Splash",
+     "Settings": {},
+     "States": 2
+    },
+    "2,2": {
+     "UUID": "com.t1fgc.beeboproto.victory",
+     "Name": "Show / hide Victory Splash",
+     "Settings": {},
+     "States": 2
+    },
+    "3,2": {
+     "UUID": "com.t1fgc.beeboproto.hideall",
+     "Name": "Hide all splashes",
+     "Settings": {},
+     "States": 1
+    },
+    "4,2": {
+     "UUID": "com.t1fgc.beeboproto.refresh",
+     "Name": "Refresh overlay in OBS",
+     "Settings": {},
+     "States": 1
+    },
+    "0,1": {
+     "UUID": "com.t1fgc.beeboproto.slot",
+     "Name": "Format key (changes with the format)",
+     "Settings": {
+      "deck": "15",
+      "slot": 0
+     },
+     "States": 1
+    },
+    "1,1": {
+     "UUID": "com.t1fgc.beeboproto.slot",
+     "Name": "Format key (changes with the format)",
+     "Settings": {
+      "deck": "15",
+      "slot": 1
+     },
+     "States": 1
+    },
+    "2,1": {
+     "UUID": "com.t1fgc.beeboproto.slot",
+     "Name": "Format key (changes with the format)",
+     "Settings": {
+      "deck": "15",
+      "slot": 2
+     },
+     "States": 1
+    },
+    "3,1": {
+     "UUID": "com.t1fgc.beeboproto.slot",
+     "Name": "Format key (changes with the format)",
+     "Settings": {
+      "deck": "15",
+      "slot": 3
+     },
+     "States": 1
+    },
+    "4,1": {
+     "UUID": "com.t1fgc.beeboproto.slot",
+     "Name": "Format key (changes with the format)",
+     "Settings": {
+      "deck": "15",
+      "slot": 4
+     },
+     "States": 1
+    }
+   }
+  },
+  "32": {
+   "name": "BeeboScore Prototype XL",
+   "cols": 8,
+   "rows": 4,
+   "keys": {
+    "0,0": {
+     "UUID": "com.t1fgc.beeboproto.score",
+     "Name": "Player score",
+     "Settings": {
+      "side": 1,
+      "mode": "tapHold"
+     },
+     "States": 1
+    },
+    "2,0": {
+     "UUID": "com.t1fgc.beeboproto.undo",
+     "Name": "Undo",
+     "Settings": {},
+     "States": 1
+    },
+    "3,0": {
+     "UUID": "com.t1fgc.beeboproto.reset",
+     "Name": "Reset scores",
+     "Settings": {},
+     "States": 1
+    },
+    "4,0": {
+     "UUID": "com.t1fgc.beeboproto.swap",
+     "Name": "Swap sides",
+     "Settings": {},
+     "States": 1
+    },
+    "7,0": {
+     "UUID": "com.t1fgc.beeboproto.score",
+     "Name": "Player score",
+     "Settings": {
+      "side": 2,
+      "mode": "tapHold"
+     },
+     "States": 1
+    },
+    "0,1": {
+     "UUID": "com.t1fgc.beeboproto.player",
+     "Name": "Set player",
+     "Settings": {
+      "side": 1
+     },
+     "States": 1
+    },
+    "3,1": {
+     "UUID": "com.t1fgc.beeboproto.slot",
+     "Name": "Format key (changes with the format)",
+     "Settings": {
+      "deck": "32",
+      "slot": 0,
+      "role": "badge"
+     },
+     "States": 1
+    },
+    "4,1": {
+     "UUID": "com.t1fgc.beeboproto.layout",
+     "Name": "Switch layout",
+     "Settings": {
+      "mode": "next"
+     },
+     "States": 1
+    },
+    "7,1": {
+     "UUID": "com.t1fgc.beeboproto.player",
+     "Name": "Set player",
+     "Settings": {
+      "side": 2
+     },
+     "States": 1
+    },
+    "0,2": {
+     "UUID": "com.t1fgc.beeboproto.overlay",
+     "Name": "Show / hide overlay",
+     "Settings": {},
+     "States": 2
+    },
+    "1,2": {
+     "UUID": "com.t1fgc.beeboproto.vs",
+     "Name": "Show / hide VS Splash",
+     "Settings": {},
+     "States": 2
+    },
+    "2,2": {
+     "UUID": "com.t1fgc.beeboproto.victory",
+     "Name": "Show / hide Victory Splash",
+     "Settings": {},
+     "States": 2
+    },
+    "5,2": {
+     "UUID": "com.t1fgc.beeboproto.hideall",
+     "Name": "Hide all splashes",
+     "Settings": {},
+     "States": 1
+    },
+    "6,2": {
+     "UUID": "com.t1fgc.beeboproto.refresh",
+     "Name": "Refresh overlay in OBS",
+     "Settings": {},
+     "States": 1
+    },
+    "1,0": {
+     "UUID": "com.t1fgc.beeboproto.slot",
+     "Name": "Format key (changes with the format)",
+     "Settings": {
+      "deck": "32",
+      "slot": 0
+     },
+     "States": 1
+    },
+    "5,0": {
+     "UUID": "com.t1fgc.beeboproto.slot",
+     "Name": "Format key (changes with the format)",
+     "Settings": {
+      "deck": "32",
+      "slot": 1
+     },
+     "States": 1
+    },
+    "6,0": {
+     "UUID": "com.t1fgc.beeboproto.slot",
+     "Name": "Format key (changes with the format)",
+     "Settings": {
+      "deck": "32",
+      "slot": 2
+     },
+     "States": 1
+    },
+    "1,1": {
+     "UUID": "com.t1fgc.beeboproto.slot",
+     "Name": "Format key (changes with the format)",
+     "Settings": {
+      "deck": "32",
+      "slot": 3
+     },
+     "States": 1
+    },
+    "2,1": {
+     "UUID": "com.t1fgc.beeboproto.slot",
+     "Name": "Format key (changes with the format)",
+     "Settings": {
+      "deck": "32",
+      "slot": 4
+     },
+     "States": 1
+    },
+    "5,1": {
+     "UUID": "com.t1fgc.beeboproto.slot",
+     "Name": "Format key (changes with the format)",
+     "Settings": {
+      "deck": "32",
+      "slot": 5
+     },
+     "States": 1
+    },
+    "6,1": {
+     "UUID": "com.t1fgc.beeboproto.slot",
+     "Name": "Format key (changes with the format)",
+     "Settings": {
+      "deck": "32",
+      "slot": 6
+     },
+     "States": 1
+    },
+    "3,2": {
+     "UUID": "com.t1fgc.beeboproto.slot",
+     "Name": "Format key (changes with the format)",
+     "Settings": {
+      "deck": "32",
+      "slot": 7
+     },
+     "States": 1
+    },
+    "4,2": {
+     "UUID": "com.t1fgc.beeboproto.slot",
+     "Name": "Format key (changes with the format)",
+     "Settings": {
+      "deck": "32",
+      "slot": 8
+     },
+     "States": 1
+    },
+    "7,2": {
+     "UUID": "com.t1fgc.beeboproto.slot",
+     "Name": "Format key (changes with the format)",
+     "Settings": {
+      "deck": "32",
+      "slot": 9
+     },
+     "States": 1
+    }
+   }
+  }
+ }
+}

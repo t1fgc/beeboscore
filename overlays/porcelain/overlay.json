@@ -1,0 +1,13 @@
+{
+  "title": "Porcelain",
+  "game": "Any game",
+  "description": "Ember's sister, glazed white with dark lettering and ember-orange fire. The winner turns gold and the loser's bar is knocked out of shape. For any fighting game.",
+  "colors": [
+    "#ffffff",
+    "#e2430c",
+    "#15171d"
+  ],
+  "version": 5,
+  "family": "Porcelain",
+  "order": 2
+}

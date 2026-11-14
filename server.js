@@ -25,6 +25,7 @@ const startgg = require('./lib/startgg');
 const sggauth = require('./lib/sggauth');
 const bracketModel = require('./lib/bracket');
 const sdHelper = require('./lib/streamdeck');
+const sdLayout = require('./lib/sdlayout');
 const FMT = require('./lib/format');
 const VT = require('./lib/vtourney');
 const { createShare } = require('./lib/share');
@@ -47,7 +48,7 @@ const V = encodeURIComponent(APP_VERSION) + '.' + Date.now().toString(36);   // 
 const GAMES = ['Any game'];
 
 function start(opts = {}) {
-  if (!opts.streamDeckPlugin) opts.streamDeckPlugin = path.join(__dirname, 'streamdeck', 'dist', 'com.t1fgc.beeboscore.streamDeckPlugin');
+  if (!opts.streamDeckPlugin) opts.streamDeckPlugin = path.join(__dirname, 'streamdeck', 'dist', 'com.t1fgc.beeboproto.streamDeckPlugin');
   // ------------------------------------------------------------ paths
   const APP_DIR = opts.dataDir || process.env.DATA_DIR || process.env.FGC_DATA_DIR
     || (process.pkg ? path.dirname(process.execPath) : __dirname);
@@ -103,6 +104,15 @@ function start(opts = {}) {
       if (!fs.existsSync(dir)) { delete seeded[name]; continue; }
       if (hashFile(path.join(dir, 'index.html')) === seeded[name].hash) { try { fs.rmSync(dir, { recursive: true, force: true }); delete seeded[name]; } catch {} }
     }
+    // 1.3.0 took the ten elemental layouts out (Frostbite, Venom…; they will come back reworked). Their pages need files the app
+    // no longer has, so an edited copy (or a copy made from one) can't draw any more: it is moved to data/retired-layouts, not deleted
+    for (const ent of fs.readdirSync(OVERLAYS_DIR, { withFileTypes: true })) {
+      if (!ent.isDirectory()) continue;
+      const dir = path.join(OVERLAYS_DIR, ent.name);
+      let head = ''; try { head = fs.readFileSync(path.join(dir, 'index.html'), 'utf8').slice(0, 8000); } catch { continue; }
+      if (!/<meta[^>]+name=["']el-theme["']/i.test(head)) continue;
+      try { const to = path.join(DATA_DIR, 'retired-layouts', ent.name); fs.mkdirSync(path.dirname(to), { recursive: true }); fs.rmSync(to, { recursive: true, force: true }); fs.renameSync(dir, to); delete seeded[ent.name]; } catch {}
+    }
     writeJSON(SEEDED_FILE, seeded);
   }
   seedOverlays();
@@ -116,7 +126,7 @@ function start(opts = {}) {
     c1: { name: '', handle: '' }, c2: { name: '', handle: '' },
     custom: {}, vs: { show: false }, splash: { show: '', side: 'W', n: 0 }, victory: { show: false, side: 0, n: 0 }, screen: '', format: null, fbar: true, hidden: false, setId: '', updatedAt: Date.now(),
   };
-  const DEFAULT_SETTINGS = { autoSwitchLayout: true, autoUpdate: true, updateRepo: '', lanNoPassword: false, refreshOnReset: true, shortcuts: {}, potatoMode: false, autoTop8: true, sdAutoUpdate: true, bracketRefresh: '20', bracketPage: '14', uiTheme: 'classic', autoVictory: true, victoryHold: '8', soundOn: false, soundVolume: '80', obsVolume: false, followFormat: true, showAutoscore: false, bracketTitle: '', bracketPics: 'avatar', autoStandings: true, vtHeadsUp: true, lightFx: false, setupDone: true, sggReport: 'ask' };
+  const DEFAULT_SETTINGS = { autoSwitchLayout: true, autoUpdate: true, updateRepo: '', lanNoPassword: false, refreshOnReset: true, shortcuts: {}, potatoMode: false, autoTop8: true, sdAutoUpdate: true, bracketRefresh: '20', bracketPage: '14', uiTheme: 'classic', autoVictory: true, lockSplash: true, victoryHold: '8', soundOn: false, soundVolume: '80', obsVolume: false, followFormat: true, showAutoscore: false, bracketTitle: '', bracketPics: 'avatar', autoStandings: true, vtHeadsUp: true, lightFx: false, setupDone: true, sggReport: 'ask' };
 
   // What overlays are sent is the state plus things worked out fresh each time (liveState, withPics): each player's
   // splash picture, the custom VS Splash pictures, sound, the next matches… The control panel sends its whole copy back
@@ -197,15 +207,17 @@ function start(opts = {}) {
     const t8 = top8View(), ch = (config.twitch && config.twitch.channel) || '', fv = state.format ? FMT.view(state.format) : null;
     if (fv) fv.pending = formatPending;
     const snd = { on: config.settings.soundOn === true, vol: config.settings.obsVolume ? 100 : soundVol() };   // obsVolume: full level out, the OBS mixer sets it     // stream sound (Settings › Sound) — off by default
-    return { ...withPics(state), snd, ...(upcoming.length ? { upcoming } : {}), ...(t8 ? { top8: t8 } : {}), ...(ch ? { twitch: { channel: ch } } : {}), ...(fv ? { fv } : {}) };
+    const fx = { lockSplash: config.settings.lockSplash !== false };     // Settings › Scoreboard: the lock-in splash in team formats
+    return { ...withPics(state), snd, fx, ...(upcoming.length ? { upcoming } : {}), ...(t8 ? { top8: t8 } : {}), ...(ch ? { twitch: { channel: ch } } : {}), ...(fv ? { fv } : {}) };
   };
   const soundVol = () => Math.max(0, Math.min(100, Math.round(Number(config.settings.soundVolume ?? 80)) || 0));
   // ------------------------------------------------------------ game formats (lib/format.js): team battles, Death Battle, KOTH, leagues
   let formatPending = 0, formatAutoT = null;
   const formatUndo = [];
-  function formatSnap() { formatUndo.push(JSON.stringify({ ...state, updatedAt: 0 })); if (formatUndo.length > 40) formatUndo.shift(); }
+  const formatUndoAt = [];                 // when each format snapshot was taken (for the Stream Deck's one Undo key)
+  function formatSnap() { formatUndo.push(JSON.stringify({ ...state, updatedAt: 0 })); formatUndoAt.push(Date.now()); if (formatUndo.length > 40) { formatUndo.shift(); formatUndoAt.shift(); } }
   function formatPlayers(f) {          // the current match → the normal scoreboard (P1 / P2, round, best-of), scores at 0
-    const sd = FMT.sides(f), pl = x => x ? { ...blankPlayer(), name: x.name, team: x.teamTag || x.team || '', country: x.country || '', character: x.character || '', pronouns: x.pronouns || '', avatar: x.avatar || '', sggId: x.sggId || '',
+    const sd = FMT.sides(f), pl = x => x ? { ...blankPlayer(), name: x.name, team: x.teamTag || x.team || '', country: x.country || '', character: x.character || '', pronouns: x.pronouns || '', avatar: x.avatar || x.pic || '', sggId: x.sggId || '',
       wins: f.kind === 'elim' || f.kind === 'teams' ? (x.wins || 0) : '', losses: f.kind === 'elim' || f.kind === 'teams' ? (x.losses || 0) : '' } : { ...blankPlayer() };
     return { p1: pl(sd.a), p2: pl(sd.b), round: FMT.label(f), bestOf: FMT.bestOf(f), setId: '' };
   }
@@ -219,10 +231,15 @@ function start(opts = {}) {
     const prevPreset = state.format ? state.format.preset : '';
     setState(patch, { keepPages: true });
     if ((f ? f.preset : '') !== prevPreset) followFormat();
-    if (f && f.status === 'done' && (f.events || []).some(e => e.type === 'done') && f.rules.splash !== false) setTimeout(() => { if (state.format && state.format.status === 'done') setState({ splash: { show: 'fwin', side: 'W', n: ((state.splash && state.splash.n) || 0) + 1 } }, { undo: true }); }, 2600);
+    const koLast = f && (f.events || []).some(e => ['tko', 'dead', 'out'].includes(e.type));   // (1.3.5) the last K.O. plays out before the champion splash comes up
+    if (f && f.status === 'done' && (f.events || []).some(e => e.type === 'done') && f.rules.splash !== false) setTimeout(() => { if (state.format && state.format.status === 'done') setState({ splash: { show: 'fwin', side: 'W', n: ((state.splash && state.splash.n) || 0) + 1 } }, { undo: true }); }, koLast ? 5600 : 2600);
   }
   function formatWatch() {             // a set inside the format was won: ask to confirm (or confirm by itself)
     const f = state.format;
+    // Team Death Battle: the switch window closes once the next set is under way. (1.3.9) Not when that point already wins
+    // the set (first to 1): the result is about to be confirmed, which closes it anyway, and a lock-in splash there would
+    // land on top of the K.O.
+    if (f && f.status === 'live' && f.switchOpen && (Number(state.p1.score) || Number(state.p2.score)) && !(f.match && winnerOf(state))) { setTimeout(() => { try { if (state.format && state.format.switchOpen && (Number(state.p1.score) || Number(state.p2.score)) && !(state.format.match && winnerOf(state))) setFormat(FMT.lockSwitch(state.format), { load: false, snap: false }); } catch {} }, 0); }
     const w = f && f.status === 'live' && f.match ? winnerOf(state) : 0;
     if (w === formatPending) return;
     formatPending = w; clearTimeout(formatAutoT); formatAutoT = null;
@@ -245,10 +262,18 @@ function start(opts = {}) {
       case 'start': setFormat(FMT.start(need())); break;
       case 'confirm': {
         const w = Number(b.w) || winnerOf(state); if (!w) throw new Error('Nobody has won this set yet.');
+        // (1.3.5) the Victory Splash is still up: it goes first, then the result (and its K.O. / lost life) plays on a clear screen
+        if (state.victory && state.victory.show && !b.afterSplash) {
+          clearTimeout(formatAutoT); formatAutoT = null;
+          setState({ victory: { ...state.victory, show: false } }, { undo: true });
+          setTimeout(() => { try { if (state.format && state.format.status === 'live') formatAction({ do: 'confirm', w, afterSplash: true }); } catch {} }, 800);
+          return { ok: true, fv: FMT.view(state.format), after: 'victory' };
+        }
         setFormat(FMT.apply(need(), w, [Number(state.p1.score) || 0, Number(state.p2.score) || 0])); break;
       }
       case 'forfeit': setFormat(FMT.forfeit(need(), Number(b.side) === 2 ? 2 : 1)); break;
-      case 'swap': setFormat(FMT.swap(need(), Number(b.side) === 2 ? 2 : 1, Number(b.index))); break;
+      case 'swap': setFormat(FMT.swap(need(), Number(b.side) === 2 ? 2 : 1, Number(b.index), { force: !!b.force })); break;
+      case 'lock': setFormat(FMT.lockSwitch(need()), { load: false }); break;
       case 'pick': setFormat(FMT.pickMatch(need(), String(b.sid || ''))); break;
       case 'join': setFormat(FMT.join(need(), b.player || {}), { load: need().status !== 'live' ? false : !need().match }); break;
       case 'leave': setFormat(FMT.leave(need(), String(b.id || '')), { load: false }); break;
@@ -262,7 +287,7 @@ function start(opts = {}) {
         break;
       }
       case 'undo': {
-        const prev = formatUndo.pop(); if (!prev) throw new Error('Nothing to undo in the format.');
+        const prev = formatUndo.pop(); formatUndoAt.pop(); if (!prev) throw new Error('Nothing to undo in the format.');
         const r = JSON.parse(prev); r.vs = state.vs; r.splash = state.splash; r.victory = { ...(state.victory || {}), show: false };
         if (r.format) { r.format.seq = ((state.format && state.format.seq) || 0) + 1; r.format.events = [{ type: 'undo' }]; }
         formatPending = 0; setState(r, { replace: true, undo: true, keepPages: true }); break;
@@ -461,13 +486,17 @@ setInterval(function(){fetch('/api/potato',{cache:'no-store'}).then(function(r){
 </script></body></html>`;
   // Fresh page load for every open overlay (OBS sources, browser tabs, online links).
   let refreshTimer = null;
-  function refreshOverlays() {
+  // ms: how long to wait first. A reset waits until the page on screen has played its own way back (the loser's bar
+  // closing up, the gold fading), so the fresh copy fades in over a page that already looks the same.
+  function refreshOverlays(ms = 150) {
     clearTimeout(refreshTimer);
-    refreshTimer = setTimeout(() => {
+    refreshTimer = setTimeout(function go() {
+      // never under a full-screen splash: the fresh copy would show it without its entrance. Wait until it's gone.
+      if ((state.vs && state.vs.show) || (state.victory && state.victory.show) || (state.splash && state.splash.show)) { refreshTimer = setTimeout(go, 1000); return; }
       const now = Date.now();
       try { for (const n of fs.readdirSync(OVERLAYS_DIR)) revs[n] = now; } catch {}  // polling clients
       hub.broadcast('reload', {});                                                     // WebSocket clients
-    }, 150);
+    }, ms);
   }
 
   const history = []; // previous states, for Undo
@@ -479,6 +508,7 @@ setInterval(function(){fetch('/api/potato',{cache:'no-store'}).then(function(r){
       if (history.length > 50) history.shift();
     }
     const hadScore = Number(state.p1 && state.p1.score) > 0 || Number(state.p2 && state.p2.score) > 0;
+    const namesWere = [state.p1 && state.p1.name, state.p2 && state.p2.name].map(n => String(n || '').trim().toLowerCase());
     const vsWasOn = !!(state.vs && state.vs.show);
     // only one full-screen splash at a time: VS intro, bracket / Top 8 or the victory splash
     if (next && next.vs && next.vs.show) { next.splash = { show: '' }; next.victory = { show: false }; }
@@ -501,7 +531,11 @@ setInterval(function(){fetch('/api/potato',{cache:'no-store'}).then(function(r){
     victoryWatch(winWas, winNow, victoryWas, undo);
     try { reportWatch(winWas, winNow, undo); } catch {}
     // Scores reset to 0–0: reload the overlay pages so every layout starts clean.
-    if (hadScore && !undo && !keepPages && !Number(state.p1.score) && !Number(state.p2.score) && config.settings.refreshOnReset !== false) refreshOverlays();   // (a format's next match keeps the pages: its effects are playing)
+    if (hadScore && !undo && !keepPages && !Number(state.p1.score) && !Number(state.p2.score) && config.settings.refreshOnReset !== false) refreshOverlays(1400);
+    // a new match at 0–0 (both players changed, e.g. Next match from start.gg or Clear): the pages start clean too.
+    // Not while a format runs: its next match plays moments on the pages that are up.
+    else if (!hadScore && !undo && !keepPages && !state.format && config.settings.refreshOnReset !== false && !Number(state.p1.score) && !Number(state.p2.score)
+      && [state.p1.name, state.p2.name].every((n, i) => String(n || '').trim().toLowerCase() !== namesWere[i])) refreshOverlays(1400);   // (a format's next match keeps the pages: its effects are playing)
     if (hadScore && !Number(state.p1.score) && !Number(state.p2.score)) { try { asNewSet(); } catch {} }   // Autoscore: a new set re-syncs on the next 0–0
     saveLater(STATE_FILE, () => state);
     writeTextOutputs();
@@ -607,6 +641,11 @@ setInterval(function(){fetch('/api/potato',{cache:'no-store'}).then(function(r){
   }
   setTimeout(() => { if (config.sggReports.some(x => x.status === 'pending' || x.status === 'undoing')) reportWork(); }, 4000);
 
+  // What one Undo key should take back: the format's last result when that was the latest change, else the last edit
+  function undoKind() {
+    const f = formatUndo.length && state.format ? formatUndoAt[formatUndoAt.length - 1] || 0 : 0, h = history.length ? history[history.length - 1].at : 0;
+    return f && f >= h - 400 ? 'format' : h ? 'state' : '';
+  }
   function undoOnce() {
     const cur = JSON.stringify({ ...state, updatedAt: 0 });
     while (history.length && history[history.length - 1].snap === cur) history.pop();
@@ -1140,6 +1179,32 @@ setInterval(function(){fetch('/api/potato',{cache:'no-store'}).then(function(r){
   }
   // ------------------------------------------------------------ Stream Deck plugin: install / keep up to date
   let sdLastSeenPlugin = '', sdBusy = false;
+  // "Set up my Stream Deck" (Settings): a number the plugin sees in /api/remote/status; it opens the BeeboScore profile on
+  // each Stream Deck and reports back (sdSetupDone). Kept for two minutes, so a plugin that is being updated still picks it up.
+  let sdSetup = 0, sdSetupResult = null, sdDecks = [], sdJob = null;
+  // On Windows the keys are written straight into Stream Deck's profile files instead (lib/sdlayout.js): Stream Deck is
+  // closed, a "BeeboScore" page goes on the profile each deck shows, and Stream Deck starts again. The plugin has to be
+  // installed first (its keys would not load otherwise), so an install / update is waited for.
+  async function sdDirect(n, waitForPlugin) {
+    const done = r => { sdSetupResult = { at: Date.now(), n, mode: 'direct', ...r }; sdJob = null; };
+    try {
+      if (waitForPlugin) {
+        const until = Date.now() + 180000;
+        for (;;) {
+          const s = await sdStatus();
+          if (s.installed && !s.outdated) break;
+          if (Date.now() > until) return done({ error: 'The BeeboScore plugin was not installed. Confirm it in Stream Deck, then press Set up again.' });
+          sdSetupResult = { at: Date.now(), n, mode: 'direct', waiting: true }; await new Promise(r => setTimeout(r, 1500));
+        }
+        await new Promise(r => setTimeout(r, 4000));      // let Stream Deck finish adding it
+      }
+      const bundle = sdHelper.readBundledJSON(opts.streamDeckPlugin, 'layouts.json');
+      if (!bundle || !bundle.layouts) return done({ error: 'The Stream Deck layouts are missing from this build.' });
+      const r = await sdLayout.install({ layouts: bundle.layouts, plugin: bundle.plugin, pluginDecks: sdDecks, backupDir: path.join(DATA_DIR, 'streamdeck-backups') });
+      done({ devices: r.decks.map(d => ({ name: d.name, keys: d.keys, profile: d.profileName, fresh: d.fresh })), skipped: r.skipped.map(d => ({ name: d.name, model: d.model })), restarted: r.restarted });
+    } catch (e) { done({ error: e.message || 'That didn’t work.' }); }
+  }
+  const sdSetupLive = () => (sdSetup && Date.now() - sdSetup < 120000 ? sdSetup : 0);
   const sdStatus = async () => ({ ...(await sdHelper.status(opts.streamDeckPlugin, sdReported)), connected: Date.now() - (remoteSeen.streamdeck || 0) < 6000,
     canInstall: typeof opts.openPath === 'function', autoUpdate: config.settings.sdAutoUpdate !== false });
   function sdOpen() { opts.openPath(opts.streamDeckPlugin); }
@@ -1179,10 +1244,11 @@ setInterval(function(){fetch('/api/potato',{cache:'no-store'}).then(function(r){
       latency: (() => { const l = latency.list().filter(v => !v.gone), t = l.map(v => v.last).filter(v => v != null); return { viewers: l.length, online: l.filter(v => v.kind === 'online').length, worst: t.length ? Math.max(...t) : null }; })(),
       layout: config.activeOverlay,
       layouts: listOverlays().map(o => ({ name: o.name, title: o.title, game: o.game })),
-      screens: layoutScreens(), screen: state.screen || '', sound: { on: config.settings.soundOn === true, vol: soundVol(), obs: config.settings.obsVolume === true }, fbar: state.fbar !== false, hidden: !!state.hidden, sggReport: (() => { const r = reportable(), last = config.sggReports[config.sggReports.length - 1]; return { mode: reportMode(), can: !!r, sent: !!(r && last && last.key === r.key && ['sent', 'pending'].includes(last.status)) }; })(), share: (() => { const st = share.status(); return { on: !!st.on, online: tunnel.status.state === 'online', chat: chatCanSay() }; })(), vt: vt ? (() => { const v = VT.view(vt), c = vtNames(); return { status: v.status, open: v.open, count: v.count, alive: v.alive, name: v.name, now: c ? `${c.a} vs ${c.b}` : '', winner: c ? winnerOf(state) : 0, champion: v.champion }; })() : null,
+      screens: layoutScreens(), screen: state.screen || '', sdSetup: sdSetupLive(), sdDecks: sdDecks.length, undo: undoKind(), sound: { on: config.settings.soundOn === true, vol: soundVol(), obs: config.settings.obsVolume === true }, fbar: state.fbar !== false, hidden: !!state.hidden, sggReport: (() => { const r = reportable(), last = config.sggReports[config.sggReports.length - 1]; return { mode: reportMode(), can: !!r, sent: !!(r && last && last.key === r.key && ['sent', 'pending'].includes(last.status)) }; })(), share: (() => { const st = share.status(); return { on: !!st.on, online: tunnel.status.state === 'online', chat: chatCanSay() }; })(), vt: vt ? (() => { const v = VT.view(vt), c = vtNames(); return { status: v.status, open: v.open, count: v.count, alive: v.alive, name: v.name, now: c ? `${c.a} vs ${c.b}` : '', winner: c ? winnerOf(state) : 0, champion: v.champion }; })() : null,
       format: state.format ? (() => { const v = FMT.view(state.format); return { kind: v.kind, preset: v.preset, status: v.status, name: v.name, label: v.label, pending: formatPending,
         score: v.kind === 'teams' ? (v.mode === 'paired' ? `${v.teams[0].points}–${v.teams[1].points}` : `${v.teams[0].left}–${v.teams[1].left}`) : v.kind === 'elim' ? (v.mode === 'koth' ? `x${v.streak}` : `${v.alive} left`) : `${v.played}/${v.total}`,
-        tags: v.teams ? v.teams.map(t => t.tag || t.name) : null, king: v.king || '', canUndo: formatUndo.length > 0 }; })() : null,
+        tags: v.teams ? v.teams.map(t => t.tag || t.name) : null, king: v.king || '', canUndo: formatUndo.length > 0,
+        tdb: v.mode === 'tdb' ? { open: !!v.switchOpen, max: v.lives, teams: v.teams.map(t => { const c = t.players.find(p => p.state === 'playing') || {}; return { tag: t.tag || t.name, color: t.color, cur: c.name || '', lives: c.lives || 0 }; }) } : null }; })() : null,
       startgg: !!(sggHas() && config.startgg.eventId), updatedAt: state.updatedAt,
       twitch: (() => { const v = vm.publicView(); return { chat: chat.state, open: v.open, count: v.count, current: v.current ? { name: v.current.display, s: v.current.s, v: v.current.v } : null, next: v.queue[0] ? v.queue[0].display : '', splash: v.splash.show, sidebar: v.sidebar, session: v.session }; })(),
       autoscore: { enabled: !!config.autoscore.enabled, state: asStatus(false).state, pending: asRun.pending ? { side: asRun.pending.side, name: asRun.pending.name } : null, canUndo: !!asRun.last, rounds: asRun.rounds } };
@@ -1213,6 +1279,10 @@ setInterval(function(){fetch('/api/potato',{cache:'no-store'}).then(function(r){
       case 'reset': setState({ p1: { score: 0 }, p2: { score: 0 } }); break;
       case 'swap': { const a = structuredClone(state.p1), c = structuredClone(state.p2); setState({ p1: c, p2: a }); break; }
       case 'undo': if (!undoOnce()) throw new Error('Nothing to undo.'); break;
+      case 'undoAny': {                   // the Stream Deck's Undo: a format result if that came last, else the last change
+        if (undoKind() === 'format') formatAction({ do: 'undo' }); else if (!undoOnce()) throw new Error('Nothing to undo.');
+        break;
+      }
       case 'sound': {                     // stream sound: on / off / toggle, or a volume step (Stream Deck, shortcuts)
         if (b.step !== undefined) { config.settings.soundVolume = String(Math.max(0, Math.min(100, soundVol() + Math.round(Number(b.step) || 0)))); if (Number(b.step) > 0 && config.settings.soundOn !== true) config.settings.soundOn = true; }
         else config.settings.soundOn = b.on === undefined || b.on === 'toggle' ? config.settings.soundOn !== true : !!b.on && b.on !== 'false';
@@ -1232,6 +1302,10 @@ setInterval(function(){fetch('/api/potato',{cache:'no-store'}).then(function(r){
         chat.say(`📋 ${st.target || 'Bracket'} — live bracket: ${st.link} (type !next to see where you are)`); break;
       }   // viewer tournament: signups open / close, confirm & next match
       case 'overlay': setState({ hidden: b.show === undefined || b.show === 'toggle' ? !state.hidden : !(b.show === true || b.show === 'true') }); break;   // hide the whole overlay during downtime (and bring it back)
+      case 'refresh': refreshOverlays(150); return { ok: true };       // reload every open overlay (seamless in the OBS link)
+      case 'hideAll': setState({ vs: { show: false }, victory: { show: false }, splash: { show: '' }, screen: '' }, { undo: true }); break;   // every full-screen splash off; the scoreboard stays
+      case 'sdDevices': sdDecks = Array.isArray(b.devices) ? b.devices.slice(0, 8).map(d => ({ name: String(d.name || '').slice(0, 60), cols: Number(d.cols) || 0, rows: Number(d.rows) || 0, type: Number(d.type) || 0 })) : []; return { ok: true };
+      case 'sdSetupDone': sdSetupResult = { at: Date.now(), n: Number(b.n) || 0, devices: Array.isArray(b.devices) ? b.devices.slice(0, 8).map(d => ({ name: String(d.name || '').slice(0, 60), keys: Number(d.keys) || 0, profile: String(d.profile || '').slice(0, 40) })) : [] }; if (Number(b.n) === sdSetup) sdSetup = 0; return { ok: true };
       case 'fbar': setState({ fbar: b.show === undefined || b.show === 'toggle' ? state.fbar === false : !!b.show && b.show !== 'false' }); break;   // the format bar (teams, survivors, queue…) along the bottom
       case 'vs': setState({ vs: { show: b.show === undefined || b.show === 'toggle' ? !(state.vs && state.vs.show) : !!b.show } }, { undo: true }); break;
       case 'splash': {
@@ -1259,6 +1333,13 @@ setInterval(function(){fetch('/api/potato',{cache:'no-store'}).then(function(r){
       case 'latencyTest': latency.test(); return { ok: true };
       case 'loser': setState({ [k]: { loser: b.value === undefined ? !state[k].loser : !!b.value } }); break;
       case 'clear': setState({ setId: '', p1: { ...blankPlayer() }, p2: { ...blankPlayer() } }); break;
+      case 'fswitch': {                                   // Team Death Battle: that team's next fighter in (Stream Deck)
+        const f = state.format; if (!f || f.rules.mode !== 'tdb' || f.status !== 'live') throw new Error('No Team Death Battle is running.');
+        if (!f.switchOpen) throw new Error('Switching opens after someone loses a life.');
+        const side = Number(b.side) === 2 ? 2 : 1, ti = side - 1, team = f.teams[ti], cur = ti === 0 ? f.match.a.i : f.match.b.i;
+        for (let k = 1; k <= team.players.length; k++) { const j = (cur + k) % team.players.length; if (!team.players[j].out && j !== cur) { formatAction({ do: 'swap', side, index: j }); return { ok: true, name: team.players[j].name }; } }
+        throw new Error('Nobody else on that team can come in.');
+      }
       case 'format': return formatAction(b);
       case 'screen': {                       // a designer screen: show / hide / toggle (by id, name or kind)
         const id = b.name === '' || b.name === 'none' ? '' : screenId(String(b.name || ''));
@@ -1534,7 +1615,7 @@ setInterval(function(){fetch('/api/potato',{cache:'no-store'}).then(function(r){
         color: hex(d.color, '#ffffff'), on: d.on !== false, cover: !!d.cover, scale: Math.min(1.6, Math.max(.4, Number(d.scale) || 1)) };
     }
     const fx = {}; for (const k of ['glow', 'shine', 'edge', 'idle', 'particles', 'mptag']) fx[k] = !(st.fx && st.fx[k] === false);
-    const victory = ['own', 'shattered', 'oni', 'off'].includes(st.victory) ? st.victory : 'own';
+    const victory = ['own', 'shattered', 'porcelain', 'oni', 'off'].includes(st.victory) ? st.victory : 'own';
     const settings = { v: 1, title, mood, font: { name: fontName, italic: !!(st.font && st.font.italic), upper: !(st.font && st.font.upper === false), ls: Math.min(.3, Math.max(-.05, Number(st.font && st.font.ls) || 0)) },
       colors, palette, slots, fx, victory, glowPad: pad,
       // a bar that was dropped on its own: where it was put (so it can be moved again), whether a wide bar is cut in three, and who each shape belongs to
@@ -1566,18 +1647,18 @@ setInterval(function(){fetch('/api/potato',{cache:'no-store'}).then(function(r){
     const tpl = fs.readFileSync(path.join(PUBLIC_DIR, 'maker-overlay.html'), 'utf8');
     const json = JSON.stringify(cfg).replace(/</g, '\\u003c').replace(/[\u2028\u2029]/g, '');
     return tpl.replace('/*MAKER*/null/*MAKER*/', () => json).replace('__TITLE__', cfg.title.replace(/[<>&]/g, '')).replace('__FONTFILE__', MAKER_FONTS[cfg.font.name])
-      .replace('__VICTORY__', ['shattered', 'oni'].includes(cfg.victory) ? cfg.victory : 'off');
+      .replace('__VICTORY__', ['shattered', 'porcelain', 'oni'].includes(cfg.victory) ? cfg.victory : 'off');
   }
 
   // ------------------------------------------------------------ layout families × game formats
-  const FORMAT_KEYS = ['crew', 'sajam', 'gauntlet', 'death', 'koth', 'league'];
+  const FORMAT_KEYS = ['crew', 'sajam', 'gauntlet', 'tdb', 'death', 'koth', 'league'];
   function variantOf(name) {             // a format version of a layout: drawn from its base layout's page
     const m = readJSON(path.join(overlayDir(name), 'overlay.json'), {});
     return m.base && safeName(m.base) !== name && overlayExists(m.base) ? { base: safeName(m.base), format: FORMAT_KEYS.includes(m.format) ? m.format : '' } : null;
   }
   // Layout Designer layouts get their game-format versions too (written when the layout is saved): the format pieces
   // come from sb-format.js, and its lives / crown / team info shows as a tag under each player bar
-  const FORMAT_LABELS = { crew: 'Crew battle', sajam: 'Team battle', gauntlet: 'Gauntlet', death: 'Death Battle', koth: 'King of the Hill', league: 'League' };
+  const FORMAT_LABELS = { crew: 'Crew battle', sajam: 'Team battle', gauntlet: 'Gauntlet', tdb: 'Team Death Battle', death: 'Death Battle', koth: 'King of the Hill', league: 'League' };
   function writeVariants(name, { title, game, colors, on }) {
     const made = [];
     for (const f of FORMAT_KEYS) {
@@ -1603,10 +1684,20 @@ setInterval(function(){fetch('/api/potato',{cache:'no-store'}).then(function(r){
     const fam = all.filter(o => o.family === cur.family && o.game === cur.game);
     return (fam.find(o => o.format === (fmt || '')) || fam.find(o => !o.format) || cur).name;
   }
-  function followFormat() {             // a format was picked / cleared: the live layout switches to that format's version of the same look
-    if (config.settings.followFormat === false) return;
-    const f = state.format, want = layoutFor(config.activeOverlay, f ? f.preset : '');
-    if (want && want !== config.activeOverlay) setActive(want);
+  function followFormat() {             // a format was picked / cleared
+    const was = config.activeOverlay;
+    if (config.settings.followFormat !== false) {    // a look with a folder per format: the live layout switches to that format's version
+      const f = state.format, want = layoutFor(config.activeOverlay, f ? f.preset : '');
+      if (want && want !== config.activeOverlay) setActive(want);
+    }
+    // every other layout draws the running format itself (formatPage): the open pages reload to pick it up, or to drop it
+    if (config.activeOverlay === was) refreshOverlays();
+  }
+  /** In this build one layout page serves every format: while a format is set up, the page is told which one
+   *  (<meta name="sb-format">), and injectOverlay then adds sb-format.js. With no format, the page is left as it is. */
+  function formatPage(html) {
+    const k = state.format ? state.format.preset : '';
+    return FORMAT_KEYS.includes(k) ? asVariant(html, { format: k }) : html;
   }
   function setActive(name) {
     config.activeOverlay = safeName(name);
@@ -1619,8 +1710,9 @@ setInterval(function(){fetch('/api/potato',{cache:'no-store'}).then(function(r){
   function injectOverlay(html, name, follow, mode = {}) {
     let base = `<base href="/o/${encodeURIComponent(mode.assets || name)}/">`;
     if (config.settings.lightFx && !mode.potato) base += `<script>document.documentElement.classList.add('sb-light')</script>`;
+    if (mode.instant && !mode.framed && !mode.potato) base += '<style>html.sb-instant body{opacity:0!important}</style>';   // a soft reload: shown once drawn, faded in
     if (mode.framed || mode.instant || mode.potato) base += `<script>${mode.framed ? 'window.__SB_FRAMED=true;' : ''}${mode.instant ? "window.__SB_INSTANT=true;document.documentElement.classList.add('sb-instant');" : ''}${mode.potato ? "window.__SB_POTATO=true;document.documentElement.classList.add('sb-potato');" : ''}</script>`;
-    const script = `<script>window.__SB_OVERLAY=${JSON.stringify(name)};window.__SB_FOLLOW_ACTIVE=${!!follow};</script><script src="/sb-perf.js?v=${V}"></script><script src="/sb-client.js?v=${V}"></script><script src="/sb-vs.js?v=${V}"></script><script src="/sb-bracket.js?v=${V}"></script><script src="/sb-victory.js?v=${V}"></script>` + (/<meta[^>]+name=["']sb-format["']/i.test(html) ? `<script src="/sb-format.js?v=${V}"></script>` : '');
+    const script = `<script>window.__SB_OVERLAY=${JSON.stringify(name)};window.__SB_FOLLOW_ACTIVE=${!!follow};</script><script src="/sb-perf.js?v=${V}"></script><script src="/sb-client.js?v=${V}"></script><script src="/sb-vs.js?v=${V}"></script><script src="/sb-bracket.js?v=${V}"></script><script src="/sb-victory.js?v=${V}"></script>` + (/<meta[^>]+name=["']sb-format["']/i.test(html) ? `<script src="/static/beebo-icons.js?v=${V}"></script><script src="/sb-format.js?v=${V}"></script>` : '');
     html = /<head[^>]*>/i.test(html) ? html.replace(/<head[^>]*>/i, m => m + base) : base + html;
     html = /<\/body>/i.test(html) ? html.replace(/<\/body>(?![\s\S]*<\/body>)/i, script + '</body>') : html + script;
     return html;
@@ -1633,7 +1725,7 @@ setInterval(function(){fetch('/api/potato',{cache:'no-store'}).then(function(r){
     return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>BeeboScore overlay</title>
 <style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent}
 iframe{position:absolute;left:0;top:0;width:100%;height:100%;border:0;background:transparent;color-scheme:normal}
-iframe.next{opacity:0;pointer-events:none}</style></head><body>
+iframe{transition:opacity .45s ease}iframe.next{opacity:0;pointer-events:none}iframe.old{pointer-events:none}</style></head><body>
 <script>(() => {
   const SRC = ${JSON.stringify(src)}, NAME = ${JSON.stringify(name)}, FOLLOW = ${!!follow};
   const extra = location.search.slice(1);
@@ -1657,9 +1749,11 @@ iframe.next{opacity:0;pointer-events:none}</style></head><body>
   function promote() {
     clearTimeout(nextTimer);
     if (!next) return;
+    // the fresh copy fades in over the old one (both show the same thing by now), then the old one goes
     const old = cur; cur = next; next = null;
+    if (old) old.classList.add('old');
     cur.classList.remove('next');
-    if (old) requestAnimationFrame(() => requestAnimationFrame(() => old.remove()));
+    if (old) setTimeout(() => old.remove(), 520);
   }
   function refresh() {
     if (next) { clearTimeout(nextTimer); next.remove(); }
@@ -2291,7 +2385,7 @@ iframe.next{opacity:0;pointer-events:none}</style></head><body>
         }
         const mode = { framed: url.searchParams.has('sbframe'), instant: url.searchParams.has('instant'), potato: potato() || url.searchParams.has('potato') };
         const vr = variantOf(name);
-        return serveFile(req, res, path.join(overlayDir(vr ? vr.base : name), 'index.html'), html => injectOverlay(vr ? asVariant(html, vr) : html, name, !specific, { ...mode, assets: vr ? vr.base : name }));
+        return serveFile(req, res, path.join(overlayDir(vr ? vr.base : name), 'index.html'), html => injectOverlay(vr ? asVariant(html, vr) : formatPage(html), name, !specific, { ...mode, assets: vr ? vr.base : name }));
       }
       if (p.startsWith('/o/')) {
         const [, , rawName, ...rest] = p.split('/');
@@ -2531,8 +2625,30 @@ iframe.next{opacity:0;pointer-events:none}</style></head><body>
       if (p === '/api/streamdeck' && method === 'GET') {
         const s = await sdStatus();
         if (s.outdated && !s.appTooOld && s.autoUpdate) sdAutoUpdate('check');      // Stream Deck just got new enough: carry on
-        return ok(res, { ...s, plugin: !!(opts.streamDeckPlugin && fs.existsSync(opts.streamDeckPlugin)) });
+        return ok(res, { ...s, plugin: !!(opts.streamDeckPlugin && fs.existsSync(opts.streamDeckPlugin)), setup: { pending: sdSetupLive(), result: sdSetupResult } });
       }
+      if (p === '/api/streamdeck/setup' && method === 'POST') {          // Settings › Set up my Stream Deck
+        if (localOnly()) return;
+        const s = await sdStatus();
+        if (sdLayout.supported() && opts.streamDeckPlugin && fs.existsSync(opts.streamDeckPlugin)) {      // Windows: write the keys in
+          if (sdJob) return ok(res, { ok: true, n: sdJob, step: 'busy', mode: 'direct', ...s });
+          if (s.appTooOld) return fail(res, 409, `Update the Stream Deck app first: the BeeboScore plugin needs ${s.minApp} or newer.`);
+          const need = !s.installed || s.outdated;
+          if (need && !opts.openPath) return fail(res, 409, 'Install the BeeboScore plugin first.');
+          if (need) { config.sdOffered = s.bundledVersion; saveConfig(); sdOpen(); }
+          const n = sdJob = Date.now(); sdSetupResult = null;
+          sdDirect(n, need);
+          return ok(res, { ok: true, n, step: !s.installed ? 'install' : s.outdated ? 'update' : 'write', mode: 'direct', ...s });
+        }
+        if (!s.installed && !s.connected) {
+          if (!opts.openPath || !opts.streamDeckPlugin || !fs.existsSync(opts.streamDeckPlugin)) return fail(res, 409, 'Install the BeeboScore plugin first.');
+          if (s.appTooOld) return fail(res, 409, `Update the Stream Deck app first: the BeeboScore plugin needs ${s.minApp} or newer.`);
+          config.sdOffered = s.bundledVersion; saveConfig(); sdOpen();
+        } else if (s.outdated && opts.openPath && !s.appTooOld) { config.sdOffered = s.bundledVersion; saveConfig(); sdOpen(); }
+        sdSetup = Date.now(); sdSetupResult = null;
+        return ok(res, { ok: true, n: sdSetup, step: !s.installed && !s.connected ? 'install' : s.outdated ? 'update' : 'switch', ...s });
+      }
+      if (p === '/api/overlays/refresh' && method === 'POST') { refreshOverlays(150); return ok(res, { ok: true }); }
       if (p === '/api/streamdeck/install' && method === 'POST') {
         if (localOnly()) return;
         if (!opts.streamDeckPlugin || !fs.existsSync(opts.streamDeckPlugin)) return fail(res, 404, 'The Stream Deck plugin file is missing from this build.');
@@ -2545,7 +2661,7 @@ iframe.next{opacity:0;pointer-events:none}</style></head><body>
       }
       if (p === '/downloads/beeboscore.streamDeckPlugin' && method === 'GET') {
         if (!opts.streamDeckPlugin || !fs.existsSync(opts.streamDeckPlugin)) return fail(res, 404, 'Not in this build.');
-        res.writeHead(200, { 'Content-Type': 'application/octet-stream', 'Content-Disposition': 'attachment; filename="com.t1fgc.beeboscore.streamDeckPlugin"', 'X-Content-Type-Options': 'nosniff' });
+        res.writeHead(200, { 'Content-Type': 'application/octet-stream', 'Content-Disposition': 'attachment; filename="com.t1fgc.beeboproto.streamDeckPlugin"', 'X-Content-Type-Options': 'nosniff' });
         return fs.createReadStream(opts.streamDeckPlugin).pipe(res);
       }
 
@@ -2680,6 +2796,7 @@ iframe.next{opacity:0;pointer-events:none}</style></head><body>
           if ('autoTop8' in body || 'bracketTitle' in body || 'bracketPics' in body) publishBracket();
           if ('sggReport' in body) reportsChanged();
           if ('lightFx' in body) hub.broadcast('fx', { light: !!config.settings.lightFx });
+          if ('lockSplash' in body) broadcast('state', liveState());
           if ('soundOn' in body || 'soundVolume' in body || 'obsVolume' in body) broadcast('state', liveState());
           if ('bracketRefresh' in body) bracketWatch(false);
           if ('bracketPage' in body) { publishBracket(); pageClock(); }

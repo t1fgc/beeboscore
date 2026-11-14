@@ -9,6 +9,34 @@
 (() => {
   'use strict';
   const NOTES = {
+    '1.4.0': [                                           // everything since 1.1.8 (1.2.0 to 1.3.9 were test builds)
+      ['New', [
+        ['Game formats', 'A new Formats tab runs seven kinds of event on top of the scoreboard: Crew Battle, Team Battle, Gauntlet, Team Death Battle, Death Battle, King of the Hill and League. The format decides who plays next; you score each set as usual and press Confirm & next match.'],
+        ['Team Death Battle', 'Two teams, and every fighter has lives. You choose how many lost sets one life is worth. After a life is lost a team can switch fighters, and a fighter who comes back still has the lives they left with.'],
+        ['Formats on stream', 'Ember and Porcelain draw every format in their own style: lives, crowns and tiers on the player bars, a format bar along the bottom, Board, Team VS and Champion splashes, and moments like a lost life or a K.O. Nothing changes in OBS.'],
+        ['Lock-in splash', 'In team formats, when both players are locked in, two halves of glass slide together with each player’s picture, name and lives or points, meld, and a light runs down the join.'],
+        ['Porcelain', 'A new layout: Ember glazed white, with dark lettering and ember-orange fire. The loser’s bar shatters and is knocked out of shape.'],
+        ['Player pictures', 'Drop any picture on a player in the Formats tab. A big one opens a crop window, then it is made smaller for you and used on their card and on the splashes. Players without a picture get their name and a big letter on a card the same size.'],
+        ['Set up my Stream Deck', 'Settings › Stream Deck: one press puts every key on your 15-key Stream Deck or Stream Deck XL, sorted, with keys that change with the format.'],
+        ['Refresh OBS', 'A button in the header (and on the Stream Deck) reloads the overlay in OBS without a visible reload.'],
+        ['Settings › Scoreboard', 'Choose whether the Victory Splash plays by itself after a set, how long it stays, and whether the lock-in splash plays.'],
+      ]],
+      ['Changed', [
+        ['No more prototype notice', 'The box at the top of the app is gone.'],
+        ['Two layouts', 'Ember and Porcelain. The ten elemental layouts are out for now, to be reworked. If you used one, the app has switched to Ember.'],
+        ['A new Stream Deck plugin', 'It is called BeeboScore Prototype, with new key pictures. Install it from Settings › Stream Deck and press Set up my Stream Deck. You can remove the old BeeboScore plugin in Stream Deck afterwards.'],
+        ['Clear of the timer', 'Ember’s middle tag is shorter so it clears the game’s timer, and the player bars wrap round the round-win circles with a lit rim for each.'],
+        ['Seamless reset', 'Reset and Clear play the bar’s own way back, then the refreshed overlay fades in over it.'],
+        ['The player in the spotlight', 'The fighter playing has a bigger card, a fighter on their last life gets a heartbeat, and a switch has its own animation.'],
+      ]],
+      ['Fixed', [
+        ['No more overlapping moments', 'A lost life or a K.O. waits for a splash to leave, and splashes clear what was left of the last moment.'],
+        ['Names shown whole', 'Names on crowded bars and knocked-out pieces fit instead of being cut off.'],
+      ]],
+      ['Faster', [
+        ['Lighter on your PC', 'The overlay’s sheens, glows and heartbeats are drawn in a cheaper way, about half the work each second in OBS.'],
+      ]],
+    ],
     '1.1.8': [
       ['Fixed', [
         ['Restart & update opens the new version', 'On some PCs the app closed after Restart & update and the new version never opened. The new version is now started directly, the same way a double-click starts it, instead of through a hidden helper that did not run everywhere. This takes effect when you update from 1.1.8 to a later version: the update to 1.1.8 itself is still done by the older version.'],

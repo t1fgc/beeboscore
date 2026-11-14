@@ -1,7 +1,7 @@
 {
   "name": "beeboscore",
   "productName": "BeeboScore",
-  "version": "1.1.8",
+  "version": "1.4.0",
   "description": "Barebones fighting game scoreboard: matches, start.gg events, go online, 11 layouts and Stream Deck keys.",
   "author": {
     "name": "Beebo"
@@ -19,6 +19,7 @@
   "scripts": {
     "start": "electron .",
     "server": "node server.js",
+    "test": "node --test tests/engine.test.mjs",
     "build:streamdeck": "cd streamdeck && npm install && npm run build",
     "predist": "node tools/set-unpack-dir.js && npm run build:streamdeck",
     "dist": "electron-builder --win portable --x64 --publish never"
@@ -70,13 +71,13 @@
     },
     "portable": {
       "artifactName": "BeeboScore-${version}.${ext}",
-      "unpackDirName": "BeeboScore-1.1.8",
+      "unpackDirName": "BeeboScore-1.4.0",
       "splashImage": "desktop/splash.bmp"
     },
     "extraResources": [
       {
-        "from": "streamdeck/dist/com.t1fgc.beeboscore.streamDeckPlugin",
-        "to": "streamdeck/com.t1fgc.beeboscore.streamDeckPlugin"
+        "from": "streamdeck/dist/com.t1fgc.beeboproto.streamDeckPlugin",
+        "to": "streamdeck/com.t1fgc.beeboproto.streamDeckPlugin"
       }
     ]
   }

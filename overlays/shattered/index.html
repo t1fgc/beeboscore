@@ -10,8 +10,9 @@
 <!--
   EMBER (the layout named Shattered until 1.1.2).  1920 x 1080, transparent. One layout for every fighting game.
 
-  A dark obsidian frame that runs along the top of the HUD, wraps over and around the
-  game's round-win circles (never covering them), and leaves the timer and portraits clear.
+  A dark obsidian frame that runs along the top of the HUD. It covers everything round the game's
+  round-win circles, with a hole and a lit rim for each one (never covering them), and leaves the
+  timer and portraits clear.
 
   ANIMATION
     • Intro: an ember line traces the frame, the obsidian ignites, names decode in.
@@ -55,7 +56,7 @@
   /* ================= frame outline (svg) ================= */
   #frame { position: absolute; left: 0; top: 0; width: 1920px; height: 120px; overflow: visible; pointer-events: none; z-index: 5; }
   #frame .edge { fill: none; stroke: url(#edgeGrad); stroke-width: 1.6; stroke-linejoin: round; opacity: .9; }
-  #frame .comet { fill: none; stroke: var(--ember-hot); stroke-width: 2.2; stroke-linecap: round; filter: url(#glow); opacity: 0; }
+  #frame .comet { fill: none; stroke: var(--ember-hot); stroke-width: 2.6; stroke-linecap: round; opacity: 0; }   /* no blur filter: it was redrawn every frame */
   .sb-ready #frame .comet { opacity: .95; transition: opacity .6s 1.2s; }
   #frame .edge.dead { stroke: var(--ember-deep); opacity: .35; animation: smolder 2.4s ease-in-out infinite; }
   #frame .edge.champ { stroke: #fff1c2; stroke-width: 2.6; filter: url(#glow) drop-shadow(0 0 6px #f6c453); transition: stroke .5s; }
@@ -108,16 +109,17 @@
   .skin {
     position: absolute; inset: 0;
     background:
-      linear-gradient(105deg, transparent 42%, rgba(255,255,255,.07) 50%, transparent 58%) no-repeat,
       linear-gradient(162deg, transparent 0 38%, rgba(255,255,255,.025) 38% 39%, transparent 39%),
       linear-gradient(18deg, transparent 0 63%, rgba(255,255,255,.02) 63% 64%, transparent 64%),
       linear-gradient(180deg, var(--obsidian-1) 0%, var(--obsidian-2) 46%, var(--obsidian-3) 100%);
-    background-size: 260% 100%, 100% 100%, 100% 100%, 100% 100%;
-    background-position: 120% 0, 0 0, 0 0, 0 0;
-    animation: glint 9s ease-in-out infinite;
   }
-  .p2 .skin { animation-delay: 4.5s; }
-  @keyframes glint { 0%, 70% { background-position: 120% 0, 0 0, 0 0, 0 0; } 100% { background-position: -20% 0, 0 0, 0 0, 0 0; } }
+  /* the sheen that crosses the bar now and then: its own layer, moved (not repainted), so it costs next to nothing */
+  .skin::before { content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 260%; pointer-events: none; will-change: transform;
+    background: linear-gradient(105deg, transparent 42%, rgba(255,255,255,.07) 50%, transparent 58%);
+    transform: translateX(-73.8%); animation: glint 9s ease-in-out infinite; }
+  .p2 .skin::before { animation-delay: 4.5s; }
+  .sh .skin::before { display: none; }
+  @keyframes glint { 0%, 70% { transform: translateX(-73.8%); } 100% { transform: translateX(12.3%); } }
   .skin::after { /* ember underglow at the bottom edge */
     content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 26px;
     background: linear-gradient(0deg, rgba(255,90,31,.16), transparent);
@@ -201,19 +203,19 @@
   /* ================= centre tag ================= */
   .center { position: absolute; top: 0; opacity: 0; transition: opacity .5s .7s; z-index: 2; }
   .sb-ready .center { opacity: 1; }
-  .center .in { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; padding-top: 2px; }
-  .meta { font: 700 12px/15px 'Chakra Petch', sans-serif; letter-spacing: 1.7px; text-transform: uppercase; color: var(--ember); white-space: nowrap; max-width: 92%; overflow: hidden; display: flex; gap: 7px; }
+  .center .in { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; padding-top: 1px; }
+  .meta { font: 700 11px/13px 'Chakra Petch', sans-serif; letter-spacing: 1.7px; text-transform: uppercase; color: var(--ember); white-space: nowrap; max-width: 92%; overflow: hidden; display: flex; gap: 7px; }
   .meta .dot { color: var(--muted); }
   .meta > span { flex: none; }
   .meta.long > span:first-child { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }   /* too long even at the smallest size: the event ends in … */
-  .round { margin-top: 1px; line-height: 25px; font-weight: 800; font-style: italic; font-size: 23px; letter-spacing: 1px; text-transform: uppercase; color: #fff; white-space: nowrap; max-width: 86%; overflow: hidden; text-overflow: ellipsis; padding-right: 3px; }
+  .round { margin-top: 0; line-height: 21px; font-weight: 800; font-style: italic; font-size: 20px; letter-spacing: 1px; text-transform: uppercase; color: #fff; white-space: nowrap; max-width: 86%; overflow: hidden; text-overflow: ellipsis; padding-right: 3px; }
   .center.gf .round { background: linear-gradient(180deg, #fff1df, #ffb36b 50%, #ff5a1f); -webkit-background-clip: text; background-clip: text; color: transparent; }
 
   /* ================= sparks ================= */
   #sparks { position: absolute; left: 0; top: 0; width: 1920px; height: 520px; pointer-events: none; z-index: 7; }
   /* reversed win: the cracks seal and the plate re-forges */
   .plate.reform { transition: none !important; animation: reform .5s ease-out; }
-  @keyframes reform { 0% { opacity: 0; filter: brightness(3.2) contrast(1.3); transform: scale(1.03); } 45% { opacity: 1; } 100% { opacity: 1; filter: none; transform: none; } }
+  @keyframes reform { 0% { opacity: .9; filter: brightness(1.9) contrast(1.15); transform: scale(1.012); } 100% { opacity: 1; filter: none; transform: none; } }   /* never fully gone: a reset looks smooth */
   .flash { animation: flash .35s ease-out; }
   @keyframes flash { 0% { filter: brightness(3.2) contrast(1.3); } 100% { filter: none; } }
   .shake { animation: shake .38s linear; }
@@ -335,21 +337,29 @@
 (() => {
   // =====================================================================
   // GEOMETRY — measured from a 1920x1080 game capture.
-  //   Portraits end at x≈164 / start at x≈1756. Round circles: x 722–824 and
-  //   1096–1198, y 37–65. Timer starts at y≈46. Health bars start at y≈70.
+  //   Portraits end at x≈164 / start at x≈1756. Round circles (Tekken 8): centres x 736.6,
+  //   770.6, 804.7 and 1112.6, 1146.6, 1180.6, y 53.7, radius ≈13.4. Timer digits start at
+  //   y≈42. Health bars start at y≈69.
   // =====================================================================
   const H = 69;            // plate height (ends just above the health bars)
-  const ARM_H = 31;        // the arm that runs over the round circles
+  const ARM_H = 31;        // the part over the round circles that holds the set pips
   const P1_X = 176, P2_X = 1090, PLATE_W = 654;   // plates
-  const C_X = 830, C_W = 260, C_H = 44;           // centre tag (above the timer)
-  const NOTCH = 114;       // width of the cut-out that cradles the round circles
+  const C_X = 830, C_W = 260, C_H = 36;           // centre tag (ends above the timer digits)
+  const NOTCH = 114;       // width of the part over the round circles
 
   // Shapes in each element's own coordinates.
   const SHAPE = {
-    p1: [[0, 0], [PLATE_W, 0], [PLATE_W, ARM_H], [PLATE_W - NOTCH + 12, ARM_H], [PLATE_W - NOTCH, ARM_H + 12], [PLATE_W - NOTCH, H], [18, H], [0, H - 18]],
-    p2: [[0, 0], [PLATE_W, 0], [PLATE_W, H - 18], [PLATE_W - 18, H], [NOTCH, H], [NOTCH, ARM_H + 12], [NOTCH - 12, ARM_H], [0, ARM_H]],
-    c:  [[0, 0], [C_W, 0], [C_W, 30], [C_W - 14, C_H], [14, C_H], [0, 30]],
+    // bottom corners: 18 px on the outside; a small 7 px cut by the round circles, so the third circle keeps a full rim
+    p1: [[0, 0], [PLATE_W, 0], [PLATE_W, H - 7], [PLATE_W - 7, H], [18, H], [0, H - 18]],
+    p2: [[0, 0], [PLATE_W, 0], [PLATE_W, H - 18], [PLATE_W - 18, H], [7, H], [0, H - 7]],
+    c:  [[0, 0], [C_W, 0], [C_W, 24], [C_W - 12, C_H], [12, C_H], [0, 24]],
   };
+  // a hole for each round circle (a little wider than the circle, so its rim shows), cut out of the plate
+  const HOLE_R = 15, HOLE_Y = 53.7;
+  const HOLES = { 1: [736.6, 770.6, 804.7].map(x => x - P1_X), 2: [1112.6, 1146.6, 1180.6].map(x => x - P2_X) };
+  const ring = (x, y, r) => `M${x - r} ${y} a${r} ${r} 0 1 0 ${2 * r} 0 a${r} ${r} 0 1 0 ${-2 * r} 0 Z`;
+  const holes = (side, dx = 0) => HOLES[side].map(x => ring(x + dx, HOLE_Y, HOLE_R)).join(' ');
+  const clipHoles = (pts, side) => `path(evenodd, "M${pts.map(([x, y]) => `${x} ${y}`).join(' L')} Z ${holes(side)}")`;
   const clip = pts => `polygon(${pts.map(([x, y]) => `${x}px ${y}px`).join(',')})`;
   const pathOf = (pts, dx) => 'M' + pts.map(([x, y]) => `${x + dx},${y}`).join('L') + 'Z';
 
@@ -357,8 +367,8 @@
   const plates = { 1: $('plate1'), 2: $('plate2') };
 
   function layout() {
-    Object.assign(plates[1].style, { left: P1_X + 'px', width: PLATE_W + 'px', height: H + 'px', clipPath: clip(SHAPE.p1) });
-    Object.assign(plates[2].style, { left: P2_X + 'px', width: PLATE_W + 'px', height: H + 'px', clipPath: clip(SHAPE.p2) });
+    Object.assign(plates[1].style, { left: P1_X + 'px', width: PLATE_W + 'px', height: H + 'px', clipPath: clipHoles(SHAPE.p1, 1) });
+    Object.assign(plates[2].style, { left: P2_X + 'px', width: PLATE_W + 'px', height: H + 'px', clipPath: clipHoles(SHAPE.p2, 2) });
     Object.assign($('center').style, { left: C_X + 'px', width: C_W + 'px', height: C_H + 'px', clipPath: clip(SHAPE.c) });
     // body = everything left/right of the notch; arm = the part over the circles
     const b1 = plates[1].querySelector('.body'), a1 = plates[1].querySelector('.arm');
@@ -370,7 +380,7 @@
     // outline + ember comets
     const shapes = { 1: [SHAPE.p1, P1_X], C: [SHAPE.c, C_X], 2: [SHAPE.p2, P2_X] };
     for (const [k, [pts, dx]] of Object.entries(shapes)) {
-      const d = pathOf(pts, dx);
+      const d = pathOf(pts, dx) + (k === 'C' ? '' : ' ' + holes(Number(k), dx));   // a lit rim round each circle too
       const edge = $('edge' + k), comet = $('comet' + k);
       edge.setAttribute('d', d); comet.setAttribute('d', d);
       const L = edge.getTotalLength();
@@ -532,16 +542,22 @@
     requestAnimationFrame(step);
   }
 
+  // too wide for its box? Measured in fractions of a pixel: a slanted last letter half a pixel too wide is still cut off
+  function over(el) {
+    if (el.scrollWidth > el.clientWidth + 1) return true;
+    const r = document.createRange(); r.selectNodeContents(el); const cs = getComputedStyle(el);
+    return r.getBoundingClientRect().width > el.getBoundingClientRect().width - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) + .05;
+  }
   function fit(el, max, min) {
     let size = max;
     el.style.fontSize = size + 'px';
-    while (el.scrollWidth > el.clientWidth + 1 && size > min) el.style.fontSize = --size + 'px';
+    while (over(el) && size > min) el.style.fontSize = (size -= .5) + 'px';
     el.classList.toggle('tight', size < max * .78);      // shrunk a lot: lighter glow so it stays readable
   }
   function fitAll() {
     document.querySelectorAll('.plate .name').forEach(el => fit(el, 36, 20));
-    document.querySelectorAll('.round').forEach(el => fit(el, 23, 14));
-    document.querySelectorAll('.center .meta').forEach(el => { el.classList.remove('long'); el.style.letterSpacing = '1.7px'; fit(el, 12, 9); if (el.scrollWidth > el.clientWidth + 1) el.style.letterSpacing = '.5px'; el.classList.toggle('long', el.scrollWidth > el.clientWidth + 1); });
+    document.querySelectorAll('.round').forEach(el => fit(el, 20, 13));
+    document.querySelectorAll('.center .meta').forEach(el => { el.classList.remove('long'); el.style.letterSpacing = '1.7px'; fit(el, 11, 9); if (el.scrollWidth > el.clientWidth + 1) el.style.letterSpacing = '.5px'; el.classList.toggle('long', el.scrollWidth > el.clientWidth + 1); });
   }
   if (document.fonts) { document.fonts.ready.then(fitAll); document.fonts.addEventListener('loadingdone', fitAll); }
 
@@ -571,10 +587,13 @@
         plate.classList.remove('gold-in'); void plate.offsetWidth; plate.classList.add('gold-in');
         setTimeout(() => plate.classList.remove('gold-in'), 900);
       }
+      if (!first && wasChamp && winner !== side)        // reset: the gold fades out instead of switching off
+        plate.animate([{ filter: 'sepia(.75) saturate(1.7) brightness(1.06)' }, { filter: 'none' }], { duration: 700, easing: 'ease-out' });
 
       // decode names when they change (and once after the intro)
       const nameEl = plate.querySelector('.name');
-      if (!first && prev['n' + side] !== p.name) decode(nameEl);
+      // (in a game format the format's own smooth name change plays instead: sb-format.js)
+      if (!first && prev['n' + side] !== p.name && !(s.format && s.format.status === 'live')) decode(nameEl);
       prev['n' + side] = p.name;
 
       // a game was taken
@@ -590,7 +609,11 @@
       }
       prev['s' + side] = p.score;
     }
-    if (!first && prev.round !== s.round) decode(document.querySelector('.round'), 420);
+    if (!first && prev.round !== s.round) {
+      const r = document.querySelector('.round');
+      if (s.format && s.format.status === 'live') r.animate([{ opacity: 0, filter: 'blur(3px)', transform: 'translateY(-4px)' }, { opacity: 1, filter: 'none', transform: 'none' }], { duration: 420, easing: 'cubic-bezier(.2,.8,.25,1)' });   // in a format: a calm fade, no scramble
+      else decode(r, 420);
+    }
     prev.round = s.round;
 
     // the set is over: the loser's plate cracks (and seals again when it's reset)

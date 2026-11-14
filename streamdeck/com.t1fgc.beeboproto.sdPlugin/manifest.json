@@ -1,0 +1,374 @@
+{
+  "$schema": "https://schemas.elgato.com/streamdeck/plugins/manifest.json",
+  "Name": "BeeboScore Prototype",
+  "Version": "1.4.0.0",
+  "Author": "Beebo",
+  "Description": "Run the BeeboScore fighting game scoreboard from your Stream Deck: live score keys, reset, swap sides, undo, losers [L], the VS and Victory Splashes, hide all splashes, refresh the overlay in OBS, game formats (format keys that change with the running format, confirm & next match, undo, splashes, the format bar, Team Death Battle switches), and start.gg: next match, set player, report results and refresh. Comes with ready-made layouts for the Stream Deck (15 keys) and the Stream Deck XL (32 keys).",
+  "UUID": "com.t1fgc.beeboproto",
+  "Icon": "imgs/plugin",
+  "Category": "BeeboScore Prototype",
+  "CategoryIcon": "imgs/category",
+  "CodePath": "bin/plugin.js",
+  "PropertyInspectorPath": "ui/inspector.html",
+  "SDKVersion": 2,
+  "Software": {
+    "MinimumVersion": "6.4"
+  },
+  "OS": [
+    {
+      "Platform": "windows",
+      "MinimumVersion": "10"
+    },
+    {
+      "Platform": "mac",
+      "MinimumVersion": "12"
+    }
+  ],
+  "Nodejs": {
+    "Version": "20"
+  },
+  "Actions": [
+    {
+      "UUID": "com.t1fgc.beeboproto.score",
+      "Name": "Player score",
+      "Icon": "imgs/actions/score",
+      "Tooltip": "Tap +1, hold −1. Shows the player's name and live score.",
+      "Controllers": [
+        "Keypad",
+        "Encoder"
+      ],
+      "Encoder": {
+        "layout": "$B1",
+        "Icon": "imgs/actions/score-dial",
+        "TriggerDescription": {
+          "Rotate": "Change score",
+          "Push": "+1",
+          "Touch": "+1 (long touch −1)"
+        }
+      },
+      "States": [
+        {
+          "Image": "imgs/keys/score",
+          "ShowTitle": false
+        }
+      ],
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboproto.reset",
+      "Name": "Reset scores",
+      "Icon": "imgs/actions/reset",
+      "Tooltip": "Both scores back to 0–0.",
+      "States": [
+        {
+          "Image": "imgs/keys/reset",
+          "ShowTitle": false
+        }
+      ],
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboproto.swap",
+      "Name": "Swap sides",
+      "Icon": "imgs/actions/swap",
+      "Tooltip": "Swap Player 1 and Player 2.",
+      "States": [
+        {
+          "Image": "imgs/keys/swap",
+          "ShowTitle": false
+        }
+      ],
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboproto.undo",
+      "Name": "Undo",
+      "Icon": "imgs/actions/undo",
+      "Tooltip": "Undo the last change.",
+      "States": [
+        {
+          "Image": "imgs/keys/undo",
+          "ShowTitle": false
+        }
+      ],
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboproto.clear",
+      "Name": "Clear players",
+      "Icon": "imgs/actions/clear",
+      "Tooltip": "Clears both players and scores for the next set.",
+      "States": [
+        {
+          "Image": "imgs/keys/clear",
+          "ShowTitle": false
+        }
+      ],
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboproto.loser",
+      "Name": "Losers [L]",
+      "Icon": "imgs/actions/loser",
+      "Tooltip": "Mark a player as coming from losers.",
+      "States": [
+        {
+          "Image": "imgs/keys/loser-off",
+          "ShowTitle": false
+        },
+        {
+          "Image": "imgs/keys/loser-on",
+          "ShowTitle": false
+        }
+      ],
+      "DisableAutomaticStates": true,
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboproto.overlay",
+      "Name": "Show / hide overlay",
+      "Icon": "imgs/actions/overlay",
+      "Tooltip": "Hides the whole overlay in OBS during downtime; press again to bring it back.",
+      "States": [
+        {
+          "Image": "imgs/keys/overlay-on",
+          "ShowTitle": false
+        },
+        {
+          "Image": "imgs/keys/overlay-off",
+          "ShowTitle": false
+        }
+      ],
+      "DisableAutomaticStates": true,
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboproto.vs",
+      "Name": "Show / hide VS Splash",
+      "Icon": "imgs/actions/vs",
+      "Tooltip": "Shows the VS Splash over the scoreboard; press again to hide it. The key lights up while the splash is on stream.",
+      "States": [
+        {
+          "Image": "imgs/keys/vs-off",
+          "ShowTitle": false
+        },
+        {
+          "Image": "imgs/keys/vs-on",
+          "ShowTitle": false
+        }
+      ],
+      "DisableAutomaticStates": true,
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboproto.layout",
+      "Name": "Switch layout",
+      "Icon": "imgs/actions/layout",
+      "Tooltip": "Next layout, or a specific one (including layouts you made in the Overlay maker).",
+      "States": [
+        {
+          "Image": "imgs/keys/layout",
+          "ShowTitle": false
+        }
+      ],
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboproto.sggreport",
+      "Name": "Report result to start.gg",
+      "Icon": "imgs/actions/sggreport",
+      "Tooltip": "Sends the finished set's result to start.gg (the match has to come from the start.gg bracket, and your account has to be able to report).",
+      "States": [
+        {
+          "Image": "imgs/keys/sggreport",
+          "ShowTitle": false
+        }
+      ],
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboproto.bracketrefresh",
+      "Name": "Refresh start.gg matches",
+      "Icon": "imgs/actions/bracketrefresh",
+      "Tooltip": "Pull the latest matches and results from start.gg right now.",
+      "States": [
+        {
+          "Image": "imgs/keys/bracketrefresh",
+          "ShowTitle": false
+        }
+      ],
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboproto.player",
+      "Name": "Set player",
+      "Icon": "imgs/actions/player",
+      "Tooltip": "Pop-up to type a name or pick a player.",
+      "States": [
+        {
+          "Image": "imgs/keys/player",
+          "ShowTitle": false
+        }
+      ],
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboproto.nextmatch",
+      "Name": "Next match (start.gg)",
+      "Icon": "imgs/actions/nextmatch",
+      "Tooltip": "Load the next match from start.gg at 0–0.",
+      "States": [
+        {
+          "Image": "imgs/keys/nextmatch",
+          "ShowTitle": false
+        }
+      ],
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboproto.fnext",
+      "Name": "Format · Confirm & next match",
+      "Icon": "imgs/actions/fnext",
+      "Tooltip": "Game formats: the battle score; press to confirm a won set and load the next match.",
+      "States": [
+        {
+          "Image": "imgs/keys/fnext",
+          "ShowTitle": false
+        }
+      ],
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboproto.fundo",
+      "Name": "Format · Undo result",
+      "Icon": "imgs/actions/fundo",
+      "Tooltip": "Game formats: undo the last recorded result.",
+      "States": [
+        {
+          "Image": "imgs/keys/fundo",
+          "ShowTitle": false
+        }
+      ],
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboproto.fsplash",
+      "Name": "Format · Splash (board / team VS / champion)",
+      "Icon": "imgs/actions/fsplash",
+      "Tooltip": "Game formats: show / hide the board, Team VS or champion splash.",
+      "States": [
+        {
+          "Image": "imgs/keys/fsplash-off",
+          "ShowTitle": false
+        },
+        {
+          "Image": "imgs/keys/fsplash-on",
+          "ShowTitle": false
+        }
+      ],
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboproto.fbar",
+      "Name": "Format · Format bar",
+      "Icon": "imgs/actions/fbar",
+      "Tooltip": "Show / hide the format bar along the bottom of the layout (teams, survivors, challengers, standings). Lit while on stream.",
+      "States": [
+        {
+          "Image": "imgs/keys/fbar-off",
+          "ShowTitle": false
+        },
+        {
+          "Image": "imgs/keys/fbar-on",
+          "ShowTitle": false
+        }
+      ],
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboproto.fswitch",
+      "Name": "Format · Switch fighter",
+      "Icon": "imgs/actions/fswitch",
+      "Tooltip": "Team Death Battle: after a life is lost, puts the team's next fighter in (they keep their lives). Set P1 or P2.",
+      "States": [
+        {
+          "Image": "imgs/keys/fswitch",
+          "ShowTitle": false
+        }
+      ],
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboproto.victory",
+      "Name": "Show / hide Victory Splash",
+      "Icon": "imgs/actions/victory",
+      "Tooltip": "The set winner, full screen. Lit gold while it is on stream.",
+      "States": [
+        {
+          "Image": "imgs/keys/victory-off",
+          "ShowTitle": false
+        },
+        {
+          "Image": "imgs/keys/victory-on",
+          "ShowTitle": false
+        }
+      ],
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboproto.hideall",
+      "Name": "Hide all splashes",
+      "Icon": "imgs/actions/hideall",
+      "Tooltip": "Takes every full-screen splash off (VS, Victory, Board, Team VS, Champion). The scoreboard stays.",
+      "States": [
+        {
+          "Image": "imgs/keys/hideall",
+          "ShowTitle": false
+        }
+      ],
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboproto.refresh",
+      "Name": "Refresh overlay in OBS",
+      "Icon": "imgs/actions/refresh",
+      "Tooltip": "Reloads the overlay in OBS so it starts clean. Through the OBS link it fades over, with no visible reload.",
+      "States": [
+        {
+          "Image": "imgs/keys/refresh",
+          "ShowTitle": false
+        }
+      ],
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboproto.slot",
+      "Name": "Format key (changes with the format)",
+      "Icon": "imgs/actions/slot",
+      "Tooltip": "Part of the BeeboScore Stream Deck layouts: becomes what its place is for in the running format (Confirm & next match, Switch fighter, Board…), framed in the format's colour.",
+      "States": [
+        {
+          "Image": "imgs/keys/slot",
+          "ShowTitle": false
+        }
+      ],
+      "UserTitleEnabled": false
+    }
+  ],
+  "Profiles": [
+    {
+      "Name": "profiles/BeeboProto-15",
+      "DeviceType": 0,
+      "Readonly": false,
+      "DontAutoSwitchWhenInstalled": true,
+      "AutoInstall": false
+    },
+    {
+      "Name": "profiles/BeeboProto-XL",
+      "DeviceType": 2,
+      "Readonly": false,
+      "DontAutoSwitchWhenInstalled": true,
+      "AutoInstall": false
+    }
+  ]
+}

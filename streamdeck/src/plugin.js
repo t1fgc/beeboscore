@@ -5,18 +5,22 @@
  * (http://127.0.0.1:3300 — found automatically).
  */
 const WebSocket = require('ws');
-const { art, dataUrl } = require('./art');
+const { art, dataUrl, tint } = require('./art');
+const { DECKS, FORMAT, roleFor, FORMAT_KEYS, planFor } = require('./decks');
 
 // ---------------------------------------------------------------- launch arguments
 const argv = process.argv.slice(2), arg = k => { const i = argv.indexOf('-' + k); return i >= 0 ? argv[i + 1] : ''; };
 const PORT = arg('port'), PLUGIN_UUID = arg('pluginUUID'), REGISTER = arg('registerEvent');
-const PREFIX = 'com.t1fgc.beeboscore.';
+const PREFIX = 'com.t1fgc.beeboproto.';
 // Stream Deck passes its own version and this plugin's version in -info; BeeboScore uses them to offer updates
 const INFO = (() => { try { return JSON.parse(arg('info') || '{}'); } catch { return {}; } })();
 const VERSIONS = { plugin: (INFO.plugin && INFO.plugin.version) || (typeof __PLUGIN_VERSION__ !== 'undefined' ? __PLUGIN_VERSION__ : ''), app: (INFO.application && INFO.application.version) || '' };
 const CANDIDATES = ['http://127.0.0.1:3300', 'http://127.0.0.1:3301', 'http://127.0.0.1:3302'];
 
 let ws = null, globals = { address: '' }, base = '', status = null, online = false;
+// the Stream Decks plugged in: id -> { name, type, cols, rows }
+const devices = new Map();
+for (const d of INFO.devices || []) devices.set(d.id, { name: d.name || '', type: d.type, cols: d.size && d.size.columns, rows: d.size && d.size.rows });
 const contexts = new Map();   // context -> { action, settings, controller, image, title, state, feedback }
 const send = (event, extra) => { if (ws && ws.readyState === 1) ws.send(JSON.stringify({ event, ...extra })); };
 const kind = action => String(action || '').replace(PREFIX, '');
@@ -53,9 +57,37 @@ async function poll() {
     if (was !== online) for (const [ctx, c] of contexts) if (c.pi) pushToPI(ctx);
   } finally { polling = false; }
 }
+// "Set up my Stream Deck" in BeeboScore's Settings: open the BeeboScore profile that fits each Stream Deck plugged in.
+// The profiles come with the plugin (Stream Deck asks once whether to add them). Only the 15-key and the XL have one.
+let setupDone = 0;
+function deckFor(d) {
+  if (d.cols === 5 && d.rows === 3) return DECKS['15'];
+  if (d.cols === 8 && d.rows === 4) return DECKS['32'];
+  return null;
+}
+// tells BeeboScore which decks are plugged in (name + size), so "Set up my Stream Deck" knows a 15-key from an XL
+let decksSent = '';
+function reportDecks() {
+  const list = [...devices.values()].map(d => ({ name: d.name, cols: d.cols || 0, rows: d.rows || 0, type: d.type || 0 })), j = JSON.stringify(list);
+  if (!online || !devices.size || (j === decksSent && status && status.sdDecks)) return;   // again if BeeboScore restarted (sdDecks 0)
+  http('/api/remote/action', { action: 'sdDevices', devices: list }).then(() => { decksSent = j; }).catch(() => {});
+}
+function runSetup(n) {
+  setupDone = n;
+  const out = [];
+  for (const [id, d] of devices) {
+    const deck = deckFor(d);
+    if (deck) send('switchToProfile', { context: PLUGIN_UUID, device: id, payload: { profile: 'profiles/' + deck.file } });
+    out.push({ name: d.name, keys: (d.cols || 0) * (d.rows || 0), profile: deck ? deck.name : '' });
+  }
+  log(`setup ${n}: ${JSON.stringify(out)}`);
+  act({ action: 'sdSetupDone', n, devices: out });
+}
 function applyStatus(d) {
   const changed = !status || JSON.stringify(status) !== JSON.stringify(d);
   status = d;
+  if (d && d.sdSetup && d.sdSetup !== setupDone) runSetup(d.sdSetup);
+  reportDecks();
   if (changed) { renderAll(); for (const [ctx, c] of contexts) if (c.pi) pushToPI(ctx); }
 }
 async function act(body, ctx, okFlash) {
@@ -74,12 +106,22 @@ async function act(body, ctx, okFlash) {
 const log = msg => send('logMessage', { payload: { message: '[BeeboScore] ' + msg } });
 
 // ---------------------------------------------------------------- drawing
+// what a key is right now. A format key ("slot") takes the job of its place on the deck in the running format.
+const curPreset = () => (status && status.format && status.format.preset) || '';
+function viewOf(c) {
+  const k = kind(c.action);
+  if (k !== 'slot') return { k, s: c.settings || {}, slot: false };
+  const r = roleFor(c.settings, curPreset());
+  return { k: r.k, s: r.s, slot: true, role: r.role };
+}
 function render(ctx) {
   const c = contexts.get(ctx); if (!c) return;
-  const s = c.settings || {}, side = Number(s.side) === 2 ? 2 : 1, p = status ? status['p' + side] : null;
+  const v = viewOf(c), s = v.s, side = Number(s.side) === 2 ? 2 : 1, p = status ? status['p' + side] : null;
   const off = !online;
+  const f0 = status && status.format, F0 = f0 && FORMAT[f0.preset], fc = F0 ? F0.color : '';
+  const teamFmt = !!(f0 && ['teams', 'tdb'].includes(F0 && F0.group)), champ = !!(f0 && f0.status === 'done');
   let svg = '', state = null, fb = null;
-  switch (kind(c.action)) {
+  switch (v.k) {
     case 'score':
       svg = art.score({ side, name: p && p.name, score: p ? p.score : '–', mode: s.mode || 'tapHold', offline: off });
       if (c.controller === 'Encoder') {
@@ -89,17 +131,23 @@ function render(ctx) {
       break;
     case 'reset': svg = art.reset({ offline: off }); break;
     case 'swap': svg = art.swap({ offline: off }); break;
-    case 'undo': svg = art.undo({ offline: off }); break;
+    case 'undo': svg = art.undo({ result: !!(status && status.undo === 'format'), offline: off }); break;   // one Undo: a format result when that came last
     case 'clear': svg = art.clear({ offline: off }); break;
     case 'nextmatch': svg = art.nextmatch({ offline: off, label: c.busy ? 'LOADING…' : (status && !status.startgg ? 'NO START.GG' : '') }); break;
-    case 'vs': { const on = !!(status && status.vs); svg = art.vs({ on, offline: off }); state = on ? 1 : 0; break; }
+    case 'vs': {                       // in a team format the VS key is the Team VS splash
+      const on = teamFmt ? !!(status && status.splash === 'fvs') : !!(status && status.vs);
+      svg = art.vs({ on, team: teamFmt, fc, offline: off }); state = on ? 1 : 0; break;
+    }
     case 'bracket': {
       const on = !!(status && status.splash === 'bracket');
       const b = status && status.bracket, hint = status && !status.startgg ? 'NO START.GG' : (b && b.top8 && !on ? 'TOP 8 SET' : '');
       svg = art.bracket({ on, offline: off, label: c.loading ? 'LOADING…' : hint }); state = on ? 1 : 0; break;
     }
     case 'bracketrefresh': svg = art.bracketRefresh({ busy: !!c.busy || !!(status && status.bracket && status.bracket.loading), offline: off, label: status && !status.startgg ? 'NO START.GG' : (c.flash || '') }); break;
-    case 'victory': { const on = !!(status && status.victory); svg = art.victory({ on, ready: !!(status && status.winner), offline: off }); state = on ? 1 : 0; break; }
+    case 'victory': {                  // once a format is won, the Victory key is its Champion splash
+      const on = champ ? !!(status && status.splash === 'fwin') : !!(status && status.victory);
+      svg = art.victory({ on, ready: !!(status && status.winner), champion: champ, fc, offline: off }); state = on ? 1 : 0; break;
+    }
     case 'bracketside': {
       const on = !!(status && status.splash === 'bracket'), b = (status && status.bracket) || {};
       const want = s.bside === 'W' ? 'W' : s.bside === 'L' ? 'L' : '';
@@ -126,19 +174,26 @@ function render(ctx) {
     }
     case 'loser': { const on = !!(p && p.loser); svg = art.loser({ side, on, offline: off }); state = on ? 1 : 0; break; }
     case 'player': svg = art.player({ side, name: p && p.name, offline: off }); break;
-    case 'fnext': { const f = status && status.format; svg = art.formatNext({ none: !f, done: f && f.status === 'done', score: f ? (f.tags && f.tags.length === 2 && f.kind === 'teams' ? f.score : f.score) : '', label: f ? f.name : '', pending: !!(f && f.pending), offline: off }); break; }
-    case 'fundo': { const f = status && status.format; svg = art.formatUndo({ ready: !!(f && f.canUndo), offline: off }); break; }
+    case 'fnext': { const f = status && status.format; svg = art.formatNext({ none: !f, done: f && f.status === 'done', score: f ? f.score : '', label: f ? f.name : '', pending: !!(f && f.pending), fc, offline: off }); break; }
+    case 'fundo': { const f = status && status.format; svg = art.formatUndo({ ready: !!(f && f.canUndo), fc, offline: off }); break; }
+    case 'fswitch': { const f = status && status.format, t = f && f.tdb, tm = t && t.teams[side - 1]; svg = art.formatSwitch({ side, none: !t, open: !!(t && t.open), name: tm ? tm.cur : '', lives: tm ? tm.lives : 0, max: t ? t.max : 0, color: tm ? tm.color : '', fc, offline: off }); break; }
     case 'vtopen': { const v = status && status.vt; svg = art.vtSignup({ open: !!(v && v.open && v.status === 'signup'), count: v ? v.count : 0, started: !!(v && v.status !== 'signup'), offline: off }); state = v && v.open ? 1 : 0; break; }
     case 'vtnext': { const v = status && status.vt; svg = art.vtNext({ now: v ? v.now : '', won: !!(v && v.winner), done: !!(v && v.status === 'done'), champion: v ? v.champion : '', offline: off }); break; }
     case 'overlay': { const h = !!(status && status.hidden); svg = art.overlay({ hidden: h, offline: off }); state = h ? 1 : 0; break; }
-    case 'fbar': { const f = status && status.format, on = !!(f && status.fbar !== false); svg = art.formatBar({ on, kind: f ? (f.preset === 'koth' ? 'koth' : f.kind) : '', offline: off }); state = on ? 1 : 0; break; }
-    case 'fsplash': { const k = s.kind || 'fboard', on = !!(status && status.splash === k); svg = art.formatSplash({ kind: k, on, offline: off }); state = on ? 1 : 0; break; }
+    case 'fbar': { const f = status && status.format, on = !!(f && status.fbar !== false); svg = art.formatBar({ on, kind: f ? (f.preset === 'koth' ? 'koth' : f.kind) : '', fc, offline: off }); state = on ? 1 : 0; break; }
+    case 'fsplash': { const k = s.kind || 'fboard', on = !!(status && status.splash === k); svg = art.formatSplash({ kind: k, on, fc, offline: off }); state = on ? 1 : 0; break; }
     case 'sound': { const so = (status && status.sound) || {}, on = !!so.on; svg = art.sound({ on, vol: so.vol ?? 60, mode: s.smode || 'toggle', offline: off }); state = on && (s.smode || 'toggle') === 'toggle' ? 1 : 0; break; }
     case 'screen': {
       const list = (status && status.screens) || [], sc = list.find(x => x.id === s.screen) || list.find(x => x.name === s.screenName);
       const on = !!(sc && status && status.screen === sc.id);
       svg = art.screen({ name: sc ? sc.name : (s.screenName || ''), on, missing: !!s.screenName && !sc && !!status, offline: off }); state = on ? 1 : 0; break;
     }
+    case 'hideall': { const any = !!(status && (status.vs || status.victory || status.splash || status.screen)); svg = art.hideAll({ any, offline: off }); break; }
+    case 'flock': { const t = status && status.format && status.format.tdb; svg = art.formatLock({ open: !!(t && t.open), none: !t, fc, offline: off }); break; }
+    case 'fforfeit': { const f = status && status.format; svg = art.formatForfeit({ side, name: p && p.name, none: !(f && f.status === 'live'), fc, offline: off }); break; }
+    case 'badge': { const f = status && status.format, F = f && FORMAT[f.preset]; svg = art.formatBadge({ name: F ? F.name : '', color: F ? F.color : '', offline: off }); break; }
+    case 'blank': svg = art.blank({ offline: off }); break;
+    case 'refresh': svg = art.refresh({ busy: !!c.busy, offline: off }); break;
     case 'layout': {
       const list = (status && status.layouts) || [];
       const target = s.mode === 'specific' ? list.find(o => o.name === s.layout) : list.find(o => o.name === (status && status.layout));
@@ -147,6 +202,8 @@ function render(ctx) {
     }
     default: return;
   }
+  // the format's own keys are drawn in its colour (Crew orange, Team Death Battle pink…) while it runs (keys.js)
+  if (v.slot) state = null;          // a format key has one state: its picture says it all
   if (state !== null && c.state !== state) { c.state = state; send('setState', { context: ctx, payload: { state } }); }
   const img = dataUrl(svg);
   if (img !== c.image) { c.image = img; send('setImage', { context: ctx, payload: { image: img, target: 0 } }); }
@@ -159,6 +216,7 @@ function pushToPI(ctx) {
   send('sendToPropertyInspector', { action: c.action, context: ctx, payload: {
     online, address: base, configured: globals.address || '',
     layouts: (status && status.layouts) || [], layout: status && status.layout, screens: (status && status.screens) || [], version: status && status.version,
+    plan: kind(c.action) === 'slot' ? planFor(c.settings) : null,
   } });
 }
 
@@ -166,8 +224,9 @@ function pushToPI(ctx) {
 const HOLD_MS = 450;
 function keyDown(ctx) {
   const c = contexts.get(ctx); if (!c) return;
-  const s = c.settings || {}, side = Number(s.side) === 2 ? 2 : 1;
-  switch (kind(c.action)) {
+  const v = viewOf(c); c.press = v;       // keyUp acts on what the key was when it went down
+  const s = v.s, side = Number(s.side) === 2 ? 2 : 1;
+  switch (v.k) {
     case 'score': {
       const mode = s.mode || 'tapHold';
       if (mode === 'add') return act({ action: 'score', side, delta: 1 });
@@ -176,13 +235,14 @@ function keyDown(ctx) {
       c.holdTimer = setTimeout(() => { c.held = true; act({ action: 'score', side, delta: -1 }); }, HOLD_MS);
       return;
     }
-    case 'reset':
-      if (s.hold) { c.held = false; c.holdTimer = setTimeout(() => { c.held = true; act({ action: 'reset' }, ctx, true); }, 700); return; }
-      return act({ action: 'reset' });
+    case 'reset':                       // tap: scores back to 0–0 · hold: a new set (players cleared too)
+      c.held = false; c.holdTimer = setTimeout(() => { c.held = true; act({ action: 'clear' }, ctx, true); }, 650); return;
     case 'swap': return act({ action: 'swap' });
-    case 'undo': return act({ action: 'undo' }, ctx);
+    case 'undo': return act({ action: 'undoAny' }, ctx);
     case 'clear': return act({ action: 'clear' }, ctx, true);
-    case 'vs': return act({ action: 'vs', show: 'toggle' }, ctx);
+    case 'vs': { const f = status && status.format, F = f && FORMAT[f.preset];
+      if (F && ['teams', 'tdb'].includes(F.group)) return act({ action: 'format', do: 'splash', kind: 'fvs', show: 'toggle' }, ctx);
+      return act({ action: 'vs', show: 'toggle' }, ctx); }
     case 'bracket': return loading(ctx, act({ action: 'splash', kind: 'bracket', show: 'toggle' }, ctx));
     case 'top8': return loading(ctx, act({ action: 'splash', kind: 'top8', show: 'toggle' }, ctx));
     case 'standings': return loading(ctx, act({ action: 'splash', kind: 'standings', show: 'toggle' }, ctx));
@@ -196,6 +256,7 @@ function keyDown(ctx) {
     case 'vtopen': return act({ action: 'vt', do: 'open', open: 'toggle' }, ctx);
     case 'vtnext': return act({ action: 'vt', do: 'next' }, ctx);
     case 'fbar': return act({ action: 'fbar', show: 'toggle' }, ctx);
+    case 'fswitch': return act({ action: 'fswitch', side }, ctx);
     case 'overlay': return act({ action: 'overlay', show: 'toggle' }, ctx);
     case 'fsplash': return act({ action: 'format', do: 'splash', kind: s.kind || 'fboard', show: 'toggle' }, ctx);
     case 'screen': { const list = (status && status.screens) || [], sc = list.find(x => x.id === s.screen) || list.find(x => x.name === s.screenName); return act({ action: 'screen', name: sc ? sc.id : (s.screenName || s.screen || ''), show: 'toggle' }, ctx); }
@@ -214,8 +275,16 @@ function keyDown(ctx) {
     case 'autoscoreconfirm': return act({ action: 'autoscoreConfirm' }, ctx, true);
     case 'autoscoreresync': return act({ action: 'autoscoreResync' }, ctx, true);
     case 'viewersidebar': return act({ action: 'viewerSidebar', show: 'toggle' }, ctx);
-    case 'victory': return act({ action: 'victory', show: 'toggle' }, ctx);
+    case 'victory': { const f = status && status.format;
+      if (f && f.status === 'done') return act({ action: 'format', do: 'splash', kind: 'fwin', show: 'toggle' }, ctx);
+      return act({ action: 'victory', show: 'toggle' }, ctx); }
     case 'bracketside': return loading(ctx, act({ action: 'bracketSide', side: s.bside === 'W' || s.bside === 'L' ? s.bside : 'toggle' }, ctx));
+    case 'hideall': return act({ action: 'hideAll' }, ctx);
+    case 'flock': return act({ action: 'format', do: 'lock' }, ctx, true);
+    case 'fforfeit': { c.held = false; c.holdTimer = setTimeout(() => { c.held = true; act({ action: 'format', do: 'forfeit', side }, ctx, true); }, 800); return; }
+    case 'badge': { const f = status && status.format; if (f) return act({ action: 'format', do: 'splash', kind: 'fboard', show: 'toggle' }, ctx); return; }
+    case 'blank': return;
+    case 'refresh': { c.busy = true; render(ctx); act({ action: 'refresh' }, ctx, true); setTimeout(() => { c.busy = false; render(ctx); }, 1600); return; }
     case 'nextmatch': {
       c.busy = true; render(ctx);
       return act({ action: 'nextMatch' }, ctx, true).finally(() => { c.busy = false; render(ctx); });
@@ -231,10 +300,11 @@ function loading(ctx, p) {
 function keyUp(ctx) {
   const c = contexts.get(ctx); if (!c || !c.holdTimer) return;
   clearTimeout(c.holdTimer); c.holdTimer = null;
-  const s = c.settings || {}, side = Number(s.side) === 2 ? 2 : 1;
-  if (!c.held && kind(c.action) === 'score') act({ action: 'score', side, delta: 1 });
-  if (!c.held && kind(c.action) === 'viewerresult') act({ action: 'viewerResult', who: s.who === 'viewer' ? 'viewer' : 'streamer', delta: 1 }, ctx);
-  if (!c.held && kind(c.action) === 'reset' && s.hold) send('showAlert', { context: ctx });   // released too early
+  const v = c.press || viewOf(c), s = v.s, side = Number(s.side) === 2 ? 2 : 1;
+  if (!c.held && v.k === 'score') act({ action: 'score', side, delta: 1 });
+  if (!c.held && v.k === 'viewerresult') act({ action: 'viewerResult', who: s.who === 'viewer' ? 'viewer' : 'streamer', delta: 1 }, ctx);
+  if (!c.held && v.k === 'reset') act({ action: 'reset' }, ctx);
+  if (!c.held && v.k === 'fforfeit') send('showAlert', { context: ctx });   // released too early
 }
 
 // ---------------------------------------------------------------- Stream Deck events
@@ -276,6 +346,8 @@ function onMessage(raw) {
       if (payload.openApp) send('openUrl', { payload: { url: (base || CANDIDATES[0]) + '/' } });
       break;
     case 'systemDidWakeUp': base = ''; poll(); break;
+    case 'deviceDidConnect': { const i = m.deviceInfo || {}; devices.set(m.device, { name: i.name || '', type: i.type, cols: i.size && i.size.columns, rows: i.size && i.size.rows }); reportDecks(); break; }
+    case 'deviceDidDisconnect': devices.delete(m.device); reportDecks(); break;
   }
 }
 
@@ -290,4 +362,4 @@ function connect() {
 }
 connect();
 setInterval(poll, 700);
-module.exports = { onMessage, contexts, _state: () => ({ base, online, status }) };
+module.exports = { onMessage, contexts, devices, _state: () => ({ base, online, status }) };

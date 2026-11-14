@@ -19,4 +19,14 @@
   document.addEventListener('keydown', e => { if (e.ctrlKey && e.shiftKey && (e.key === 'H' || e.key === 'h')) { e.preventDefault(); toggle(); } });
   window.addEventListener('beebo:state', e => { const s = e.detail || (P.state && P.state()); if (s && 'hidden' in s) { hidden = !!s.hidden; draw(); } });
   P.api('/api/state').then(s => { hidden = !!s.hidden; draw(); }).catch(() => {});
+
+  // "Refresh OBS": reloads the overlay pages in OBS (the browser source's cache too). Through the OBS link the new page
+  // fades in over the old one, so nothing flickers on stream.
+  const rb = document.getElementById('refreshBtn');
+  if (rb) rb.addEventListener('click', async () => {
+    if (rb.disabled) return; rb.disabled = true; rb.classList.add('spin');
+    try { await P.api('/api/overlays/refresh', { method: 'POST', body: {} }); P.toast('Overlay refreshed in OBS'); }
+    catch (e) { P.toast(e.message, true); }
+    setTimeout(() => { rb.disabled = false; rb.classList.remove('spin'); }, 1200);
+  });
 })();

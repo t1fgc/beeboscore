@@ -706,7 +706,7 @@ section.tab[data-tab="maker"] { max-width: none; gap: 0; }
           <div class="mk-row" style="margin-top:10px"><button class="mk-btn sm" id="mkMirror" title="Copy P1's spots to P2, flipped">Mirror P1 to P2</button><button class="mk-btn sm" id="mkReplace" title="Put every spot back where the maker first placed it">Place them again</button></div>
         </div>
         <div class="mk-tray"><h2>Effects</h2><div class="mk-fx" id="mkFx"></div>
-          <div class="mk-field"><span>Set winner</span><select id="mkVic"><option value="own">This layout's own banner</option><option value="shattered">Ember splash</option><option value="off">Nothing</option></select></div></div>
+          <div class="mk-field"><span>Set winner</span><select id="mkVic"><option value="own">This layout's own banner</option><option value="shattered">Ember splash</option><option value="porcelain">Porcelain splash</option><option value="off">Nothing</option></select></div></div>
       </div>
     </div>
     <div class="mk-save"><button class="mk-btn go" id="mkSaveLive">Save and go live</button><button class="mk-btn" id="mkSave">Save layout</button><span class="note" id="mkNote"></span></div>
@@ -744,9 +744,9 @@ section.tab[data-tab="maker"] { max-width: none; gap: 0; }
   function previewDoc(instant) {
     const cfg = { ...settingsOut(), title: 'Preview', pieces: job.an.pieces.map(p => ({ x: p.x, y: p.y, w: p.w, h: p.h, side: p.side, src: p.src, glow: p.glow, edge: p.edge })) };
     const json = JSON.stringify(cfg).replace(/</g, '\\u003c').replace(/[\u2028\u2029]/g, '');
-    const shattered = cfg.victory === 'shattered';
+    const shattered = cfg.victory === 'shattered' || cfg.victory === 'porcelain';   // either splash (sb-victory.js)
     return tplText.replace('/*MAKER*/null/*MAKER*/', () => json).replace('__TITLE__', 'Preview').replace('__FONTFILE__', FONTS[cfg.font.name] || FONTS['Saira Condensed'])
-      .replace('__VICTORY__', shattered ? 'shattered' : 'off')
+      .replace('__VICTORY__', shattered ? cfg.victory : 'off')
       .replace('<body>', `<body><script>window.__MAKER_DEMO=true;${instant ? 'window.__SB_INSTANT=true;' : ''}<\/script>`)
       .replace('</body>', (shattered ? '<script src="/sb-perf.js"><\/script><script src="/sb-victory.js"><\/script>' : '') + '</body>');
   }

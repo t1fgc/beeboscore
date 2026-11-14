@@ -14,8 +14,6 @@ Developed by Beebo
 
 ![The Ember layout showing a match](docs/images/overlay-shattered.png)
 
-> **This is a prototype build.** A new build is on the way later in 2026. See [What's coming](#whats-coming).
-
 ---
 
 ## Windows SmartScreen warning
@@ -44,7 +42,7 @@ The app keeps everything it saves in a **`BeeboScore Data`** folder next to the 
 
 ---
 
-## What's in this build
+## What's in it
 
 ![The control panel](docs/images/control-panel.png)
 
@@ -52,37 +50,52 @@ The app keeps everything it saves in a **`BeeboScore Data`** folder next to the 
 
 Names, scores, round, format and event on one screen. **+ / −** on each score, Swap, Reset, Undo, and a losers **[L]** mark. Changes go live when you press **Update**, or straight away in **Live** mode.
 
-### 11 layouts
+### Game formats
 
-Pick one from the **Layout** menu at the top of the app. It changes in OBS straight away. Every layout is made for any fighting game and sits in the same place along the top of the screen, clear of the game's timer, round counters and portraits.
+![A Team Death Battle on the Porcelain layout: life crests on the player bars, and a card for every fighter along the bottom](docs/images/team-death-battle.jpg)
 
-![The 11 layouts](docs/images/layouts.png)
+Run an event on top of the scoreboard from the **Formats** tab. The format decides who plays next; you score each set as usual and press **Confirm & next match**.
+
+| Format | How it is won |
+| --- | --- |
+| **Crew Battle** | Winner stays on. A crew is out when every player has lost. |
+| **Team Battle** (Sajam Slam style) | Players are paired by tier. First team to the target points wins; a tie goes to the coaches. |
+| **Gauntlet** | One player against a line of challengers. |
+| **Team Death Battle** | Two teams, and every fighter has lives. After a life is lost, a team can switch fighters. A fighter who comes back still has the lives they left with. |
+| **Death Battle** | Everyone has lives. Lose a set, lose a life. The last one standing wins. |
+| **King of the Hill** | Winner stays, loser goes to the back of the queue. |
+| **League** | Everyone plays everyone. Standings by wins, then head-to-head. |
+
+Both layouts draw every format in their own style: lives, crowns, tiers or table position on the player bars, a format bar along the bottom, and Board, Team VS and Champion splashes. Knockouts, lost lives, switches and eliminations play by themselves when a result is confirmed. Nothing changes in OBS.
+
+In the team formats, a **lock-in splash** plays when both players are locked in: two halves of glass slide together with each player's picture, name and lives or points, meld, and a light runs down the join. The fighter playing has a bigger card on the team bar, and a fighter on their last life gets a heartbeat across their bar.
+
+![The Formats tab with a Team Death Battle being set up](docs/images/formats.png)
+
+To give a player a picture, drop an image on them in the list (or click 📷). A big picture opens a crop window first. The picture is used on their card on the team bar and on the VS and lock-in splashes; players without one show their name and a big letter instead, on a card the same size.
+
+The full guide is in [docs/FORMATS.md](docs/FORMATS.md).
+
+### Layouts
+
+Pick one from the **Layout** menu at the top of the app. It changes in OBS straight away. Both layouts are made for any fighting game and sit in the same place along the top of the screen, clear of the game's timer and portraits. Each player bar covers everything round the game's round-win circles, with a lit rim round each circle.
+
+![Ember and Porcelain, at match point and when the set is over](docs/images/layouts.png)
 
 | Layout | What it is made of |
 | --- | --- |
 | **Ember** | The original (called Shattered in 1.0.0): dark obsidian with ember light. The winner turns gold and the loser's plate cracks. |
-| **Frostbite** | Ice: frosted plates with icicles and drifting snow. |
-| **Venom** | Toxic slime: dripping plates, bubbles and horror lettering. |
-| **Royal** | Velvet banners with gold trim, and a crown for the winner. |
-| **Crimson** | Forged steel: blade-shaped plates with a red edge and brush lettering. |
-| **Gold Rush** | Gold ingots with stamped lettering and showers of coins. |
-| **Sakura** | Paper plates, a blossom branch and falling petals. |
-| **Tidal** | Deep-water glass with a moving waterline, bubbles and splashes. |
-| **Voltage** | Circuit plates with a lightning edge, arcs and sparks. |
-| **Chrome** | Mirror-polished capsules with moving reflections. |
-| **Pastel** | Candy-coloured clouds, rounded lettering, stars and confetti. |
+| **Porcelain** | Ember's sister, glazed white, with dark lettering and ember-orange fire. The winner turns gold and the loser's bar shatters and is knocked out of shape. |
 
-Each layout has its own bar shape, lettering, effects and animations: an intro, a reaction when a game is taken, a match-point state, and a winner and a loser when the set ends. Each also has its own VS Splash and Victory Splash.
+Each has an intro, a reaction when a game is taken, a match-point state, a winner and a loser when the set ends, and its own VS Splash and Victory Splash. The score sits in a solid box with at least 7:1 contrast and stays that way for the player who lost. The effects stay off the game's health bars, timer and portraits.
 
-In every layout the score sits in a solid box with at least 7:1 contrast and stays that way for the player who lost.
-
-The ten new layouts never draw over the game's health bars, round counters, timer or portraits. Their shapes end at the bar's bottom edge, their glows stop there, and their effects stay inside the bar. The burst when a game or a set is won is the only thing that goes past it, for about a second.
+> **The ten elemental layouts** from 1.1.8 (Frostbite, Venom, Royal, Crimson, Gold Rush, Sakura, Tidal, Voltage, Chrome and Pastel) are out for now. They are being reworked and will come back in a later version. If you had edited one, your copy is kept in `BeeboScore Data/data/retired-layouts`.
 
 ### VS Splash and Victory Splash
 
 Press **Show VS Splash** on the Matches tab (or **Ctrl + I**) for a full-screen player-vs-player splash before a set. When a set ends, the Victory Splash shows the winner and the final score. Every layout has its own.
 
-![VS Splash and Victory Splash in different layouts](docs/images/splashes.jpg)
+![VS Splash and Victory Splash on Ember (top) and Porcelain (bottom)](docs/images/splashes.jpg)
 
 ### Your own VS Splash pictures
 
@@ -145,25 +158,29 @@ Copy the OBS link, or press **Go online** for a public overlay link and a passwo
 
 ### Stream Deck
 
-The plugin comes inside the app: **File → Install Stream Deck Plugin**. Twelve keys: player score (tap +1, hold −1), reset, swap, undo, losers [L], show / hide overlay, show / hide VS Splash, switch layout, set player, next match, report result to start.gg and refresh start.gg matches. Needs Stream Deck 6.4 or newer.
+The plugin comes inside the app: **Settings → Stream Deck → Install** (or **File → Install Stream Deck Plugin**). Then press **Set up my Stream Deck** and BeeboScore fills the whole deck for you: one layout for the 15-key Stream Deck, one for the 32-key Stream Deck XL. On Windows it adds a **BeeboScore Prototype** page to the profile your deck is showing (Stream Deck closes for a few seconds and comes back with it; your other pages stay, and a backup of the profile goes in `BeeboScore Data/data/streamdeck-backups`). On macOS, Stream Deck asks to add the BeeboScore Prototype profile.
+
+The plugin is called **BeeboScore Prototype**. Coming from 1.1.8? Install it from **Settings → Stream Deck**, press **Set up my Stream Deck**, and then remove the old *BeeboScore* plugin in Stream Deck.
+
+- **Top row, the match:** both players' scores at the ends (tap +1, hold −1), Undo, Reset (tap 0–0, hold for a new set) and Swap.
+- **Middle, what changes with the format:** each player's keys on their side ([L], or Switch fighter / Forfeit in a format), Next in the middle (next match from start.gg, or confirm & next in a format), then Board, Format bar or Lock in. Format keys are drawn in the format's colour (the same as the Matches tab): Crew Battle orange, Team Battle purple, Gauntlet teal, Team Death Battle pink, Death Battle red, King of the Hill gold, League blue.
+- **Bottom row, what is on stream:** Overlay, VS (Team VS in a team format), Victory (Champion once a format is won), Hide all and Refresh. On the XL the last row is left free for your own keys.
+- **Undo** takes back a format result when that was the last thing that happened.
+- Every key is also in Stream Deck's *BeeboScore Prototype* list to place by hand, including **Format key** (pick the deck and the place in its settings). Needs Stream Deck 6.4 or newer.
+
+**Refresh OBS** (in the header, and on the Stream Deck) reloads the overlay in OBS, cache and all. Through the OBS link the new page fades in over the old one, so there's no visible reload. BeeboScore also does it by itself when the scores are reset to 0–0 and when a new match comes in.
+
+### Settings → Scoreboard
+
+- **Refresh OBS on reset and new match:** the overlay reloads in OBS when the scores go back to 0–0 or the next match comes in. It fades over, with no visible reload.
+- **Victory Splash when a set ends:** on, it plays by itself; off, it only shows when you ask for it. **Keep the Victory Splash up for** sets how long it stays (5 to 20 seconds, or until you hide it).
+- **Lock-in splash in team formats:** turn it off to skip it.
 
 ### Settings → Check for updates
 
 The app only looks for a new version when you press **Check for updates**. (If a newer BeeboScore exe is already in the same folder, it offers that one without downloading anything.) If there is one, **Download update** saves the new exe next to the one you're running, and **Restart & update** switches over to it. After **Restart & update** the app says it is installing, closes, shows a starting screen, and opens again by itself in 10 to 20 seconds. Your `BeeboScore Data` folder is used by both versions, so nothing is lost. Delete the old exe whenever you like.
 
 The first time a new version starts, a **What's new** window lists what changed. You can open it again from Settings.
-
----
-
-## What's coming
-
-The next build is planned for later in 2026 and will include:
-
-- **Multiple supported game formats:** Team Battle, KOTH, Death Battle and more
-- **Twitch integration** for Viewer Battles and Tournaments
-- **Bracket Generator** with custom overlays
-- **Layout Designer**, packed with features for creators who want to make their own overlays
-- And more!
 
 ---
 

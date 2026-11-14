@@ -3,7 +3,7 @@
  * Injected into every layout. Shown/hidden by state.victory ({ show, side }): BeeboScore puts it up a
  * moment after a set is won (Settings › Scoreboard), from the app, a Stream Deck key or a shortcut.
  *
- * Pick the look with   <meta name="sb-victory" content="shattered">   (styles: shattered, oni)
+ * Pick the look with   <meta name="sb-victory" content="shattered">   (styles: shattered, porcelain, oni)
  * or turn it off with  <meta name="sb-victory" content="off">  (layouts from the Layout Designer draw
  * their own victory screen). <html> gets the class sb-victory-on while it's showing.
  */
@@ -16,7 +16,11 @@
   let style = meta ? String(meta.content || '').trim().toLowerCase() : '';
   if (style === 'off') return;
   const NAME = String(window.__SB_OVERLAY || '').toLowerCase();
-  if (!['shattered', 'oni'].includes(style)) style = /(^|-)oni($|-)/.test(NAME) ? 'oni' : 'shattered';
+  if (!['shattered', 'porcelain', 'oni'].includes(style)) style = /(^|-)oni($|-)/.test(NAME) ? 'oni' : 'shattered';
+  // Porcelain is Ember's victory screen in white: the same moves (style "shattered"), .vc-pc on top for the colours
+  const PC = style === 'porcelain';
+  if (PC) style = 'shattered';
+  const BASE = 'vc-st-' + style + (PC ? ' vc-pc' : '');
   const POTATO = () => document.documentElement.classList.contains('sb-potato') || !!window.__SB_POTATO;
 
   const CSS = `
@@ -187,13 +191,36 @@ html.sb-potato #sb-victory .vc-frame path{filter:none}
 @keyframes vc-drop{from{opacity:0;transform:translate(-50%,-40px)}}
 @keyframes vc-up{from{opacity:0;transform:translateY(26px)}}
 html.sb-potato #sb-victory *,html.sb-potato #sb-victory{animation:none!important;transition:none!important}
+/* =================================== PORCELAIN: Ember's victory screen glazed white, deep gold =================================== */
+#sb-victory.vc-st-shattered.vc-pc .vc-bg{background:radial-gradient(ellipse 55% 50% at 50% 42%,rgba(246,196,83,.34),transparent 70%),radial-gradient(ellipse 80% 40% at 50% 112%,rgba(255,90,31,.2),transparent 70%),linear-gradient(180deg,#ffffff,#e4e6eb)}
+#sb-victory.vc-st-shattered.vc-pc .vc-rays{background:repeating-conic-gradient(from 0deg at 50% 40%,rgba(217,154,43,.13) 0deg 5deg,transparent 5deg 18deg)}
+#sb-victory.vc-st-shattered.vc-pc .vc-ghost{color:#b98a2a}
+#sb-victory.vc-st-shattered.vc-pc .vc-round{color:#15171d;background:linear-gradient(180deg,#ffffff,#e3e5ea);box-shadow:inset 0 2px 0 #d99a2b,inset 0 0 0 1px rgba(185,138,42,.4)}
+#sb-victory.vc-st-shattered.vc-pc .vc-round .vc-event{color:#a86f12}
+#sb-victory.vc-st-shattered.vc-pc .vc-ava{background:linear-gradient(160deg,#ffe7a3,#d99a2b 40%,#8a5a12)}
+#sb-victory.vc-st-shattered.vc-pc .vc-ava img,#sb-victory.vc-st-shattered.vc-pc .vc-ava .vc-ini{background:linear-gradient(160deg,#ffffff,#e1e3e9);color:#a86f12}
+#sb-victory.vc-st-shattered.vc-pc .vc-team{color:#e2430c}
+#sb-victory.vc-st-shattered.vc-pc .vc-name,#sb-victory.vc-st-shattered.vc-pc .vc-n2{background:linear-gradient(180deg,#b8801a 0%,#8a5a0c 45%,#5a3a05 58%,#a8741a 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-stroke:0}
+#sb-victory.vc-st-shattered.vc-pc .vc-name{filter:drop-shadow(0 3px 0 rgba(255,255,255,.95)) drop-shadow(0 5px 10px rgba(138,90,12,.3))}
+#sb-victory.vc-st-shattered.vc-pc .vc-n2{filter:drop-shadow(0 0 22px rgba(246,196,83,.9))}
+#sb-victory.vc-st-shattered.vc-pc .vc-line{color:#6c7180}
+#sb-victory.vc-st-shattered.vc-pc .vc-score{background:linear-gradient(180deg,#24262e,#0b0c10);box-shadow:inset 0 0 0 1px rgba(246,196,83,.7)}
+#sb-victory.vc-st-shattered.vc-pc .vc-def em{color:#15171d}
+#sb-victory.vc-st-shattered.vc-pc .vc-frame .f1{stroke:#d99a2b;filter:drop-shadow(0 0 5px rgba(217,154,43,.7))}
+#sb-victory.vc-st-shattered.vc-pc .vc-frame .f2{stroke:rgba(185,138,42,.4)}
+#sb-victory.vc-st-shattered.vc-pc .vc-title .vc-tm{background:linear-gradient(180deg,#e8b64a 0%,#c4861c 40%,#8a5a0c 52%,#d99a2b 64%,#a86f12 82%,#5a3a05 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 3px 0 rgba(255,255,255,.9)) drop-shadow(0 6px 14px rgba(138,90,12,.28))}
+#sb-victory.vc-st-shattered.vc-pc .vc-t1 span{color:#d99a2b;text-shadow:0 0 18px rgba(246,196,83,.55),0 0 60px rgba(246,196,83,.3)}
+#sb-victory.vc-st-shattered.vc-pc .vc-t2 span{color:#f0b840;text-shadow:0 0 30px rgba(246,196,83,.7),0 0 90px rgba(246,196,83,.4)}
+#sb-victory.vc-st-shattered.vc-pc .vc-pic img{filter:drop-shadow(0 0 30px rgba(217,154,43,.35))}
+
 `;
   const st = document.createElement('style'); st.textContent = CSS;
   (document.head || document.documentElement).appendChild(st);
 
   // ----------------------------------------------------------------------------- DOM
   const root = document.createElement('div');
-  root.id = 'sb-victory'; root.className = 'vc-st-' + style; root.setAttribute('aria-hidden', 'true');
+  root.id = 'sb-victory'; root.className = BASE; root.setAttribute('aria-hidden', 'true');
   root.innerHTML = `<div class="vc-bg"></div><div class="vc-rays"></div><svg class="vc-art" viewBox="0 0 1920 1080"></svg><svg class="vc-frame" viewBox="0 0 1920 1080"><path class="f2" d="M70,40H1850L1880,70V1010L1850,1040H70L40,1010V70Z"/><path class="f1" d="M60,28H1860L1892,60V1020L1860,1052H60L28,1020V60Z"/></svg><div class="vc-f2w"><svg class="vc-frame vc-frame2" viewBox="0 0 1920 1080"><path class="f1" d="M60,28H1860L1892,60V1020L1860,1052H60L28,1020V60Z"/></svg></div><div class="vc-kanji">勝</div><div class="vc-ghost"></div>
     <div class="vc-pic"><img alt=""></div>
     <div class="vc-round"><span class="vc-event"></span><span class="vc-rnd"></span></div>
@@ -226,7 +253,7 @@ html.sb-potato #sb-victory *,html.sb-potato #sb-victory{animation:none!important
   // ----------------------------------------------------------------------------- particles
   const cv = $('.vc-cv'), ctx = cv.getContext('2d');
   let parts = [], raf = 0, last = 0, ambient = 0;
-  const COL = style === 'oni' ? [[255, 70, 20], [255, 150, 50], [200, 10, 20]] : [[255, 220, 140], [255, 190, 90], [255, 120, 50]];
+  const COL = style === 'oni' ? [[255, 70, 20], [255, 150, 50], [200, 10, 20]] : PC ? [[214, 150, 30], [235, 120, 30], [190, 110, 20]] : [[255, 220, 140], [255, 190, 90], [255, 120, 50]];
   function burst(x, y, n, power, spread = Math.PI * 2, dir = -Math.PI / 2) {
     if (window.SBPerf) n = window.SBPerf.n(n);
     for (let i = 0; i < n; i++) {
@@ -246,7 +273,7 @@ html.sb-potato #sb-victory *,html.sb-potato #sb-victory{animation:none!important
       const [x, y] = onFrame();
       parts.push(style === 'oni'
         ? { x, y, vx: (Math.random() - .5) * 30, vy: -(60 + Math.random() * 90), g: -20, life: 1, decay: 1.4 + Math.random(), size: 3 + Math.random() * 5, c: COL[Math.random() * COL.length | 0], wob: Math.random() * 6 }
-        : { x, y, vx: (Math.random() - .5) * 20, vy: -(10 + Math.random() * 30), g: -5, life: 1, decay: .7 + Math.random() * .6, size: 1 + Math.random() * 2, c: [255, 240, 190], wob: Math.random() * 6 });
+        : { x, y, vx: (Math.random() - .5) * 20, vy: -(10 + Math.random() * 30), g: -5, life: 1, decay: .7 + Math.random() * .6, size: 1 + Math.random() * 2, c: PC ? [222, 160, 40] : [255, 240, 190], wob: Math.random() * 6 });
     }
     const n = style === 'oni' ? 3 : 2;
     for (let i = 0; i < n; i++) parts.push({ x: 200 + Math.random() * 1520, y: 1090, vx: (Math.random() - .5) * 40, vy: -(80 + Math.random() * 160), g: -20,
@@ -261,7 +288,7 @@ html.sb-potato #sb-victory *,html.sb-potato #sb-victory{animation:none!important
     if (ambient && (ambient += dt) > .06) { ambient = 1e-6; if (!P || Math.random() < P.q) rise(); }
     if (dirty) ctx.clearRect(dirty[0] - 2, dirty[1] - 2, dirty[2] - dirty[0] + 4, dirty[3] - dirty[1] + 4);
     let nb = null;
-    ctx.globalCompositeOperation = style === 'oni' ? 'source-over' : 'lighter';
+    ctx.globalCompositeOperation = style === 'oni' || PC ? 'source-over' : 'lighter';   // added light vanishes on white
     parts = parts.filter(p => (p.life -= p.decay * dt) > 0);
     for (const p of parts) {
       p.vy += p.g * dt; p.vx *= .99; p.x += (p.vx + (p.wob ? Math.sin(t / 300 + p.wob) * 30 : 0)) * dt; p.y += p.vy * dt;
@@ -328,7 +355,7 @@ html.sb-potato #sb-victory *,html.sb-potato #sb-victory{animation:none!important
   function show(instant) {
     clear();
     document.documentElement.classList.add('sb-victory-on');
-    root.className = 'vc-st-' + style + ' vc-show';
+    root.className = BASE + ' vc-show';
     refit();
     if (instant || POTATO()) { if (!POTATO()) { ambient = 1e-6; run(); } return; }
     void root.offsetWidth; root.classList.add('vc-in');
@@ -339,9 +366,9 @@ html.sb-potato #sb-victory *,html.sb-potato #sb-victory{animation:none!important
   function hide(instant) {
     clear(); ambient = 0;
     document.documentElement.classList.remove('sb-victory-on');
-    if (instant || POTATO() || !root.classList.contains('vc-show')) { root.className = 'vc-st-' + style; parts = []; return; }
+    if (instant || POTATO() || !root.classList.contains('vc-show')) { root.className = BASE; parts = []; return; }
     root.classList.remove('vc-in'); root.classList.add('vc-out');
-    later(() => { if (!shown) { root.className = 'vc-st-' + style; parts = []; } }, 650);
+    later(() => { if (!shown) { root.className = BASE; parts = []; } }, 650);
   }
   let first = true;
   addEventListener('scoreboard', e => {
@@ -357,7 +384,7 @@ html.sb-potato #sb-victory *,html.sb-potato #sb-victory{animation:none!important
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) return;
     if (shown && root.classList.contains('vc-in')) { clear(); root.classList.remove('vc-in'); const n = $('.vc-name'); n.textContent = n.dataset.txt || n.textContent; }
-    if (!shown && root.className !== 'vc-st-' + style) { clear(); root.className = 'vc-st-' + style; }
+    if (!shown && root.className !== BASE) { clear(); root.className = BASE; }
   });
   window.BeeboVictory = { style };
 })();

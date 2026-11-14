@@ -1,6 +1,6 @@
 'use strict';
 /*
- * BeeboScore, developed by Beebo — the barebones scoreboard: Matches, start.gg, Go online, 11 layouts,
+ * BeeboScore, developed by Beebo — the barebones scoreboard: Matches, start.gg, Go online, Ember and Porcelain layouts,
  * the Overlay maker and Stream Deck keys. Portable: keeps its data next to the exe, uses its own port (3300),
  * and only looks for an update when you ask it to (Settings › Check for updates).
  */
@@ -101,8 +101,8 @@ async function boot() {
   if (AFTER_UPDATE) { let waited = 0; while (waited < 8000 && !(await portFree(3300))) { await new Promise(r => setTimeout(r, 250)); waited += 250; } updateLog(`started by Restart & update${waited ? ` (waited ${waited} ms for the old copy to close)` : ''}`); }
   updater = createUpdater(app, { dir: PORTABLE_DIR, log: updateLog });
   try {
-    const sdPlugin = SD_PLUGIN = app.isPackaged ? path.join(process.resourcesPath, 'streamdeck', 'com.t1fgc.beeboscore.streamDeckPlugin')
-      : path.join(__dirname, '..', 'streamdeck', 'dist', 'com.t1fgc.beeboscore.streamDeckPlugin');
+    const sdPlugin = SD_PLUGIN = app.isPackaged ? path.join(process.resourcesPath, 'streamdeck', 'com.t1fgc.beeboproto.streamDeckPlugin')
+      : path.join(__dirname, '..', 'streamdeck', 'dist', 'com.t1fgc.beeboproto.streamDeckPlugin');
     srv = await start({ dataDir: DATA_DIR, port: 3300, autoPort: true, desktop: true, testBuild: TEST_BUILD, lite: true, updater,
       openPath: p => shell.openPath(p), showPicker: openPicker, capture: captureShot,
       openExternal: u => { if (/^https:\/\//i.test(u)) shell.openExternal(u); },        // start.gg sign-in opens in the person's own browser

@@ -502,7 +502,7 @@
     const isVer = o => o.base && overlays.some(b => b.name === o.base);
     const list = overlays.filter(o => (gameFilter === 'all' || o.game === gameFilter) && !isVer(o));
     $('#overlayList').innerHTML = list.map(o => {
-      const FO = ['crew', 'sajam', 'gauntlet', 'death', 'koth', 'league'], vers = overlays.filter(v => v.base === o.name).sort((x, y) => FO.indexOf(x.format) - FO.indexOf(y.format)), liveVer = vers.find(v => v.name === active);
+      const FO = ['crew', 'sajam', 'gauntlet', 'tdb', 'death', 'koth', 'league'], vers = overlays.filter(v => v.base === o.name).sort((x, y) => FO.indexOf(x.format) - FO.indexOf(y.format)), liveVer = vers.find(v => v.name === active);
       const live = o.name === active || !!liveVer;
       return `<div class="lcard ${live ? 'active' : ''}">
         <div class="swatch" style="background:${swatch(o)}"><span class="g">${esc(o.game)}</span>${live ? '<span class="live">LIVE</span>' : ''}</div>
@@ -1046,6 +1046,7 @@
     $('#setShowAutoscore').checked = !!settings.showAutoscore; showAutoscoreTab(!!settings.showAutoscore);
     $('#setRefreshReset').checked = settings.refreshOnReset !== false;
     $('#setAutoVictory').checked = settings.autoVictory !== false;
+    if ($('#setLockSplash')) $('#setLockSplash').checked = settings.lockSplash !== false;
     $('#setVictoryHold').value = String(settings.victoryHold ?? '8');
     renderSound();
     $('#setPotato').checked = !!settings.potatoMode;
@@ -1064,6 +1065,7 @@
     if (!on && $('main .tab[data-tab="autoscore"].on')) showTab('match');
   }
   $('#setAutoVictory').onchange = e => saveSettings({ autoVictory: e.target.checked }, e.target.checked ? 'The Victory Splash will show when a set ends' : 'The Victory Splash only shows when you ask');
+  if ($('#setLockSplash')) $('#setLockSplash').onchange = e => saveSettings({ lockSplash: e.target.checked }, e.target.checked ? 'The lock-in splash will play in team formats' : 'No lock-in splash in team formats');
   $('#setVictoryHold').onchange = e => saveSettings({ victoryHold: e.target.value }, e.target.value === '0' ? 'The Victory Splash stays up until you hide it' : `The Victory Splash hides after ${e.target.value} s`);
   $('#setRefreshReset').onchange = e => saveSettings({ refreshOnReset: e.target.checked }, e.target.checked ? 'The overlay will refresh when scores are reset' : 'The overlay will no longer refresh on reset');
   // ------------------------------------------------------------ sound (sb-sound.js): stream on/off + volume here, the preview's own level under the preview

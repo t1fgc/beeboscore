@@ -43,6 +43,9 @@
     if (readySent) return; readySent = true;
     const go = () => {
       root.classList.remove('sb-instant');
+      // instant is for the first frame only: from here on this copy plays everything (a lost life, a K.O., the splashes)
+      // like any other. (It used to stay on, so after a seamless refresh the format moments never played again.)
+      window.__SB_INSTANT = false;
       requestAnimationFrame(() => requestAnimationFrame(() => { try { parent.postMessage({ sb: 'ready' }, location.origin); } catch (e) {} }));
     };
     const fonts = document.fonts && document.fonts.ready ? Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 1500))]) : Promise.resolve();
@@ -196,12 +199,12 @@
     if (typeof window.onScoreboard === 'function') { try { window.onScoreboard(s); } catch (e) { console.error(e); } }
     prev = s;
     first = false;
-    if (FRAMED) signalReady();
+    signalReady();
   }
 
   const style = document.createElement('style');
   style.textContent = '.sb-hidden{display:none!important}' +
-    'body{transition:opacity .5s ease}html.sb-off body{opacity:0!important;pointer-events:none}' +
+    'body{transition:opacity .5s ease}html.sb-off body,html.sb-leaving body{opacity:0!important;pointer-events:none}html.sb-leaving body{transition:opacity .26s ease}' +
     'html.sb-instant *,html.sb-instant *::before,html.sb-instant *::after{transition:none!important;animation-delay:0s!important;animation-duration:0s!important}' +
     // potato mode: every animation jumps to its final frame and stays there
     'html.sb-potato *,html.sb-potato *::before,html.sb-potato *::after{transition:none!important;animation-delay:0s!important;animation-duration:0s!important;animation-iteration-count:1!important}' +
@@ -266,8 +269,19 @@
     if (msg.type === 'state') { onState(msg.data); ackWhenDrawn(msg.seq, t0); }
     else if (msg.type === 'bracket') { try { window.__SB_BRACKET = msg.data; window.dispatchEvent(new CustomEvent('scoreboard:bracket', { detail: msg.data })); } catch (e) {} }   // framed too: new results arrive live
     else if (FRAMED) return;            // reloads / layout switches: the host page swaps in a fresh copy instead
-    else if (msg.type === 'reload') { if (!msg.data.overlay || msg.data.overlay === OVERLAY) location.reload(); }
+    else if (msg.type === 'reload') { if (!msg.data.overlay || msg.data.overlay === OVERLAY) softReload(); }
     else if (msg.type === 'active-changed') { if (FOLLOW && msg.data.overlay !== OVERLAY) location.reload(); }
+  }
+  // A page opened on its own (not inside the OBS host page): fade out, come back as an instant copy (no intro) that fades
+  // in once drawn. The address is put back afterwards, so pressing F5 later still plays the intro.
+  function softReload() {
+    if (q.has('preview') || q.has('potato') || window.__SB_POTATO) return location.reload();
+    root.classList.add('sb-leaving');
+    const u = new URL(location.href); u.searchParams.set('instant', ''); u.searchParams.set('t', Date.now());
+    setTimeout(() => location.replace(u.toString().replace('instant=&', 'instant&').replace(/instant=$/, 'instant')), 280);
+  }
+  if (INSTANT && !FRAMED && /[?&]instant(&|=|$)/.test(location.search)) {
+    try { const u = new URL(location.href); u.searchParams.delete('instant'); u.searchParams.delete('t'); history.replaceState(null, '', u.pathname + (u.search || '') + u.hash); } catch (e) {}
   }
   function startPolling() {
     if (polling) return;
@@ -277,7 +291,7 @@
         const d = await r.json();
         onState(d.state);
         if (FRAMED) return;
-        if (lastRev !== null && d.rev !== lastRev) return location.reload();
+        if (lastRev !== null && d.rev !== lastRev) return softReload();
         lastRev = d.rev;
         if (FOLLOW && d.active && d.active !== OVERLAY) location.reload();
       } catch (e) { /* server restarting — keep trying */ }

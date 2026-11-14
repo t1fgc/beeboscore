@@ -10,16 +10,7 @@ streamdeck/dist/
 /overlays/*
 # ...except the layouts that come with the app (Ember's folder is still called shattered)
 !/overlays/shattered/
-!/overlays/frostbite/
-!/overlays/venom/
-!/overlays/royal/
-!/overlays/crimson/
-!/overlays/goldrush/
-!/overlays/sakura/
-!/overlays/tidal/
-!/overlays/voltage/
-!/overlays/chrome/
-!/overlays/pastel/
+!/overlays/porcelain/
 BeeboScore Data/
 
 # never commit these: a start.gg OAuth app's ID and secret, and local environment files

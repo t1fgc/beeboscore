@@ -7,24 +7,7 @@
 <title>BeeboScore</title>
 <link href="/favicon.ico" rel="icon"/>
 <link href="/static/panel.css" rel="stylesheet"/>
-<style id="liteStyle">
-/* BeeboScore: the prototype notice at the top of every tab (open the first time, remembers being closed) */
-.proto { border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 12px; background: var(--card); margin-bottom: 4px; }
-.proto summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 10px; padding: 10px 14px; font-size: 13px; }
-.proto summary::-webkit-details-marker { display: none; }
-.proto summary b { color: var(--accent); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
-.proto summary span { color: var(--muted); flex: 1; min-width: 0; }
-.proto summary i { font-style: normal; font-size: 12px; font-weight: 700; color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 3px 10px; white-space: nowrap; }
-.proto summary i::before { content: 'Show'; }
-.proto[open] summary i::before { content: 'Hide'; }
-.proto summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 10px; }
-.proto .proto-body { padding: 2px 16px 14px; font-size: 13.5px; line-height: 1.5; }
-.proto .proto-body p { margin: 0 0 8px; }
-.proto ul { margin: 0; padding-left: 18px; }
-.proto li { margin: 3px 0; }
-.proto li b { color: var(--text); }
-body.mk-open .proto { margin: 14px 26px; }
-</style></head>
+</head>
 <body>
 <a class="skip-link" href="#main">Skip to the controls</a>
 <header class="head">
@@ -33,7 +16,7 @@ body.mk-open .proto { margin: 14px 26px; }
 </div>
 <div class="spacer"></div>
 <div class="status"><span class="dot" id="dot"></span><span id="statusText">Connecting…</span></div>
-<button class="btn ghost sm ov-toggle" id="ovBtn" title="Hide the whole overlay during downtime, show it again when you're back (Ctrl+Shift+H)"><svg viewbox="0 0 24 24"><path d="M12 5C6.5 5 2.7 9.4 1.5 12c1.2 2.6 5 7 10.5 7s9.3-4.4 10.5-7C21.3 9.4 17.5 5 12 5zm0 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8z"></path></svg><span>Overlay on</span></button><button class="btn ghost sm" id="undoBtn" title="Undo the last change sent to stream (Ctrl+Z)"><svg viewbox="0 0 24 24"><path d="M12.5 8c-2.6 0-5 1-6.9 2.6L2 7v9h9l-3.6-3.6A8 8 0 0 1 20.1 16l2.4-.8A10.5 10.5 0 0 0 12.5 8z"></path></svg>Undo</button>
+<button class="btn ghost sm ov-toggle" id="ovBtn" title="Hide the whole overlay during downtime, show it again when you're back (Ctrl+Shift+H)"><svg viewbox="0 0 24 24"><path d="M12 5C6.5 5 2.7 9.4 1.5 12c1.2 2.6 5 7 10.5 7s9.3-4.4 10.5-7C21.3 9.4 17.5 5 12 5zm0 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8z"></path></svg><span>Overlay on</span></button><button class="btn ghost sm local-only" id="refreshBtn" title="Reload the overlay in OBS so it starts clean (like “Refresh cache of current page”) — it fades over, with no visible reload"><svg viewbox="0 0 24 24"><path d="M17.7 6.3A8 8 0 1 0 20 12h-2.2a5.8 5.8 0 1 1-1.7-4.1L13 11h7V4l-2.3 2.3z"></path></svg>Refresh OBS</button><button class="btn ghost sm" id="undoBtn" title="Undo the last change sent to stream (Ctrl+Z)"><svg viewbox="0 0 24 24"><path d="M12.5 8c-2.6 0-5 1-6.9 2.6L2 7v9h9l-3.6-3.6A8 8 0 0 1 20.1 16l2.4-.8A10.5 10.5 0 0 0 12.5 8z"></path></svg>Undo</button>
 <span class="pending" hidden="" id="pending">Unsaved changes</span>
 <button class="btn ghost sm" hidden="" id="revertBtn" title="Discard changes">Revert</button>
 <div aria-label="Update mode" class="seg" role="tablist">
@@ -47,24 +30,12 @@ body.mk-open .proto { margin: 14px 26px; }
 </div>
 <div class="app">
 <nav aria-label="Sections" class="rail">
-<button class="on" data-tab="match"><svg viewbox="0 0 24 24"><path d="M3 5h8v14H3zm10 0h8v14h-8z" opacity=".35"></path><path d="M6 9h2v6H6zm10 0h2v6h-2z"></path></svg>Matches</button>
+<button class="on" data-tab="match"><svg viewbox="0 0 24 24"><path d="M3 5h8v14H3zm10 0h8v14h-8z" opacity=".35"></path><path d="M6 9h2v6H6zm10 0h2v6h-2z"></path></svg>Matches</button><button data-tab="format" title="Crew and team battles, Team Death Battle, Death Battle, King of the Hill and leagues"><svg viewbox="0 0 24 24"><path d="M12 2l8 3v6c0 5-3.4 9.3-8 11-4.6-1.7-8-6-8-11V5z" opacity=".35"></path><path d="M12 6.5l1.6 3.3 3.6.5-2.6 2.5.6 3.6-3.2-1.7-3.2 1.7.6-3.6-2.6-2.5 3.6-.5z"></path></svg>Formats<i class="badge" hidden="" id="fmtBadge"></i></button>
 <button data-tab="bracket"><svg viewbox="0 0 24 24"><path d="M3 4h6v4H3zm0 12h6v4H3zm12-6h6v4h-6zM9 6h3v12H9v-2h1V8H9zm3 5h3v2h-3z"></path></svg>start.gg</button>
 <button data-tab="stream"><svg viewbox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm1 17.9V18h-2v1.9A8 8 0 0 1 4.1 13H6v-2H4.1A8 8 0 0 1 11 4.1V6h2V4.1a8 8 0 0 1 6.9 6.9H18v2h1.9a8 8 0 0 1-6.9 6.9zM12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"></path></svg>Stream</button><button class="local-only" data-tab="maker" title="Turn a static PNG overlay into an animated layout"><svg viewbox="0 0 24 24"><path d="M9.64 7.64c.23-.5.36-1.05.36-1.64a4 4 0 1 0-4 4c.59 0 1.14-.13 1.64-.36L10 12l-2.36 2.36A3.9 3.9 0 0 0 6 14a4 4 0 1 0 4 4c0-.59-.13-1.14-.36-1.64L12 14l7 7h3v-1L9.64 7.64zM6 8a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm0 12a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm6-7.5a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1zM19 3l-6 6 2 2 7-7V3h-3z"></path></svg>Overlay maker</button><button class="local-only" data-tab="settings" title="Version and updates"><svg viewbox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.48.48 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6a3.6 3.6 0 1 1 0-7.2 3.6 3.6 0 0 1 0 7.2z"></path></svg>Settings</button>
 <span class="grow" style="flex:1"></span>
 </nav>
-<main id="main" tabindex="-1"><details class="proto" id="protoNote" open="">
-<summary><b>Prototype build</b><span>A new build is on the way later in 2026.</span><i aria-hidden="true"></i></summary>
-<div class="proto-body">
-<p>This is only a prototype build. A new build is coming later in 2026, and it will include all of the following:</p>
-<ul>
-<li><b>Multiple supported game formats:</b> Team Battle, KOTH, Death Battle and more</li>
-<li><b>Twitch integration</b> for Viewer Battles and Tournaments</li>
-<li><b>Bracket Generator</b> with custom overlays</li>
-<li><b>Layout Designer</b>, packed with features for creators who want to make their own overlays</li>
-<li>And more!</li>
-</ul>
-</div>
-</details>
+<main id="main" tabindex="-1">
 <!-- ===================== MATCH ===================== -->
 <section class="tab on" data-tab="match">
 <div class="card winner-card" hidden="" id="winCard">
@@ -141,6 +112,31 @@ body.mk-open .proto { margin: 14px 26px; }
 <div class="field" style="margin:0"><label class="l">Picture URL</label><input autocomplete="off" data-path="p2.avatar" placeholder="Filled in from start.gg" type="text"/></div></div></div>
 </div>
 <div class="local-only" id="vaRoot"></div></div>
+</section><!-- ===================== FORMATS ===================== -->
+<section class="tab fmt-tab" data-tab="format">
+<div class="card fmt-head">
+<div class="fmt-title"><b id="fmtName">Game formats</b><span class="pill" id="fmtPill">Off</span><span class="spacer"></span>
+<button class="btn primary" hidden="" id="fmtStart">▶ Start</button><button class="btn" hidden="" id="fmtEnd" title="Stop now — the best record wins">⏹ End</button>
+<button class="btn ghost" hidden="" id="fmtReset" title="Back to setup, keeping the rosters">↺ Back to setup</button><button class="btn ghost" hidden="" id="fmtClear" title="Turn formats off">✕</button></div>
+<p class="hint" id="fmtSub">Run a crew battle, a Sajam Slam-style team battle, a gauntlet, a Team Death Battle, a Death Battle, King of the Hill or a league. Set it up here; once it starts, every match is run from the Matches tab.</p>
+</div>
+<div class="card" id="fmtPresets">
+<h2>Pick a format</h2>
+<div class="fmt-presets" id="fmtPresetList"></div>
+</div>
+<div class="card" hidden="" id="fmtLive">
+<h2>Now playing <span class="pill" id="fmtLabel"></span><span class="spacer"></span><button class="btn sm ghost" id="fmtUndo" title="Undo the last result (Ctrl+Alt+Z)">↶ Undo result</button></h2>
+<div class="fmt-now" id="fmtNow"></div>
+<div class="fmt-pending" hidden="" id="fmtPending"></div>
+<div class="fmt-acts" id="fmtActs"></div>
+<div class="fmt-splash"><span class="lbl">On stream:</span>
+<button class="btn sm" data-fsplash="fvs" id="fsVs">🤼 Team VS</button><button class="btn sm" data-fsplash="fboard" id="fsBoard">📋 Board</button><button class="btn sm" data-fsplash="fwin" id="fsWin">🏆 Champion</button><button class="btn sm" id="fsBar" title="Show or hide the format bar along the bottom of the layout (also on Stream Deck)">▁ Format bar</button>
+<span class="spacer"></span><button class="btn sm ghost" hidden="" id="fmtLayoutBtn"></button></div>
+</div>
+<div class="card" hidden="" id="fmtBoardCard"><h2 id="fmtBoardTitle">Board</h2><div id="fmtBoard"></div></div>
+<div class="card" hidden="" id="fmtRules"><h2>Rules</h2><div id="fmtRulesBody"></div></div>
+<div class="card" hidden="" id="fmtRoster"><h2 id="fmtRosterTitle">Teams <span class="spacer"></span><select class="f fmt-saved" id="fmtSaved"><option value="">📂 Load a saved list…</option></select></h2><div id="fmtRosterBody"></div></div>
+<div class="card" hidden="" id="fmtLogCard"><h2>Results <span class="spacer"></span><button class="btn sm ghost" id="fmtCsv">⬇ CSV</button></h2><div id="fmtLog"></div></div>
 </section>
 <!-- ===================== BRACKET ===================== -->
 <section class="tab" data-tab="bracket">
@@ -241,7 +237,31 @@ body.mk-open .proto { margin: 14px 26px; }
 </div>
 </section><!-- ===================== OVERLAY MAKER (this build only) ===================== -->
 <section class="tab local-only" data-tab="maker"><div id="mkRoot"></div></section><!-- ===================== SETTINGS (this build: updates & about) ===================== -->
-<section class="tab local-only" data-tab="settings"><div class="card local-only" id="updCard">
+<section class="tab local-only" data-tab="settings"><div class="card local-only" id="setBehave">
+<h2>Scoreboard</h2>
+<div class="opts">
+<label class="toggle opt"><input id="setRefreshReset" type="checkbox"/><span class="sw"></span><span class="opt-t"><b>Refresh OBS on reset and new match</b><small>Reload the overlay when scores go back to 0–0 or the next match comes in, so every set starts clean. It fades over, with no visible reload.</small></span></label>
+<label class="toggle opt"><input id="setAutoVictory" type="checkbox"/><span class="sw"></span><span class="opt-t"><b>Victory Splash when a set ends</b><small>A moment after someone wins a set, the winner takes the whole screen. Off: it only shows when you ask for it (the win card, a shortcut or Stream Deck).</small></span></label>
+<label class="toggle opt"><input id="setLockSplash" type="checkbox"/><span class="sw"></span><span class="opt-t"><b>Lock-in splash in team formats</b><small>When both players are locked in (Team Death Battle) or the next match comes up (Crew Battle, Team Battle, Gauntlet), a VS splash with both players, their pictures and their lives or points.</small></span></label>
+<div class="opt-row"><span class="opt-t"><b>Keep the Victory Splash up for</b><small>Then it hides by itself.</small></span>
+<select class="f local-only" id="setVictoryHold" style="width:auto"><option value="5">5 seconds</option><option value="8">8 seconds</option><option value="12">12 seconds</option><option value="20">20 seconds</option><option value="0">until I hide it</option></select></div>
+</div>
+</div><div class="card local-only" id="sdCard">
+<h2>Stream Deck <span class="spacer"></span><span class="pill" id="sdPill">Not connected</span></h2>
+<p class="hint" style="margin:-4px 0 12px">Run the scoreboard from an Elgato Stream Deck: scores, reset, swap, undo, the VS and Victory Splashes, hide all splashes, refresh OBS, [L], layouts, next match from start.gg, and keys for every game format.</p>
+<div class="sd-rows">
+<div class="sd-row"><i class="sd-dot" id="sdAppDot"></i><div class="sd-txt"><b>Stream Deck app</b><small id="sdAppTxt">Checking…</small></div>
+<a class="btn sm" hidden="" href="https://www.elgato.com/downloads" id="sdGetApp" rel="noopener" target="_blank">Get Stream Deck</a></div>
+<div class="sd-row"><i class="sd-dot" id="sdPlugDot"></i><div class="sd-txt"><b>BeeboScore Prototype plugin</b><small id="sdPlugTxt">Checking…</small></div>
+<button class="btn sm primary local-only" hidden="" id="sdInstall">Install</button></div>
+<div class="sd-row local-only"><i class="sd-dot" id="sdSetupDot"></i><div class="sd-txt"><b>BeeboScore layout</b><small id="sdSetupTxt">Puts every key you need on a 15-key Stream Deck or a 32-key Stream Deck XL, as a new BeeboScore Prototype page (Stream Deck closes and reopens for a moment). The scores, Reset, Hide all and the splashes stay put; the format keys change with the format, in its colour.</small></div>
+<button class="btn sm primary" id="sdSetup">Set up my Stream Deck</button></div>
+</div>
+<div class="opts" style="margin-top:6px">
+<label class="toggle opt local-only"><input id="setSdAuto" type="checkbox"/><span class="sw"></span><span class="opt-t"><b>Keep the plugin up to date</b><small>When BeeboScore has a newer plugin it hands it to Stream Deck for you — just confirm there.</small></span></label>
+</div>
+<p class="hint" style="margin:10px 0 0">Not on this PC? <a download="" href="/downloads/beeboscore.streamDeckPlugin" id="sdDownload">Download the plugin file</a> and double-click it on the PC with the Stream Deck.</p>
+</div><div class="card local-only" id="updCard">
 <h2>Updates &amp; about</h2>
 <div class="about"><img alt="" src="/favicon.ico"/><div style="flex:1;min-width:0"><b style="font-size:16px">BeeboScore</b><div class="hint" id="aboutText" style="margin:2px 0 0">Developed by Beebo</div></div><button class="btn ghost" hidden="" id="wnOpen">What's new</button></div>
 <div class="hint" hidden="" id="updUnsupported" style="margin-top:12px">Checking for updates works in the desktop app, on the PC that runs it.</div>
@@ -331,31 +351,7 @@ body.mk-open .proto { margin: 14px 26px; }
 <span id="sdBannerText"></span><span class="spacer"></span>
 <a class="btn sm primary" href="https://www.elgato.com/downloads" id="sdBannerGet" rel="noopener" target="_blank">Get Stream Deck</a>
 <button class="btn sm ghost" id="sdBannerLater">Later</button>
-</div><i class="badge" hidden="" id="fmtBadge"></i><i class="badge" hidden="" id="twBadge"></i><i class="badge" hidden="" id="setBadge"></i><section class="tab fmt-tab" data-tab="format">
-<div class="card fmt-head">
-<div class="fmt-title"><b id="fmtName">Game formats</b><span class="pill" id="fmtPill">Off</span><span class="spacer"></span>
-<button class="btn primary" hidden="" id="fmtStart">▶ Start</button><button class="btn" hidden="" id="fmtEnd" title="Stop now — the best record wins">⏹ End</button>
-<button class="btn ghost" hidden="" id="fmtReset" title="Back to setup, keeping the rosters">↺ Back to setup</button><button class="btn ghost" hidden="" id="fmtClear" title="Turn formats off">✕</button></div>
-<p class="hint" id="fmtSub">Run a crew battle, a Sajam Slam-style team battle, a gauntlet, a Death Battle, King of the Hill or a league. Set it up here; once it starts, every match is run from the Matches tab.</p>
-</div>
-<div class="card" id="fmtPresets">
-<h2>Pick a format</h2>
-<div class="fmt-presets" id="fmtPresetList"></div>
-</div>
-<div class="card" hidden="" id="fmtLive">
-<h2>Now playing <span class="pill" id="fmtLabel"></span><span class="spacer"></span><button class="btn sm ghost" id="fmtUndo" title="Undo the last result (Ctrl+Alt+Z)">↶ Undo result</button></h2>
-<div class="fmt-now" id="fmtNow"></div>
-<div class="fmt-pending" hidden="" id="fmtPending"></div>
-<div class="fmt-acts" id="fmtActs"></div>
-<div class="fmt-splash"><span class="lbl">On stream:</span>
-<button class="btn sm" data-fsplash="fvs" id="fsVs">⚔ Team VS</button><button class="btn sm" data-fsplash="fboard" id="fsBoard">📋 Board</button><button class="btn sm" data-fsplash="fwin" id="fsWin">🏆 Champion</button><button class="btn sm" id="fsBar" title="Show or hide the format bar along the bottom of the layout (also on Stream Deck and the OBS dock)">▁ Format bar</button>
-<span class="spacer"></span><button class="btn sm ghost" hidden="" id="fmtLayoutBtn"></button></div>
-</div>
-<div class="card" hidden="" id="fmtBoardCard"><h2 id="fmtBoardTitle">Board</h2><div id="fmtBoard"></div></div>
-<div class="card" hidden="" id="fmtRules"><h2>Rules</h2><div id="fmtRulesBody"></div></div>
-<div class="card" hidden="" id="fmtRoster"><h2 id="fmtRosterTitle">Teams <span class="spacer"></span><select class="f fmt-saved" id="fmtSaved"><option value="">📂 Load a saved list…</option></select></h2><div id="fmtRosterBody"></div></div>
-<div class="card" hidden="" id="fmtLogCard"><h2>Results <span class="spacer"></span><button class="btn sm ghost" id="fmtCsv">⬇ CSV</button></h2><div id="fmtLog"></div></div>
-</section><section class="tab" data-tab="layouts">
+</div><i class="badge" hidden="" id="twBadge"></i><i class="badge" hidden="" id="setBadge"></i><section class="tab" data-tab="layouts">
 <h1 class="pagetitle">Layouts</h1>
 <p>Pick what OBS shows. Switching is instant. Click <b>Edit</b> to change any layout's HTML live.</p>
 <div class="card designer-card local-only">
@@ -629,17 +625,6 @@ body.mk-open .proto { margin: 14px 26px; }
 <label class="toggle opt local-only"><input id="setPotato" type="checkbox"/><span class="sw"></span><span class="opt-t"><b>🥔 Potato mode</b><small>Windows XP look, no effects, layouts as still pictures — for the lowest-end PCs. Restarts the app.</small></span></label>
 </div>
 </div>
-<div class="card local-only" id="setBehave">
-<h2>Scoreboard</h2>
-<div class="opts">
-<label class="toggle opt"><input id="setAutoSwitch" type="checkbox"/><span class="sw"></span><span class="opt-t"><b>Follow the game</b><small>Switch to that game’s layout when you change the game at the top.</small></span></label>
-<label class="toggle opt"><input id="setFollowFormat" type="checkbox"/><span class="sw"></span><span class="opt-t"><b>Follow the format</b><small>Pick a format (crew battle, Death Battle…) and the layout switches to that format’s version of the same look. Clear the format and it switches back.</small></span></label>
-<label class="toggle opt"><input id="setRefreshReset" type="checkbox"/><span class="sw"></span><span class="opt-t"><b>Refresh OBS on reset</b><small>Reload the overlay when scores go back to 0–0, so every set starts clean.</small></span></label>
-<label class="toggle opt"><input id="setAutoVictory" type="checkbox"/><span class="sw"></span><span class="opt-t"><b>Victory Splash when a set ends</b><small>A moment after someone wins, the winner takes the whole screen. You can also show it from the win card, a shortcut or Stream Deck.</small></span></label>
-<div class="opt-row"><span class="opt-t"><b>Keep the Victory Splash up for</b><small>Then it hides by itself.</small></span>
-<select class="f local-only" id="setVictoryHold" style="width:auto"><option value="5">5 seconds</option><option value="8">8 seconds</option><option value="12">12 seconds</option><option value="20">20 seconds</option><option value="0">until I hide it</option></select></div>
-</div>
-</div>
 <div class="card local-only" id="setSound">
 <h2>Sound <span class="spacer"></span><span class="pill" id="sndPill">Off</span></h2>
 <p class="hint" style="margin:-4px 0 12px">Every layout has its own sounds — glass, embers and low booms on Shattered, taiko drums and temple bells on Oni. The app makes them itself (nothing to download), on a point, match point, a set won, the VS intro, splashes and game-format moments.</p>
@@ -658,20 +643,6 @@ body.mk-open .proto { margin: 14px 26px; }
 <select class="f" id="sndPack" style="width:auto"><option value="shattered">🪞 Shattered pack</option><option value="oni">🥁 Oni pack</option></select></div>
 <div class="snd-grid" id="sndGrid"></div>
 </div>
-</div>
-<div class="card" id="sdCard">
-<h2>Stream Deck <span class="spacer"></span><span class="pill" id="sdPill">Not connected</span></h2>
-<p class="hint" style="margin:-4px 0 12px">Run the scoreboard from an Elgato Stream Deck: scores, reset, swap, undo, VS intro, bracket and Top 8 splashes, [L], layouts, next match from start.gg, and a <b>Set player</b> key that pops up a name picker.</p>
-<div class="sd-rows">
-<div class="sd-row"><i class="sd-dot" id="sdAppDot"></i><div class="sd-txt"><b>Stream Deck app</b><small id="sdAppTxt">Checking…</small></div>
-<a class="btn sm" hidden="" href="https://www.elgato.com/downloads" id="sdGetApp" rel="noopener" target="_blank">Get Stream Deck</a></div>
-<div class="sd-row"><i class="sd-dot" id="sdPlugDot"></i><div class="sd-txt"><b>BeeboScore plugin</b><small id="sdPlugTxt">Checking…</small></div>
-<button class="btn sm primary local-only" hidden="" id="sdInstall">Install</button></div>
-</div>
-<div class="opts" style="margin-top:6px">
-<label class="toggle opt local-only"><input id="setSdAuto" type="checkbox"/><span class="sw"></span><span class="opt-t"><b>Keep the plugin up to date</b><small>When BeeboScore has a newer plugin it hands it to Stream Deck for you — just confirm there.</small></span></label>
-</div>
-<p class="hint" style="margin:10px 0 0">Not on this PC? <a download="" href="/downloads/beeboscore.streamDeckPlugin" id="sdDownload">Download the plugin file</a> and double-click it on the PC with the Stream Deck.</p>
 </div>
 <div class="card" id="keysCard">
 <h2>Keyboard shortcuts</h2>
@@ -865,8 +836,8 @@ body.mk-open .proto { margin: 14px 26px; }
 <button aria-label="Mute the preview" class="btn sm ghost icon-btn" id="pvMute">🔊</button>
 <input aria-label="Preview volume" id="pvVol" max="100" min="0" step="5" type="range"/><b id="pvVolV">60%</b>
 <small id="pvSndTag">preview</small>
-</div><div class="picker"><label for="gamePick">Game</label><select id="gamePick" title="Pick the game — the scoreboard layout follows it"></select></div><div class="inline local-only" style="margin:0 0 12px;gap:8px;flex-wrap:wrap"><a class="btn sm ghost" href="/selftest?run" id="selfTest" rel="noopener" target="_blank">🩺 Run the self-test</a><button class="btn sm ghost" id="wizAgain">🧭 Run the first-time setup again</button></div></div><script src="/static/keys.js"></script>
+</div><div class="picker"><label for="gamePick">Game</label><select id="gamePick" title="Pick the game — the scoreboard layout follows it"></select></div><div class="inline local-only" style="margin:0 0 12px;gap:8px;flex-wrap:wrap"><a class="btn sm ghost" href="/selftest?run" id="selfTest" rel="noopener" target="_blank">🩺 Run the self-test</a><button class="btn sm ghost" id="wizAgain">🧭 Run the first-time setup again</button></div><label class="toggle opt"><input id="setAutoSwitch" type="checkbox"/><span class="sw"></span><span class="opt-t"><b>Follow the game</b><small>Switch to that game’s layout when you change the game at the top.</small></span></label><label class="toggle opt"><input id="setFollowFormat" type="checkbox"/><span class="sw"></span><span class="opt-t"><b>Follow the format</b><small>Pick a format (crew battle, Death Battle…) and the layout switches to that format’s version of the same look. Clear the format and it switches back.</small></span></label></div><script src="/static/keys.js"></script>
 <script src="/static/panel.js"></script>
-<script src="/static/report-panel.js"></script><script src="/static/overlay-toggle.js"></script><script src="/static/maker-panel.js"></script><script src="/static/prototype-note.js"></script><script src="/static/pic-editor.js"></script><script src="/static/player-pics.js"></script><script src="/static/whats-new.js"></script><script src="/static/vs-art.js"></script>
+<script src="/static/report-panel.js"></script><script src="/static/overlay-toggle.js"></script><script src="/static/streamdeck-panel.js"></script><script src="/static/maker-panel.js"></script><script src="/static/pic-editor.js"></script><script src="/static/player-pics.js"></script><script src="/static/whats-new.js"></script><script src="/static/vs-art.js"></script><script src="/static/panel-ask.js"></script><script src="/static/format-panel.js"></script><script src="/static/match-format.js"></script>
 </body>
 </html>

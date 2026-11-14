@@ -1,12 +1,12 @@
-"""Builds this prototype build's control panel (public/index.html) from the full app's panel.
-Kept: Matches (basics), start.gg event (sign-in, event, matches, results back), Stream (OBS link + Go online),
-the header's Layout picker, the prototype notice at the top, Settings (version and Check for updates), and — in this
-build only — the Overlay maker tab.
+"""Builds this build's control panel (public/index.html) from the full app's panel.
+Kept: Matches (basics), Formats (crew and team battles, Team Death Battle, Death Battle, King of the Hill, leagues),
+start.gg event (sign-in, event, matches, results back), Stream (OBS link + Go online), the header's Layout picker,
+Settings (version and Check for updates), and — in this build only — the Overlay maker tab.
 Everything else is moved into a hidden #liteAttic so the shared panel code still finds its elements.
 
   python tools/make-lite-panel.py <the full app's public/index.html> public/index.html
 Running it on a panel it already built (public/index.html itself) is fine too: the stripping is skipped and only
-the steps that are still missing (Layout picker, Overlay maker, Settings, prototype notice, VS Splash card, Splash pictures, wording) are applied."""
+the steps that are still missing (Layout picker, Overlay maker, Settings, VS Splash card, Splash pictures, Formats, wording) are applied."""
 import re, sys
 from bs4 import BeautifulSoup
 src, out = sys.argv[1], sys.argv[2]
@@ -38,47 +38,12 @@ def maker_tab():
     soup.select('main > section.tab')[-1].insert_after(BeautifulSoup('<!-- ===================== OVERLAY MAKER (this build only) ===================== -->\n<section class="tab local-only" data-tab="maker"><div id="mkRoot"></div></section>', 'html.parser'))
     soup.select('script[src]')[-1].insert_after(BeautifulSoup('<script src="/static/maker-panel.js"></script>', 'html.parser'))
 
-PROTO_CSS = """
-/* BeeboScore: the prototype notice at the top of every tab (open the first time, remembers being closed) */
-.proto { border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 12px; background: var(--card); margin-bottom: 4px; }
-.proto summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 10px; padding: 10px 14px; font-size: 13px; }
-.proto summary::-webkit-details-marker { display: none; }
-.proto summary b { color: var(--accent); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
-.proto summary span { color: var(--muted); flex: 1; min-width: 0; }
-.proto summary i { font-style: normal; font-size: 12px; font-weight: 700; color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 3px 10px; white-space: nowrap; }
-.proto summary i::before { content: 'Show'; }
-.proto[open] summary i::before { content: 'Hide'; }
-.proto summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 10px; }
-.proto .proto-body { padding: 2px 16px 14px; font-size: 13.5px; line-height: 1.5; }
-.proto .proto-body p { margin: 0 0 8px; }
-.proto ul { margin: 0; padding-left: 18px; }
-.proto li { margin: 3px 0; }
-.proto li b { color: var(--text); }
-body.mk-open .proto { margin: 14px 26px; }
-"""
-PROTO_HTML = """<details class="proto" id="protoNote" open>
-<summary><b>Prototype build</b><span>A new build is on the way later in 2026.</span><i aria-hidden="true"></i></summary>
-<div class="proto-body">
-<p>This is only a prototype build. A new build is coming later in 2026, and it will include all of the following:</p>
-<ul>
-<li><b>Multiple supported game formats:</b> Team Battle, KOTH, Death Battle and more</li>
-<li><b>Twitch integration</b> for Viewer Battles and Tournaments</li>
-<li><b>Bracket Generator</b> with custom overlays</li>
-<li><b>Layout Designer</b>, packed with features for creators who want to make their own overlays</li>
-<li>And more!</li>
-</ul>
-</div>
-</details>
-"""
-
-def proto_note():
-    """The notice at the top of the app: this is a prototype, and what the next build brings. A native <details>, open the
-    first time; public/prototype-note.js remembers when it's been closed."""
-    style = soup.select_one('#liteStyle')            # each part is added only if it's missing, and the style always follows PROTO_CSS
-    if style: style.string = PROTO_CSS
-    else: soup.head.append(BeautifulSoup('<style id="liteStyle">' + PROTO_CSS + '</style>', 'html.parser'))
-    if not soup.select_one('#protoNote'): soup.select_one('main').insert(0, BeautifulSoup(PROTO_HTML, 'html.parser'))
-    if not soup.select_one('script[src="/static/prototype-note.js"]'): soup.select('script[src]')[-1].insert_after(BeautifulSoup('<script src="/static/prototype-note.js"></script>', 'html.parser'))
+def no_proto_note():
+    """(1.4.0) The prototype notice that used to sit at the top of every tab is gone: its <details id="protoNote">, its
+    style (#liteStyle) and public/prototype-note.js are taken out of a panel that still has them."""
+    for sel in ('#protoNote', '#liteStyle', 'script[src="/static/prototype-note.js"]'):
+        el = soup.select_one(sel)
+        if el: el.decompose()
 
 def vs_card():
     """Matches tab: the VS Splash card (its button, each player's record and profile picture link) comes back out of the
@@ -118,6 +83,49 @@ def vs_art():
     if not soup.select_one('script[src="/static/vs-art.js"]'):
         soup.select('script[src]')[-1].insert_after(BeautifulSoup('<script src="/static/vs-art.js"></script>', 'html.parser'))
 
+FORMAT_TAB = """<section class="tab fmt-tab" data-tab="format">
+<div class="card fmt-head">
+<div class="fmt-title"><b id="fmtName">Game formats</b><span class="pill" id="fmtPill">Off</span><span class="spacer"></span>
+<button class="btn primary" id="fmtStart" hidden>▶ Start</button><button class="btn" id="fmtEnd" hidden title="Stop now — the best record wins">⏹ End</button>
+<button class="btn ghost" id="fmtReset" hidden title="Back to setup, keeping the rosters">↺ Back to setup</button><button class="btn ghost" id="fmtClear" hidden title="Turn formats off">✕</button></div>
+<p class="hint" id="fmtSub">Run a crew battle, a Sajam Slam-style team battle, a gauntlet, a Team Death Battle, a Death Battle, King of the Hill or a league. Set it up here; once it starts, every match is run from the Matches tab.</p>
+</div>
+<div class="card" id="fmtPresets">
+<h2>Pick a format</h2>
+<div class="fmt-presets" id="fmtPresetList"></div>
+</div>
+<div class="card" id="fmtLive" hidden>
+<h2>Now playing <span class="pill" id="fmtLabel"></span><span class="spacer"></span><button class="btn sm ghost" id="fmtUndo" title="Undo the last result (Ctrl+Alt+Z)">↶ Undo result</button></h2>
+<div class="fmt-now" id="fmtNow"></div>
+<div class="fmt-pending" id="fmtPending" hidden></div>
+<div class="fmt-acts" id="fmtActs"></div>
+<div class="fmt-splash"><span class="lbl">On stream:</span>
+<button class="btn sm" data-fsplash="fvs" id="fsVs">🤼 Team VS</button><button class="btn sm" data-fsplash="fboard" id="fsBoard">📋 Board</button><button class="btn sm" data-fsplash="fwin" id="fsWin">🏆 Champion</button><button class="btn sm" id="fsBar" title="Show or hide the format bar along the bottom of the layout (also on Stream Deck)">▁ Format bar</button>
+<span class="spacer"></span><button class="btn sm ghost" id="fmtLayoutBtn" hidden></button></div>
+</div>
+<div class="card" id="fmtBoardCard" hidden><h2 id="fmtBoardTitle">Board</h2><div id="fmtBoard"></div></div>
+<div class="card" id="fmtRules" hidden><h2>Rules</h2><div id="fmtRulesBody"></div></div>
+<div class="card" id="fmtRoster" hidden><h2 id="fmtRosterTitle">Teams <span class="spacer"></span><select class="f fmt-saved" id="fmtSaved"><option value="">📂 Load a saved list…</option></select></h2><div id="fmtRosterBody"></div></div>
+<div class="card" id="fmtLogCard" hidden><h2>Results <span class="spacer"></span><button class="btn sm ghost" id="fmtCsv">⬇ CSV</button></h2><div id="fmtLog"></div></div>
+</section>"""
+
+def format_tab():
+    """Game formats (1.2.0): the Format tab comes back out of the attic with the full app's current markup (Team Death
+    Battle included), right after Matches; a rail button with the "set won, waiting for Confirm" dot; and the two scripts
+    that run it — public/format-panel.js (the tab) and public/match-format.js (the picker and console on the Matches tab).
+    public/panel-ask.js is the panel's own "type something" window: the desktop app has no prompt()."""
+    if not soup.select_one('main > section.tab[data-tab="format"]'):
+        old = soup.select_one('section.tab[data-tab="format"]')
+        if old: old.decompose()
+        soup.select_one('main > section.tab[data-tab="match"]').insert_after(BeautifulSoup('<!-- ===================== FORMATS ===================== -->\n' + FORMAT_TAB, 'html.parser'))
+    if not soup.select_one('nav.rail button[data-tab="format"]'):
+        badge = soup.select_one('#fmtBadge')
+        if badge: badge.decompose()
+        soup.select_one('nav.rail button[data-tab="match"]').insert_after(BeautifulSoup('<button data-tab="format" title="Crew and team battles, Team Death Battle, Death Battle, King of the Hill and leagues"><svg viewBox="0 0 24 24"><path d="M12 2l8 3v6c0 5-3.4 9.3-8 11-4.6-1.7-8-6-8-11V5z" opacity=".35"/><path d="M12 6.5l1.6 3.3 3.6.5-2.6 2.5.6 3.6-3.2-1.7-3.2 1.7.6-3.6-2.6-2.5 3.6-.5z"/></svg>Formats<i class="badge" hidden id="fmtBadge"></i></button>', 'html.parser'))
+    for src in ('/static/panel-ask.js', '/static/format-panel.js', '/static/match-format.js'):       # after panel.js; the text window, then the tab's script
+        if not soup.select_one(f'script[src="{src}"]'):
+            soup.select('script[src]')[-1].insert_after(BeautifulSoup(f'<script src="{src}"></script>', 'html.parser'))
+
 def whats_new():
     """What's new: a window that opens once after an update (public/whats-new.js), and a button for it in Settings, beside
     the app's name (that part of the card shows wherever the app runs; public/whats-new.js unhides the button)."""
@@ -139,6 +147,28 @@ def settings_tab():
     soup.select('main > section.tab')[-1].insert_after(BeautifulSoup('<!-- ===================== SETTINGS (this build: updates & about) ===================== -->\n<section class="tab local-only" data-tab="settings"></section>', 'html.parser'))
     soup.select_one('main > section.tab[data-tab="settings"]').append(card.extract())
     soup.select('nav.rail button[data-tab]')[-1].insert_after(BeautifulSoup('<button class="local-only" data-tab="settings" title="Version and updates"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.48.48 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6a3.6 3.6 0 1 1 0-7.2 3.6 3.6 0 0 1 0 7.2z"/></svg>Settings</button>', 'html.parser'))
+
+def sd_card():
+    """Settings: the Stream Deck card (1.3.2) comes back out of the attic, above Updates & about: the app and plugin status,
+    Install / Update, and "Set up my Stream Deck", which puts the BeeboScore layout on a 15-key Stream Deck or a 32-key
+    Stream Deck XL. public/streamdeck-panel.js runs it. Only on the PC running the app."""
+    card = soup.select_one('#sdCard')
+    if card is None or not card.find_parent(id='liteAttic'): return
+    soup.select_one('#updCard').insert_before(card.extract())
+    card['class'] = card.get('class', []) + ['local-only']
+    if not soup.select_one('script[src="/static/streamdeck-panel.js"]'):
+        soup.select_one('script[src="/static/overlay-toggle.js"]').insert_after(BeautifulSoup('<script src="/static/streamdeck-panel.js"></script>', 'html.parser'))
+
+def behave_card():
+    """Settings: the Scoreboard card (1.3.6) comes back out of the attic, above the Stream Deck card: Refresh OBS on
+    reset, the Victory Splash when a set ends (and how long it stays), the lock-in splash in team formats. Its two
+    "follow" switches stay in the attic: this build has one layout for every game and no format versions of it."""
+    card = soup.select_one('#setBehave')
+    if card is None or not card.find_parent(id='liteAttic'): return
+    soup.select_one('#sdCard').insert_before(card.extract())
+    for i in ('setAutoSwitch', 'setFollowFormat'):
+        el = card.select_one('#' + i)
+        if el is not None: attic.append(el.find_parent('label').extract())
 
 # Wording left over from the full app (mostly in the hidden attic) that names a single game: this build is for every
 # fighting game, so those lines are reworded. Patterns, so no game has to be named here either.
@@ -205,13 +235,16 @@ if not built: strip()
 layout_picker()
 maker_tab()
 settings_tab()
-proto_note()
+sd_card()
+behave_card()
+no_proto_note()
 vs_card()
 pics_card()
 pic_editor()
 whats_new()
 no_colours()
 vs_art()
+format_tab()
 html = str(soup).replace('>Bracket</a> tab', '>start.gg</a> tab')
 for pattern, new in SCRUB: html = re.sub(pattern, new, html)
 open(out, 'w').write(html)
