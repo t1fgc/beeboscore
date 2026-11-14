@@ -216,7 +216,7 @@ More in [docs/BUILDING.md](docs/BUILDING.md). Publishing a release is in [docs/R
 
 ---
 
-## Licence
+## License
 
 [MIT](LICENSE) © 2026 Beebo. The bundled fonts are under the SIL Open Font License or the Apache License 2.0; see [`public/fonts/FONTS-LICENSES.txt`](public/fonts/FONTS-LICENSES.txt).
 
