@@ -4,3 +4,5 @@
 *.woff2 binary
 *.exe   binary
 *.streamDeckPlugin binary
+*.jpg   binary
+*.bmp   binary

@@ -19,7 +19,6 @@
   let mode = store('mode') || 'manual';
   let overlays = [], active = '', players = [], liveTimer = null;
   let info = { local: true, games: [] }, settings = { autoSwitchLayout: true };
-  let gameFilter = 'all';
 
   function store(k, v) { try { if (v === undefined) return localStorage.getItem('sb.' + k); localStorage.setItem('sb.' + k, v); } catch { return null; } }
   const get = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);
@@ -35,7 +34,9 @@
     const act = err && typeof err === 'object' ? err : null;
     t.className = 'toast' + (err && !act ? ' err' : '') + (act ? ' act' : '');
     t.textContent = msg;
-    if (act) { const b = document.createElement('button'); b.className = 'toast-btn'; b.textContent = act.action; b.onclick = () => { t.remove(); act.run(); }; t.appendChild(b); }
+    if (act) { const run = act.run; act.run = () => { if (act.used) return; act.used = true; run(); }; const b = document.createElement('button'); b.className = 'toast-btn'; b.textContent = act.action; b.onclick = () => { t.remove(); act.run(); }; t.appendChild(b); }
+    // 1.12.19: every message also goes to the bell in the header (panel-qol.js), with its Undo while that still works
+    try { window.dispatchEvent(new CustomEvent('beebo:toast', { detail: { msg: String(msg), err: !!(err && !act), act, at: Date.now() } })); } catch (e) {}
     box.appendChild(t);
     while (box.children.length > 3) box.firstChild.remove();
     setTimeout(() => t.remove(), act ? act.ms || 6000 : err ? 4500 : 2200);
@@ -52,7 +53,7 @@
     if (!res.ok) throw new Error((data && data.error) || (typeof data === 'string' && data.length < 200 && data) || res.statusText || 'Request failed');
     return data;
   }
-  const flagUrl = cc => /^[a-z]{2}$/i.test(cc || '') ? `https://flagcdn.com/w40/${cc.toLowerCase()}.png` : '';
+  const flagUrl = cc => /^[a-z]{2}$/i.test(cc || '') ? `/static/flags/${cc.toLowerCase()}.svg` : '';
   function setFlag(p, cc) {
     const img = $('#' + p + 'flag'), u = flagUrl(cc);
     if (u) { if (img.getAttribute('src') !== u) img.src = u; img.style.visibility = ''; }
@@ -66,29 +67,36 @@
   window.addEventListener('scroll', () => { if (!curTab) return; tabScroll[curTab] = Math.round(window.scrollY); clearTimeout(tabScroll.t); tabScroll.t = setTimeout(() => { const { t, ...o } = tabScroll; store('tabScroll', JSON.stringify(o)); }, 400); }, { passive: true });
   function showTab(name) {
     if (!$(`main .tab[data-tab="${name}"]`)) name = 'match';
-    if (name === 'designer' && !info.local) name = 'layouts';
-    if (name === 'autoscore' && !(settings && settings.showAutoscore)) name = 'match';
-    document.body.classList.toggle('dz-open', name === 'designer');
-    if (name === 'designer') designerFrame();
     $$('nav.rail button').forEach(b => b.classList.toggle('on', b.dataset.tab === name));
     $$('main .tab').forEach(t => t.classList.toggle('on', t.dataset.tab === name));
     store('tab', name);
+    try { window.dispatchEvent(new CustomEvent('beebo:tab', { detail: { name } })); } catch (e) {}
     if (name === 'bracket' && sgg.tournament && !sets.length) loadSets();
     const back = curTab === '' ? tabScroll[name] || 0 : 0;             // a reload lands where you were; switching tabs starts at the top
     curTab = name;
     window.scrollTo({ top: 0 }); if (back) setTimeout(() => window.scrollTo({ top: back }), 250);
   }
   $$('nav.rail button').forEach(b => { b.onclick = () => showTab(b.dataset.tab); });
-  document.addEventListener('click', e => { const j = e.target.closest('[data-scroll-to]'); if (j) { e.preventDefault(); const el = document.getElementById(j.dataset.scrollTo); if (el) el.scrollIntoView({ block: 'start', behavior: 'smooth' }); } });
-  // UI theme (Settings › Look & feel): Classic or Shattered, without reloading
+  document.addEventListener('click', e => { const j = e.target.closest('[data-scroll-to]'); if (j) { e.preventDefault(); const el = document.getElementById(j.dataset.scrollTo); if (el) { const t = el.classList.contains('collapsed') && el.querySelector('.cl-tg'); if (t) t.click(); el.scrollIntoView({ block: 'start', behavior: 'smooth' }); } } });
+  // UI theme (Settings › Look & feel), without reloading: Classic, Ember, and the five Designer themes (public/themes/)
+  const DESIGNER_THEMES = ['hive', 'dojo', 'circuit', 'street', 'glacier'];
+  const needCss = href => { if (!document.querySelector(`link[href="${href}"]`)) { const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href; document.head.appendChild(l); } };
   function applyTheme(t) {
-    const sh = t === 'shattered' && !document.documentElement.classList.contains('potato');
-    document.documentElement.classList.toggle('theme-shattered', sh);
-    if (sh && !document.querySelector('link[href="/static/theme-shattered.css"]')) { const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = '/static/theme-shattered.css'; document.head.appendChild(l); }
-    $$('#themePick .theme-opt').forEach(b => b.classList.toggle('on', b.dataset.theme === (t || 'classic')));
+    const potato = document.documentElement.classList.contains('potato');
+    t = potato ? 'classic' : t || 'classic';
+    const sh = t === 'shattered', dz = DESIGNER_THEMES.includes(t), cl = document.documentElement.classList;
+    cl.toggle('theme-shattered', sh);
+    for (const x of DESIGNER_THEMES) cl.toggle('theme-' + x, x === t);
+    cl.toggle('ui-x', dz);
+    cl.toggle('theme-custom', t === 'custom'); if (window.BeeboTheme) window.BeeboTheme.apply();     // 1.12.18: your own theme (show-tab.js)
+    cl.toggle('theme-contrast', t === 'contrast');                                                    // 1.12.19: high contrast (panel.css)     // 1.12.18: your own theme (show-tab.js)
+    if (sh) needCss('/static/theme-shattered.css');
+    if (dz) { needCss('/static/themes/base.css'); needCss(`/static/themes/${t}.css`); }
+    $$('#themePick .theme-opt').forEach(b => b.classList.toggle('on', b.dataset.theme === t));
+    window.dispatchEvent(new CustomEvent('beebo:theme', { detail: t }));
     const f = document.querySelector('#dzFrame iframe'); if (f) try { f.contentWindow.postMessage({ type: 'beebo-designer-theme', theme: sh ? 'shattered' : 'classic' }, location.origin); } catch {}
   }
-  $('#themePick').onclick = e => { const b = e.target.closest('.theme-opt'); if (!b) return; applyTheme(b.dataset.theme); saveSettings({ uiTheme: b.dataset.theme }, b.dataset.theme === 'shattered' ? 'Shattered theme on' : 'Classic theme on'); };
+  $('#themePick').onclick = e => { const b = e.target.closest('.theme-opt'); if (!b) return; applyTheme(b.dataset.theme); saveSettings({ uiTheme: b.dataset.theme }, `${b.querySelector('b').textContent} theme on`); };
   document.addEventListener('click', e => { const g = e.target.closest('[data-goto]'); if (g) { e.preventDefault(); showTab(g.dataset.goto); if (g.dataset.scroll) setTimeout(() => { const el = document.getElementById(g.dataset.scroll); if (el) el.scrollIntoView({ block: 'start', behavior: 'smooth' }); }, 30); } });
 
   // ------------------------------------------------------------ form <-> draft
@@ -106,10 +114,12 @@
     renderGamePick();
     renderCustom();
     renderVS();
+    window.dispatchEvent(new CustomEvent('beebo:draft'));       // the Format tab's score strip follows the Matches tab
   }
   function markDirty() {
     if (mode === 'live') { clearTimeout(liveTimer); liveTimer = setTimeout(push, 90); }
     else { dirty = true; updateBar(); }
+    window.dispatchEvent(new CustomEvent('beebo:draft'));
   }
   function updateBar() {
     const btn = $('#updateBtn');
@@ -124,14 +134,13 @@
     clearTimeout(liveTimer);
     if (!draft) return;
     const payload = clone(draft);
-    delete payload.vs;                    // the VS intro is switched on its own
+    delete payload.vs;                    // FullVS is switched on its own
     delete payload.splash;                // …and so are the bracket / Top 8 splashes
-    delete payload.hidden;                // …and hiding the whole overlay (the header button / Stream Deck)
     payload.p1.score = Math.max(0, Number(payload.p1.score) || 0);
     payload.p2.score = Math.max(0, Number(payload.p2.score) || 0);
     try {
       server = await api('/api/state', { method: 'POST', body: payload });
-      dirty = false; updateBar(); renderWin();
+      dirty = false; updateBar(); renderWin(); stateEvent();
       if (mode === 'manual') toast('Overlay updated');
     } catch (e) { toast('Update failed: ' + e.message, true); }
   }
@@ -158,10 +167,12 @@
     for (const k of ['p1', 'p2']) draft[k] = { name: '', team: '', pronouns: '', country: '', character: '', score: 0, loser: false, sggId: '', avatar: '', wins: '', losses: '' };
     render(); markDirty(); $('[data-path="p1.name"]').focus();
   };
+  // everything else that follows the scoreboard (the Matches tab's event strip, the viewer tournament…) hears it here
+  function stateEvent() { window.dispatchEvent(new CustomEvent('beebo:state', { detail: server })); }
   async function undo() {
     try {
       const r = await api('/api/state/undo', { method: 'POST' });
-      server = r.state; draft = clone(server); dirty = false; render(); updateBar();
+      server = r.state; draft = clone(server); dirty = false; render(); updateBar(); stateEvent();
       toast(r.left ? 'Undone' : 'Undone — that was the oldest change');
     } catch (e) { toast(e.message, true); }
   }
@@ -180,8 +191,8 @@
   });
 
   document.addEventListener('keydown', e => {
-    if ($('#editorModal').classList.contains('open') || e.defaultPrevented) return;
-    if (e.altKey && /^[1-9]$/.test(e.key)) { e.preventDefault(); const tabs = ['match', 'format', 'bracket', 'layouts', 'designer', 'stream', 'twitch', ...(settings.showAutoscore ? ['autoscore'] : []), 'settings']; if (tabs[e.key - 1]) showTab(tabs[e.key - 1]); return; }
+    if (e.defaultPrevented) return;
+    if (e.altKey && /^[1-9]$/.test(e.key)) { e.preventDefault(); const tabs = ['match', 'format', 'bracket', 'stream', 'settings']; if (tabs[e.key - 1]) showTab(tabs[e.key - 1]); return; }
     if (capturing || !draft) return;
     const typing = /INPUT|TEXTAREA|SELECT/.test(document.activeElement && document.activeElement.tagName) && document.activeElement.type !== 'checkbox';
     const action = BeeboKeys.match(e, keys(), typing);
@@ -192,10 +203,8 @@
       update: () => { if (mode === 'manual') push(); }, swap: swapPlayers, undo, resetScores: () => $('#resetBtn').click(), vsToggle: () => toggleVS(),
       victoryToggle: () => toggleVictory(),
       bracketToggle: () => toggleSplash('bracket'), top8Toggle: () => toggleSplash('top8'), bracketRefresh: () => refreshBracket(), bracketSide: () => bracketSide('toggle'),
-      viewerNext: () => viewerKey({ action: 'viewerNext' }), viewerWin: () => viewerKey({ action: 'viewerResult', who: 'streamer' }), viewerLose: () => viewerKey({ action: 'viewerResult', who: 'viewer' }),
-      viewerQueue: () => viewerKey({ action: 'viewerQueue', open: 'toggle' }), viewerSplash: () => viewerKey({ action: 'viewerSplash', show: 'toggle' }), viewerSidebar: () => viewerKey({ action: 'viewerSidebar', show: 'toggle' }),
-      autoscoreToggle: () => viewerKey({ action: 'autoscoreToggle' }), autoscoreUndo: () => viewerKey({ action: 'autoscoreUndo' }), autoscoreConfirm: () => viewerKey({ action: 'autoscoreConfirm' }),
       soundToggle: () => viewerKey({ action: 'sound', on: 'toggle' }).then(r => { if (r && r.status) toast(r.status.sound.on ? '🔊 Stream sound on' : '🔇 Stream sound off'); }),
+      ...BeeboKeys.showActions(b => viewerKey(b), toast),           // the set's own extras (set timer, head-to-head, moments, stats strip)
     }[action] || (() => {}))();
   });
 
@@ -203,11 +212,11 @@
   const POTATO_ON = ['The app restarts in a lightweight mode for low-end PCs.', [
     'Classic Windows XP look; every animation and visual effect is switched off.',
     'Layouts are drawn as a still picture (PNG) each time something changes. No animations or effects on stream.',
-    'Lightest option for OBS: add an <b>Image</b> source pointing at <code>output/overlay.png</code> in your BeeboScore folder (or keep the usual Browser source).',
+    'Lightest option for OBS: add an <b>Image</b> source pointing at <code>output/overlay.png</code> in your BeeboScore Lite Data folder (or keep the usual Browser source).',
     'Graphics acceleration is turned off, and most extras run at the bare minimum.',
     'You can switch back here at any time (another restart).']];
   const POTATO_OFF = ['The app restarts with the full experience again.', [
-    'Animated layouts, effects and the VS intro animations come back.',
+    'Animated layouts, effects and the FullVS animations come back.',
     'The normal look and the live overlay preview return.']];
   let wantPotato = false;
   $('#setPotato').onchange = e => {
@@ -215,7 +224,7 @@
     e.target.checked = !!settings.potatoMode;            // only changes once confirmed
     const [lead, items] = wantPotato ? POTATO_ON : POTATO_OFF;
     $('#potatoTitle').textContent = wantPotato ? '🥔 Turn on Potato mode?' : 'Turn off Potato mode?';
-    $('#potatoLead').innerHTML = `<b>BeeboScore needs to restart.</b> ${lead}`;
+    $('#potatoLead').innerHTML = `<b>BeeboScore Lite needs to restart.</b> ${lead}`;
     $('#potatoList').innerHTML = items.map(t => `<li>${t}</li>`).join('');
     $('#potatoGo').textContent = wantPotato ? 'Restart in Potato mode' : 'Restart normally';
     $('#potatoModal').hidden = false; $('#potatoGo').focus();
@@ -252,15 +261,31 @@
 
   // Stream Deck (Settings): public/streamdeck-panel.js
 
-  // ------------------------------------------------------------ VS intro
-  async function toggleVS(show) {
-    try { server = await api('/api/vs', { method: 'POST', body: { show: show === undefined ? 'toggle' : show } }); renderVS(); toast(server.vs && server.vs.show ? 'VS Splash on stream' : 'VS Splash hidden'); }
-    catch (e) { toast(e.message, true); }
+  // ------------------------------------------------------------ FullVS — FullVS and GlassVS (1.12.6)
+  // The button plays the VS style chosen beside it: FullVS (the full VS splash) or GlassVS (the glass lock-in VS), in any
+  // format or match. The Stream Deck has a key for each, and the VS key follows the choice (hold it to switch).
+  const vsStyle = () => (settings && settings.vsStyle === 'glass' ? 'glass' : 'full');
+  const teamLive = () => !!(server && server.format && server.format.status === 'live' && (server.format.kind === 'teams' || (server.format.kind === 'elim' && server.format.preset !== 'koth')));
+  async function toggleVS(show, style = vsStyle()) {
+    try {
+      const r = await api('/api/remote/action', { method: 'POST', body: { action: 'vs', style, show: show === undefined ? 'toggle' : show } });
+      const st = r.status || {}; server = { ...server, vs: { show: !!st.vs }, playerVs: { show: !!st.playerVs } }; renderVS();
+      const nm = style === 'glass' ? 'GlassVS' : 'FullVS', on = style === 'glass' ? !!st.playerVs : !!st.vs;
+      toast(on ? `${nm} on stream` : `${nm} hidden`);
+    } catch (e) { toast(e.message, true); }
   }
   function renderVS() {
-    const on = !!(server && server.vs && server.vs.show);
+    const g = vsStyle() === 'glass', on = g ? !!(server && server.playerVs && server.playerVs.show) : !!(server && server.vs && server.vs.show);
     $('#vsToggle').classList.toggle('on', on);
-    $('#vsToggle').textContent = on ? 'Hide VS Splash' : 'Show VS Splash';
+    $('#vsToggle').textContent = `${on ? 'Hide' : 'Show'} ${g ? 'GlassVS' : 'FullVS'}`;
+    $('#vsToggle').title = g ? 'GlassVS: the glass lock-in VS — the two players face to face, pictures framed, names under them. Stays up until you hide it.' : 'FullVS: the full VS splash.';
+    $$('#vsStyle [data-vs]').forEach(b => b.classList.toggle('on', b.dataset.vs === vsStyle()));
+    { const own = !!(settings && settings.overlayColours === 'layout'); $('#vsCols').classList.toggle('layout-own', own); $('#vsColsOwn').hidden = !own; }      // 1.12.24
+    for (const n of [1, 2]) {      // 1.12.7: the side colours
+      const v = String((settings && settings['vsColor' + n]) || ''), lab = $(`#vsCols .vsc[data-n="${n}"]`), inp = $('#vsCol' + n); if (!lab || !inp) continue;
+      lab.classList.toggle('unset', !v); if (v && document.activeElement !== inp) inp.value = v; lab.style.setProperty('--c', v || 'transparent');
+      lab.querySelector('span').textContent = v ? `Player ${n} · ${v.toUpperCase()}` : `Player ${n} · layout’s`;
+    }
     if (!draft) return;
     for (const n of [1, 2]) {
       const p = draft['p' + n] || {}, img = $('#vsAva' + n), src = String(p.avatar || '');
@@ -269,6 +294,13 @@
     }
   }
   $('#vsToggle').onclick = () => toggleVS();
+  { const vcT = {};
+    const setCol = (n, v, msg) => { settings['vsColor' + n] = v; renderVS(); clearTimeout(vcT[n]); vcT[n] = setTimeout(() => saveSettings({ ['vsColor' + n]: v }, msg), 160); };
+    for (const n of [1, 2]) { const inp = $('#vsCol' + n); if (!inp) continue;
+      inp.oninput = () => setCol(n, inp.value.toLowerCase(), '');
+      inp.onchange = () => setCol(n, inp.value.toLowerCase(), `Player ${n}’s side of the VS screens: ${inp.value.toUpperCase()}`); }
+    $$('#vsCols [data-x]').forEach(b => b.onclick = e => { e.preventDefault(); e.stopPropagation(); setCol(+b.dataset.x, '', `Player ${b.dataset.x}’s side: back to the layout’s colour`); }); }
+  $$('#vsStyle [data-vs]').forEach(b => b.onclick = () => { if (vsStyle() === b.dataset.vs) return; settings.vsStyle = b.dataset.vs; renderVS(); saveSettings({ vsStyle: b.dataset.vs }, `The VS button plays ${b.dataset.vs === 'glass' ? 'GlassVS' : 'FullVS'}`); });
   // designer screens of the active layout (starting soon, BRB, Top 8, lower thirds…)
   let screens = { screens: [], current: '' };
   const SCR_EMOJI = { starting: '⏳', brb: '☕', ending: '👋', top8: '🏆', card: '🪪', twitch: '💬', lower: '📛', ticker: '📰', camera: '🎥', custom: '🧩' };
@@ -283,10 +315,9 @@
     const b = ev.target.closest('button'); if (!b) return;
     try { const r = await api('/api/remote/action', { method: 'POST', body: { action: 'screen', name: b.dataset.id, show: 'toggle' } }); if (r && r.state) server = r.state; } catch (e) { toast(e.message, true); }
   };
-  $('#scrDesign').onclick = () => openDesigner && openDesigner(active);
   loadScreens();
   $('#vsRefresh').onclick = async () => {
-    try { await api('/api/vs/refresh', { method: 'POST', body: {} }); toast(sgg.tournament ? 'Fetching pictures and records from start.gg…' : 'Connect a start.gg tournament in the start.gg tab first'); }
+    try { await api('/api/vs/refresh', { method: 'POST', body: {} }); toast(sgg.tournament ? 'Fetching pictures and records from start.gg…' : 'Connect a start.gg tournament in the Bracket tab first'); }
     catch (e) { toast(e.message, true); }
   };
   // a newly typed name is a different player: drop the old start.gg link, picture and record…
@@ -309,7 +340,7 @@
   function renderKeys() {
     const k = keys();
     $('#keyList').innerHTML = Object.keys(BeeboKeys.DEFAULTS).map(a => `<div class="keyrow"><span>${esc(BeeboKeys.LABELS[a])}</span>
-      <button class="keybtn${capturing === a ? ' listening' : ''}" data-act="${a}" ${info.local === false ? 'disabled title="Only on the PC running BeeboScore"' : ''}>${capturing === a ? 'Press keys…' : BeeboKeys.html(k[a])}</button></div>`).join('');
+      <button class="keybtn${capturing === a ? ' listening' : ''}" data-act="${a}" ${info.local === false ? 'disabled title="Only on the PC running BeeboScore Lite"' : ''}>${capturing === a ? 'Press keys…' : BeeboKeys.html(k[a])}</button></div>`).join('');
   }
   // stop listening if the user clicks anywhere else or changes tab
   document.addEventListener('mousedown', e => { if (capturing && !e.target.closest('.keybtn')) { capturing = null; renderKeys(); } }, true);
@@ -376,7 +407,10 @@
     const games = gameList();
     const cur = draft ? draft.game : '';
     const withLayout = new Set(overlays.map(o => o.game));
-    const html = games.map(g => `<option value="${esc(g)}">${esc(g)}${withLayout.has(g) ? '' : ' (no layout yet)'}</option>`).join('');
+    // only games that have a layout; with one game there's nothing to pick, so the menu hides
+    const real = games.filter(g => withLayout.has(g));
+    const pk = sel.closest('.picker'); if (pk) pk.hidden = real.length < 2;
+    const html = real.map(g => `<option value="${esc(g)}">${esc(g)}</option>`).join('');
     if (sel.dataset.h !== html) { sel.innerHTML = html; sel.dataset.h = html; $('#gameList').innerHTML = games.map(g => `<option value="${esc(g)}">`).join(''); }
     sel.value = cur;
   }
@@ -391,8 +425,7 @@
     const order = Object.keys(groups).sort((x, y) => (y === cur) - (x === cur) || (x === 'Any game') - (y === 'Any game') || x.localeCompare(y));
     const opt = list => { const base = list.find(o => !o.format) || list[0], live = list.find(o => o.name === active);
       return `<option value="${esc(list.length > 1 ? 'family:' + base.name : base.name)}">${esc(list.length > 1 ? base.family : base.title)}${live && live.format ? ' · ' + esc(live.title.replace(/^.*?—\s*/, '')) : ''}</option>`; };
-    // one group (this build: every layout is for any game) needs no heading
-    sel.innerHTML = order.length === 1 ? groups[order[0]].map(opt).join('') : order.map(g => `<optgroup label="${esc(g === cur ? '★ ' + g : g)}">${groups[g].map(opt).join('')}</optgroup>`).join('');
+    sel.innerHTML = order.map(g => `<optgroup label="${esc(g === cur ? '★ ' + g : g)}">${groups[g].map(opt).join('')}</optgroup>`).join('');
     const fam = a && overlays.filter(o => o.game === a.game && o.family === a.family);
     sel.value = fam && fam.length > 1 ? 'family:' + (fam.find(o => !o.format) || fam[0]).name : active;
   }
@@ -432,17 +465,16 @@
 
   // ------------------------------------------------------------ preview
   function scaleFrames() {
-    for (const [w, f] of [['#previewWrap', '#preview'], ['#edPreviewWrap', '#edPreview']]) {
+    for (const [w, f] of [['#previewWrap', '#preview']]) {
       const wrap = $(w), fr = $(f);
-      if (wrap.clientWidth) fr.style.transform = `scale(${wrap.clientWidth / 1920})`;
+      if (wrap && fr && wrap.clientWidth) fr.style.transform = `scale(${wrap.clientWidth / 1920})`;
     }
   }
   new ResizeObserver(scaleFrames).observe($('#previewWrap'));
-  new ResizeObserver(scaleFrames).observe($('#edPreviewWrap'));
   const BGS = [['checker', 'Checker'], ['game', 'Scene'], ['green', 'Green']];
   function setBg(bg) {
     store('bg', bg);
-    for (const w of ['#previewWrap', '#edPreviewWrap']) $(w).className = 'preview-wrap ' + bg;
+    for (const w of ['#previewWrap']) $(w).className = 'preview-wrap ' + bg;
     $$('#bgChips .chip').forEach(c => c.classList.toggle('on', c.dataset.v === bg));
   }
   $('#bgChips').innerHTML = BGS.map(([v, t]) => `<button class="chip" data-v="${v}">${t}</button>`).join('');
@@ -479,11 +511,11 @@
     else if (document.hidden || document.body.classList.contains('pv-collapsed')) fr.dataset.src = src;
     else if (fr.getAttribute('src') !== src) fr.src = src;
     const o = overlays.find(x => x.name === active);
-    if (o && ['shattered', 'oni'].includes(o.sound) && $('#sndPack').value !== o.sound) { $('#sndPack').value = o.sound; renderSoundTest(); }   // Sound test: the live layout's pack
+    // (the built-in sound packs are gone: nothing for the layout to pick here any more)
     $('#nowName').textContent = o ? o.title : active;
     $('#nowGame').textContent = o ? o.game : '';
     $('#nowSwatch').style.background = swatch(o);
-    renderLayoutPick(); renderOverlays();
+    renderLayoutPick();
   }
   document.addEventListener('visibilitychange', () => {
     // stop the preview completely while the window is hidden or minimised
@@ -493,211 +525,8 @@
     else if (fr.dataset.src && !document.body.classList.contains('pv-collapsed')) { fr.src = fr.dataset.src; delete fr.dataset.src; }
   });
 
-  // ------------------------------------------------------------ layouts tab
-  function renderOverlays() {
-    const games = [...new Set(overlays.map(o => o.game))];
-    if (gameFilter !== 'all' && !games.includes(gameFilter)) gameFilter = 'all';
-    $('#gameFilter').innerHTML = ['all', ...games].map(g => `<button class="chip ${g === gameFilter ? 'on' : ''}" data-g="${esc(g)}">${g === 'all' ? 'All games' : esc(g)}</button>`).join('');
-    // a format version shows on its look's card (Shattered → Crew Battle, Death Battle…), not as a card of its own
-    const isVer = o => o.base && overlays.some(b => b.name === o.base);
-    const list = overlays.filter(o => (gameFilter === 'all' || o.game === gameFilter) && !isVer(o));
-    $('#overlayList').innerHTML = list.map(o => {
-      const FO = ['crew', 'sajam', 'gauntlet', 'tdb', 'death', 'koth', 'league'], vers = overlays.filter(v => v.base === o.name).sort((x, y) => FO.indexOf(x.format) - FO.indexOf(y.format)), liveVer = vers.find(v => v.name === active);
-      const live = o.name === active || !!liveVer;
-      return `<div class="lcard ${live ? 'active' : ''}">
-        <div class="swatch" style="background:${swatch(o)}"><span class="g">${esc(o.game)}</span>${live ? '<span class="live">LIVE</span>' : ''}</div>
-        <div class="lbody"><b>${esc(o.title)}${liveVer ? ` <small class="lver">· ${esc(liveVer.title.replace(/^.*?—\s*/, ''))}</small>` : ''}</b><p>${esc(o.description || `${o.files.length} file${o.files.length === 1 ? '' : 's'}`)}</p>
-          ${vers.length ? `<div class="lvers" title="Each game format has its own version of this look. It switches by itself when you set up a format; click one to put it live now.">${vers.map(v => `<span class="lver-p"><button class="chip ${v.name === active ? 'on' : ''}" data-act="use" data-n="${esc(v.name)}">${esc(v.title.replace(/^.*?—\s*/, ''))}</button><button class="chip ghost lnk" data-act="url" data-n="${esc(v.name)}" title="Copy the OBS link that always shows ${esc(v.title)}">🔗</button></span>`).join('')}</div>` : ''}
-          <div class="lacts">
-            ${o.name === active ? '' : `<button class="btn sm primary" data-act="use" data-n="${esc(o.name)}">${liveVer ? 'Use without a format' : 'Use'}</button>`}
-            ${info.local && o.designer ? `<button class="btn sm" data-act="design" data-n="${esc(o.name)}" title="Open it in the Layout Designer">🎨 Edit design</button>` : ''}
-            ${info.local && !o.designer ? `<button class="btn sm" data-act="edit" data-n="${esc(o.name)}">Edit</button>` : ''}
-            ${info.local && o.bundled && o.edited ? `<button class="btn sm ghost" data-act="restore" data-n="${esc(o.name)}" title="Put this layout back the way BeeboScore ships it — your edited version is kept as a copy">↺ Restore original</button>` : ''}
-            ${info.local ? `
-            <button class="btn sm ghost" data-act="dup" data-n="${esc(o.name)}">Duplicate</button>` : ''}
-            <button class="btn sm ghost" data-act="url" data-n="${esc(o.name)}" title="Copy a link that always shows this layout">Link</button>
-            ${live || !info.local || vers.length ? '' : `<button class="btn sm ghost danger" data-act="del" data-n="${esc(o.name)}" title="Delete">✕</button>`}
-          </div></div></div>`;
-    }).join('') || '<div class="empty"><b>No layouts for this game yet</b>Duplicate one or upload your own below.</div>';
-  }
-  $('#gameFilter').onclick = e => { const c = e.target.closest('.chip'); if (c) { gameFilter = c.dataset.g; renderOverlays(); } };
+  // ------------------------------------------------------------ layouts (Lite: the header picker only — no Layouts tab, no Designer)
   async function loadOverlays() { overlays = await api('/api/overlays'); const a = overlays.find(o => o.active); if (a) active = a.name; refreshActive(); renderGamePick(); }
-  $('#overlayList').onclick = async e => {
-    const b = e.target.closest('[data-act]'); if (!b) return;
-    const n = b.dataset.n;
-    try {
-      if (b.dataset.act === 'use') await setActive(n);
-      if (b.dataset.act === 'edit') openEditor(n);
-      if (b.dataset.act === 'design') openDesigner(n);
-      if (b.dataset.act === 'restore' && confirm(`Put "${n}" back the way it came with BeeboScore?\n\nYour edited version won’t be lost — it’s kept as a separate layout.`)) { const r = await api(`/api/overlays/${encodeURIComponent(n)}/restore`, { method: 'POST' }); toast(`Original restored — your version is kept as “${r.kept}”`); }
-      if (b.dataset.act === 'dup') askName('Duplicate layout', n + '-copy', n);
-      if (b.dataset.act === 'url') copy(`${location.origin}/overlay/${encodeURIComponent(n)}`, 'Link to this layout copied');
-      if (b.dataset.act === 'del' && confirm(`Delete layout "${n}" and all its files? This can't be undone.`)) { await api(`/api/overlays/${encodeURIComponent(n)}`, { method: 'DELETE' }); toast('Layout deleted'); }
-    } catch (err) { toast(err.message, true); }
-  };
-
-  // the Layout Designer opens in its own window (docked beside this one in the desktop app)
-  // the Layout Designer is built into the app: its own tab, the app's colours, the whole window
-  let dzWin = null, dzWant = null;
-  function designerFrame(edit) {
-    const box = $('#dzFrame'); if (!box) return;
-    let f = box.querySelector('iframe');
-    const theme = document.documentElement.classList.contains('theme-shattered') ? 'shattered' : 'classic';
-    if (!f) {
-      f = document.createElement('iframe'); f.title = 'Layout Designer'; f.allow = 'clipboard-read; clipboard-write';
-      f.src = '/designer?embed=1&theme=' + theme + (edit ? '&edit=' + encodeURIComponent(edit) : '');
-      box.appendChild(f); dzWin = f.contentWindow; return;
-    }
-    if (edit) { try { f.contentWindow.postMessage({ type: 'beebo-designer-edit', name: edit }, location.origin); } catch {} }
-  }
-  function openDesigner(name) { showTab('designer'); if (name) designerFrame(name); }
-  window.addEventListener('message', ev => {
-    if (ev.origin !== location.origin || !ev.data) return;
-    if (ev.data.type === 'beebo-designer-saved') { loadOverlays && loadOverlays(); loadScreens(); }
-    if (ev.data.type === 'beebo-designer-theme?') { const f = $('#dzFrame iframe'); if (f) f.contentWindow.postMessage({ type: 'beebo-designer-theme', theme: document.documentElement.classList.contains('theme-shattered') ? 'shattered' : 'classic' }, location.origin); }
-  });
-  $('#openDesigner').onclick = () => openDesigner();
-
-  let nameResolve = null;
-  function askName(title, suggestion, from, uploadMode) {
-    $('#nmTitle').textContent = title;
-    $('#nmName').value = suggestion || '';
-    $('#nmFromWrap').hidden = !!uploadMode;
-    $('#nmGameWrap').hidden = !uploadMode;
-    $('#nmFrom').innerHTML = overlays.map(o => `<option value="${esc(o.name)}" ${o.name === (from || 'shattered') ? 'selected' : ''}>${esc(o.title)} — ${esc(o.game)}</option>`).join('');
-    $('#nmGame').innerHTML = ['Any game', ...gameList()].map(g => `<option ${draft && g === draft.game ? 'selected' : ''}>${esc(g)}</option>`).join('');
-    $('#nmOk').textContent = uploadMode ? 'Upload' : 'Create';
-    $('#nmHint').textContent = uploadMode ? 'Uploading into an existing layout name adds or replaces its files.' : 'Starts as a copy of the layout you pick. Edit it freely — the original stays as it is.';
-    $('#nameModal').classList.add('open');
-    setTimeout(() => $('#nmName').select(), 30);
-    return new Promise(r => {
-      nameResolve = uploadMode ? r : async v => {
-        if (!v) return;
-        try { const res = await api('/api/overlays/new', { method: 'POST', body: { name: v, from: $('#nmFrom').value } }); toast(`Created "${res.name}"`); await loadOverlays(); openEditor(res.name); }
-        catch (e) { toast(e.message, true); }
-      };
-    });
-  }
-  function closeName(v) { $('#nameModal').classList.remove('open'); const r = nameResolve; nameResolve = null; if (r) r(v); }
-  $('#nmCancel').onclick = () => closeName(null);
-  $('#nmOk').onclick = () => closeName($('#nmName').value.trim());
-  $('#nmName').onkeydown = e => { if (e.key === 'Enter') closeName($('#nmName').value.trim()); if (e.key === 'Escape') closeName(null); };
-  $('#newOverlayBtn').onclick = () => askName('New layout', 'my-layout', 'shattered');
-
-  const readB64 = file => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1] || ''); r.onerror = rej; r.readAsDataURL(file); });
-  // a .beebo file (exported from the Layout Designer): becomes a designer layout, ready to use and edit
-  async function importBeebo(file) {
-    try {
-      const d = JSON.parse(await file.text()), design = d && (d.design || (d.scenes ? d : null));
-      if (!design || !design.scenes) throw new Error('That isn’t a BeeboScore layout file');
-      const base = String(design.title || file.name.replace(/\.beebo$/i, '')).toLowerCase().normalize('NFKD').replace(/[^\w\s-]/g, '').trim().replace(/[\s_]+/g, '-').slice(0, 44) || 'imported-layout';
-      let name = base, n = 1, r = null;
-      for (;;) { try { r = await api('/api/designs', { method: 'POST', body: { name, design, setActive: false, overwrite: false } }); break; } catch (e) { if (!/exists/i.test(e.message) || n > 20) throw e; name = `${base}-${++n}`; } }
-      await loadOverlays(); toast(`Imported “${design.title || name}” — 🎨 Edit design to change it`);
-    } catch (e) { toast(e.message || 'Couldn’t import that file', true); }
-  }
-  async function upload(list) {
-    if (!list.length) return;
-    const beebo = list.filter(f => /\.beebo$/i.test(f.path)); if (beebo.length) { for (const f of beebo) await importBeebo(f.file); list = list.filter(f => !/\.beebo$/i.test(f.path)); if (!list.length) return; }
-    if (!list.some(f => /\.html?$/i.test(f.path))) return toast('Include at least one .html file', true);
-    const tops = new Set(list.map(f => f.path.includes('/') ? f.path.split('/')[0] : ''));
-    let folderName = '';
-    if (tops.size === 1 && [...tops][0]) { folderName = [...tops][0]; list.forEach(f => { f.path = f.path.split('/').slice(1).join('/'); }); }
-    const html = list.find(f => /\.html?$/i.test(f.path));
-    const suggestion = (folderName || html.path.split('/').pop().replace(/\.html?$/i, '')).replace(/[^\w\- ]+/g, '').replace(/\s+/g, '-');
-    const name = await askName('Upload layout', suggestion, null, true);
-    if (!name) return;
-    try {
-      toast('Uploading…');
-      const files = await Promise.all(list.map(async f => ({ path: f.path, data: await readB64(f.file) })));
-      const game = $('#nmGame').value;
-      const res = await api('/api/overlays/upload', { method: 'POST', body: { name, files, game: game === 'Any game' ? '' : game } });
-      toast(`Uploaded "${res.name}"`);
-      await loadOverlays();
-      if (confirm(`Show "${res.name}" in OBS now?`)) await setActive(res.name);
-    } catch (e) { toast('Upload failed: ' + e.message, true); }
-  }
-  $('#pickFiles').onclick = e => { e.stopPropagation(); $('#fileInput').click(); };
-  $('#pickFolder').onclick = e => { e.stopPropagation(); $('#folderInput').click(); };
-  $('#drop').onclick = () => $('#fileInput').click();
-  $('#fileInput').onchange = e => { upload([...e.target.files].map(f => ({ file: f, path: f.name }))); e.target.value = ''; };
-  $('#folderInput').onchange = e => { upload([...e.target.files].map(f => ({ file: f, path: f.webkitRelativePath || f.name }))); e.target.value = ''; };
-  const drop = $('#drop');
-  ['dragenter', 'dragover'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.add('over'); }));
-  ['dragleave', 'drop'].forEach(t => drop.addEventListener(t, () => drop.classList.remove('over')));
-  drop.addEventListener('drop', async e => {
-    e.preventDefault();
-    const entries = [...e.dataTransfer.items].map(i => i.webkitGetAsEntry && i.webkitGetAsEntry()).filter(Boolean);
-    const out = [];
-    const walk = (entry, prefix) => new Promise(res => {
-      if (entry.isFile) entry.file(f => { out.push({ file: f, path: prefix + f.name }); res(); }, res);
-      else {
-        const reader = entry.createReader(); const all = [];
-        const next = () => reader.readEntries(async batch => { if (!batch.length) { for (const c of all) await walk(c, prefix + entry.name + '/'); res(); } else { all.push(...batch); next(); } }, res);
-        next();
-      }
-    });
-    if (entries.length) { for (const en of entries) await walk(en, ''); } else out.push(...[...e.dataTransfer.files].map(f => ({ file: f, path: f.name })));
-    upload(out);
-  });
-
-  // ------------------------------------------------------------ editor
-  let editing = null, edPath = 'index.html', edTimer = null, edLoaded = '';
-  function refreshEditorFiles() {
-    const o = overlays.find(x => x.name === editing);
-    const files = (o ? o.files : ['index.html']).filter(f => TEXT_EXT.test(f));
-    $('#edFile').innerHTML = files.map(f => `<option ${f === edPath ? 'selected' : ''}>${esc(f)}</option>`).join('');
-  }
-  async function openEditor(name, file = 'index.html') {
-    editing = name; edPath = file;
-    const o = overlays.find(x => x.name === name);
-    $('#edTitle').textContent = o ? o.title : name;
-    refreshEditorFiles();
-    await loadFile();
-    $('#edPreview').src = `/overlay/${encodeURIComponent(name)}?preview`;
-    $('#editorModal').classList.add('open');
-    requestAnimationFrame(scaleFrames);
-    $('#edText').focus();
-  }
-  async function loadFile() {
-    try { edLoaded = await api(`/api/overlays/${encodeURIComponent(editing)}/file?path=${encodeURIComponent(edPath)}`); $('#edText').value = edLoaded; edStatus(''); }
-    catch (e) { toast(e.message, true); }
-  }
-  async function saveFile() {
-    clearTimeout(edTimer);
-    const text = $('#edText').value;
-    if (text === edLoaded || !editing) return;
-    edStatus('Saving…');
-    try { await api(`/api/overlays/${encodeURIComponent(editing)}/file?path=${encodeURIComponent(edPath)}`, { method: 'PUT', body: text }); edLoaded = text; edStatus('Saved · OBS updated', 'ok'); }
-    catch (e) { edStatus('Save failed: ' + e.message, 'err'); }
-  }
-  function edStatus(t, cls) { const el = $('#edSave'); el.textContent = t; el.className = 'ed-save ' + (cls || ''); }
-  $('#edText').addEventListener('input', e => { e.stopPropagation(); edStatus('Unsaved'); if ($('#edAuto').checked) { clearTimeout(edTimer); edTimer = setTimeout(saveFile, 700); } });
-  $('#edText').addEventListener('keydown', e => {
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); saveFile(); }
-    if (e.key === 'Tab') { e.preventDefault(); insertAtCursor('  '); }
-  });
-  function insertAtCursor(txt) { const ta = $('#edText'); ta.setRangeText(txt, ta.selectionStart, ta.selectionEnd, 'end'); ta.dispatchEvent(new Event('input', { bubbles: true })); ta.focus(); }
-  $('#edAuto').checked = store('autosave') !== '0';
-  $('#edAuto').onchange = e => store('autosave', e.target.checked ? '1' : '0');
-  $('#edFile').onchange = async e => { await saveFile(); edPath = e.target.value; loadFile(); };
-  $('#edSaveBtn').onclick = saveFile;
-  $('#edFolder').onclick = () => api(`/api/overlays/${encodeURIComponent(editing)}/open-folder`, { method: 'POST' }).then(r => toast('Opened ' + r.path)).catch(e => toast(e.message, true));
-  $('#edClose').onclick = async () => { await saveFile(); $('#editorModal').classList.remove('open'); editing = null; $('#edPreview').src = 'about:blank'; };
-  document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('#editorModal').classList.contains('open')) { e.preventDefault(); $('#edClose').click(); } });   // closing saves first
-  const REFS = [
-    ['P1 name', '<span data-sb="p1.name" data-sb-fit="40,20"></span>'], ['P1 score', '<span data-sb="p1.score" data-sb-scored="p1"></span>'],
-    ['P1 team', '<span data-sb="p1.team"></span>'], ['P1 flag', '<img data-sb-src="p1.flagUrl">'], ['P1 pips', '<div data-sb-pips="p1"></div>'],
-    ['P1 [L]', '<span data-sb-show="p1.loser">[L]</span>'], ['P1 char art', '<img data-sb-src="chars/{p1.characterSlug}.png">'],
-    ['P2 name', '<span data-sb="p2.name" data-sb-fit="40,20"></span>'], ['P2 score', '<span data-sb="p2.score" data-sb-scored="p2"></span>'],
-    ['P2 team', '<span data-sb="p2.team"></span>'], ['P2 flag', '<img data-sb-src="p2.flagUrl">'], ['P2 pips', '<div data-sb-pips="p2"></div>'],
-    ['P2 [L]', '<span data-sb-show="p2.loser">[L]</span>'], ['Round', '<span data-sb="round"></span>'], ['Best of', '<span data-sb="bestOfText"></span>'],
-    ['Game', '<span data-sb="game"></span>'], ['Event', '<span data-sb="event"></span>'], ['Casters', '<span data-sb="commentators"></span>'],
-    ['Custom', '<span data-sb="custom.field1"></span>'],
-  ];
-  $('#refButtons').innerHTML = REFS.map(([t, c], i) => `<button data-i="${i}" title="${esc(c)}">${esc(t)}</button>`).join('');
-  $('#refButtons').onclick = e => { const b = e.target.closest('button'); if (b) insertAtCursor(REFS[b.dataset.i][1]); };
-
   // ------------------------------------------------------------ stream tab
   function fallbackCopy(text, done) { const t = document.createElement('textarea'); t.value = text; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove(); done(); }
   function copy(text, msg) {
@@ -705,13 +534,19 @@
     if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(done, () => fallbackCopy(text, done));
     else fallbackCopy(text, done);
   }
+  // short links (/s/<code>, lib/shortlinks.js): only for pages anyone may see; anything else keeps its full address
+  async function shortLink(pathOrUrl, base = location.origin) {
+    try { const r = await api('/api/short', { method: 'POST', body: { path: pathOrUrl } }); return base + r.path; } catch (e) { return /^https?:/.test(pathOrUrl) ? pathOrUrl : base + pathOrUrl; }
+  }
   document.addEventListener('click', e => { const b = e.target.closest('[data-copy]'); if (b) copy($('#' + b.dataset.copy).value, b.dataset.copy === 'obsUrl' ? 'OBS URL copied — paste it into a Browser Source' : 'Link copied'); });
   $('#obsUrl').value = location.origin + '/overlay';
   $('#openOutput').onclick = e => { e.preventDefault(); api('/api/open-output', { method: 'POST' }).catch(err => toast(err.message, true)); };
   $('#logoutBtn').onclick = async () => { await api('/api/logout', { method: 'POST' }).catch(() => {}); location.href = '/login'; };
 
   // ------------------------------------------------------------ autocomplete
-  function refreshChars() { const chars = [...new Set(players.map(p => p.character).filter(Boolean))].sort(); $('#charList').innerHTML = chars.map(c => `<option value="${esc(c)}">`).join(''); }
+  // the Character boxes suggest the Tekken 8 roster, plus any character your players have been on (1.12.13: the roster too)
+  const T8 = ['Alisa', 'Anna', 'Armor King', 'Asuka', 'Azucena', 'Bryan', 'Claudio', 'Clive', 'Devil Jin', 'Dragunov', 'Eddy', 'Fahkumram', 'Feng', 'Heihachi', 'Hwoarang', 'Jack-8', 'Jin', 'Jun', 'Kazuya', 'King', 'Kuma', 'Lars', 'Law', 'Lee', 'Leo', 'Leroy', 'Lidia', 'Lili', 'Nina', 'Panda', 'Paul', 'Raven', 'Reina', 'Shaheen', 'Steve', 'Victor', 'Xiaoyu', 'Yoshimitsu', 'Zafina'];
+  function refreshChars() { const chars = [...new Set([...T8, ...players.map(p => p.character).filter(Boolean)])].sort((a, b) => a.localeCompare(b)); $('#charList').innerHTML = chars.map(c => `<option value="${esc(c)}">`).join(''); }
   async function loadPlayers() { try { players = await api('/api/players'); refreshChars(); } catch {} }
   function rank(q) {
     const nq = norm(q);
@@ -760,7 +595,7 @@
       if (!q || !items.length || (items.length === 1 && items[0].name === input.value && (!k || items[0].team === draft[k].team))) { close(); return; }
       idx = Math.min(idx, items.length - 1);
       box.innerHTML = items.map((p, i) => `<div class="ac-item ${i === idx ? 'on' : ''}" data-i="${i}">
-          ${p.country ? `<img src="https://flagcdn.com/w40/${esc(p.country)}.png" alt="" onerror="this.style.visibility='hidden'">` : ''}
+          ${p.country ? `<img src="/static/flags/${esc(String(p.country).toLowerCase())}.svg" alt="" onerror="this.style.visibility='hidden'">` : ''}
           ${p.team ? `<span class="tm">${esc(p.team)}</span>` : ''}<span class="nm">${highlight(p.name, q)}</span>
           <span class="meta">${esc([p.character, p.pronouns].filter(Boolean).join(' · '))}</span>
           ${p.source !== 'history' ? '<span class="src">START.GG</span>' : ''}</div>`).join('');
@@ -867,7 +702,7 @@
     $('#sggSignedOut').hidden = on; $('#sggSignedIn').hidden = !on;
     if (on) { $('#sggUser').textContent = (a.user && a.user.name) || 'start.gg account'; $('#sggAva').src = (a.user && a.user.avatar) || ''; $('#sggUserSub').textContent = `Signed in with start.gg · ${a.protection === 'os' ? 'protected by Windows' : 'encrypted on this PC'}`; }
     $('#sggSignin').disabled = !!a.waiting; $('#sggSignin').lastChild.textContent = a.waiting ? 'Waiting for start.gg…' : 'Sign in with start.gg';
-    $('#sggSigninHint').innerHTML = a.ready ? 'Opens start.gg in your browser — if you’re already signed in there, it’s one click. Your sign-in stays encrypted on this PC and never leaves BeeboScore. Sign out at any time.'
+    $('#sggSigninHint').innerHTML = a.ready ? 'Opens start.gg in your browser — if you’re already signed in there, it’s one click. Your sign-in stays encrypted on this PC and never leaves BeeboScore. Sign out any time.'
       : 'Sign-in needs a start.gg app — open <b>Advanced</b> below to add one, or use an API token.';
     if (document.activeElement !== $('#sggAppId')) $('#sggAppId').value = a.clientId || '';
     $('#sggAppSecret').placeholder = a.hasSecret ? '•••••• (saved)' : a.builtIn ? 'built in' : '';
@@ -898,7 +733,7 @@
     try { await api('/api/startgg/signin', { method: 'POST' }); toast('Finish signing in in your browser'); sgg.account = { ...(sgg.account || {}), waiting: true }; renderAccount(); }
     catch (e) { toast(e.message, true); if (/Advanced/.test(e.message)) $('#sggAdv').open = true; }
   };
-  $('#sggSignout').onclick = async () => { if (!confirm('Sign out of start.gg in BeeboScore? The saved sign-in is deleted from this PC.')) return; try { sgg = await api('/api/startgg/signout', { method: 'POST' }); renderSgg(); toast('Signed out of start.gg'); } catch (e) { toast(e.message, true); } };
+  $('#sggSignout').onclick = async () => { if (!(await BeeboAsk.confirm({ title: 'Sign out of start.gg?', text: 'The saved sign-in is deleted from this PC. You can sign in again any time.', ok: 'Sign out of start.gg', danger: true }))) return; try { sgg = await api('/api/startgg/signout', { method: 'POST' }); renderSgg(); toast('Signed out of start.gg'); } catch (e) { toast(e.message, true); } };
   $('#sggAppSave').onclick = async () => {
     const body = { clientId: $('#sggAppId').value.trim(), redirect: $('#sggAppRedirect').value.trim() }; if ($('#sggAppSecret').value) body.clientSecret = $('#sggAppSecret').value;
     try { sgg = await api('/api/startgg/app', { method: 'POST', body }); $('#sggAppSecret').value = ''; renderSgg(); toast('start.gg app saved'); } catch (e) { toast(e.message, true); }
@@ -911,6 +746,7 @@
     if (sgg.link && !$('#sggLink').value) $('#sggLink').value = sgg.link;
     const t = sgg.tournament;
     $('#sggEventRow').hidden = !t;
+    $('#sggUnload').hidden = !t;
     $('#sggSetsCard').hidden = !t;
     $('#splashCard').hidden = !(t && sgg.eventId);
     if (t) $('#sggEvent').innerHTML = (sgg.eventId ? '' : '<option value="">Choose an event…</option>') + t.events.map(e => `<option value="${e.id}" ${String(e.id) === String(sgg.eventId) ? 'selected' : ''}>${esc(e.name)}${e.game ? ' — ' + esc(e.game) : ''}${e.numEntrants ? ` (${e.numEntrants})` : ''}</option>`).join('');
@@ -926,6 +762,11 @@
     try { sgg = await api('/api/startgg/token', { method: 'POST', body: { token } }); $('#sggToken').value = ''; renderSgg(); toast('start.gg token saved'); } catch (e) { toast(e.message, true); }
   };
   $('#sggTokenChange').onclick = () => { $('#sggTokenRow').hidden = false; $('#sggTokenSaved').hidden = true; $('#sggToken').focus(); };
+  // 1.12.24: Unload — nothing is lost that Load can't bring back (the link stays in the box)
+  $('#sggUnload').onclick = async () => {
+    const name = sgg.tournament ? sgg.tournament.name : 'The tournament';
+    try { sgg = await api('/api/startgg/clear', { method: 'POST' }); renderSgg(); sets = []; await loadPlayers(); toast(`${name} unloaded — Load brings it back`); } catch (e) { toast(e.message, true); }
+  };
   $('#sggLoad').onclick = async () => {
     const link = $('#sggLink').value.trim();
     if (!link) return toast('Paste a tournament link', true);
@@ -952,13 +793,81 @@
     catch (e) { $('#sggSets').innerHTML = `<p class="hint">${esc(e.message)}</p>`; }
   }
   const slotName = sl => sl ? `${sl.team ? `<small>${esc(sl.team)}</small> ` : ''}${esc(sl.name)}` : '<span style="color:var(--faint)">TBD</span>';
+  // one-click results: ✓ beside the winner's name reports the set to start.gg; DQ disqualifies that player from it
+  const sggPending = new Set();
+  const oneClick = (s, k) => {
+    const me = s['p' + k], them = s['p' + (3 - k)];
+    if (!me || !them || s.state === 3 || !me.entrantId || !them.entrantId || !info.local) return '';
+    if (sggPending.has(String(s.id))) return k === 2 ? ' <small class="sgg-pend">Reporting…</small>' : '';
+    return `<button class="bv-win" data-q="${esc(s.id)}" data-k="${k}" title="${esc(me.name)} won — report to start.gg" aria-label="${esc(me.name)} won">✓</button><button class="bv-dq" data-q="${esc(s.id)}" data-k="${k}" data-dq="1" title="Disqualify ${esc(me.name)} (${esc(them.name)} goes through)">DQ</button>`;
+  };
+  async function quickReport({ setId, w, l, round, isDQ }) {
+    if (isDQ && !(await BeeboAsk.confirm({ title: `Disqualify ${l.name}?`, text: `${w.name} goes through on start.gg.`, ok: `Disqualify ${l.name}`, danger: true }))) return;
+    sggPending.add(String(setId)); renderSets(); drawSggTree();
+    try {
+      await api('/api/startgg/quick', { method: 'POST', body: { setId, winnerId: w.entrantId || w.id, loserId: l.entrantId || l.id, names: [w.name, l.name], round, isDQ } });
+      toast(isDQ ? `${l.name} disqualified — ${w.name} goes through` : `✓ ${w.name} wins — sent to start.gg`, { action: '↶ Undo', ms: 9000, run: () => api('/api/startgg/report/undo', { method: 'POST', body: { setId } }).then(() => toast('Result taken back on start.gg')).catch(e => toast(e.message, true)) });
+      setTimeout(() => { sggPending.delete(String(setId)); loadSets(); refreshSggTree(true); }, 3500);
+    } catch (e) { sggPending.delete(String(setId)); renderSets(); drawSggTree(); toast(e.message, true); }
+  }
+  $('#sggSets').addEventListener('click', e => {
+    const b = e.target.closest('[data-q]'); if (!b) return;
+    const s = sets.find(x => String(x.id) === b.dataset.q); if (!s) return;
+    const k = Number(b.dataset.k), me = s['p' + k], them = s['p' + (3 - k)], dq = !!b.dataset.dq;
+    quickReport({ setId: s.id, w: dq ? them : me, l: dq ? me : them, round: s.round, isDQ: dq });
+  });
+  // disqualify a player: start.gg DQs happen per match, so it's their next match that isn't played yet
+  function renderDqSel() {
+    const names = new Map();
+    for (const s of sets) for (const k of ['p1', 'p2']) if (s[k] && s[k].entrantId) names.set(String(s[k].entrantId), s[k].name);
+    const opts = [...names].sort((a, b) => a[1].localeCompare(b[1]));
+    const h = '<option value="">Pick a player…</option>' + opts.map(([id, n]) => `<option value="${esc(id)}">${esc(n)}</option>`).join('');
+    if ($('#sggDqSel').dataset.h !== h) { $('#sggDqSel').dataset.h = h; $('#sggDqSel').innerHTML = h; }
+  }
+  $('#sggDq').onclick = () => {
+    const id = $('#sggDqSel').value; if (!id) return toast('Pick a player first', true);
+    const s = sets.find(x => x.state !== 3 && x.p1 && x.p2 && [String(x.p1.entrantId), String(x.p2.entrantId)].includes(id));
+    if (!s) return toast('They have no match waiting to be played — start.gg disqualifies a player from a match they’re in.', true);
+    const k = String(s.p1.entrantId) === id ? 1 : 2;
+    quickReport({ setId: s.id, w: s['p' + (3 - k)], l: s['p' + k], round: s.round, isDQ: true });
+  };
+  // the bracket view: the same matches drawn as a bracket (from the bracket splash's data)
+  let sggView = store('sggView') || 'list', sggModel = null;
+  async function refreshSggTree(force) {
+    if (sggView !== 'tree') return;
+    try { if (force) await api('/api/bracket/refresh', { method: 'POST' }); sggModel = await api('/api/bracket/data'); } catch { sggModel = null; }
+    drawSggTree();
+  }
+  function drawSggTree() {
+    const host = $('#sggTree'); if (sggView !== 'tree' || !window.BeeboBracketView) return;
+    if (!sggModel || sggModel.viewer) { host.innerHTML = `<p class="hint">${sggModel && sggModel.viewer ? 'The bracket isn’t from start.gg.' : 'Loading the bracket… (if it doesn’t appear, the event may not have started)'}</p>`; return; }
+    const secs = BeeboBracketView.fromModel(sggModel);
+    BeeboBracketView.draw(host, secs, {
+      pending: sggPending,
+      canWin: S => info.local && S.state !== 'done' && !!(S.a.id && S.b.id), canDQ: S => info.local && S.state !== 'done' && !!(S.a.id && S.b.id),
+      canReset: S => info.local && S.state === 'done', canLoad: S => S.state !== 'done' && !!(S.a.id && S.b.id),
+      onWin: (S, k) => quickReport({ setId: S.id, w: S[k], l: S[k === 'a' ? 'b' : 'a'], round: S.raw.round }),
+      onDQ: (S, k) => quickReport({ setId: S.id, w: S[k === 'a' ? 'b' : 'a'], l: S[k], round: S.raw.round, isDQ: true }),
+      onReset: async S => { if (await BeeboAsk.confirm({ title: `Take back ${S.a.name} vs ${S.b.name}?`, text: 'start.gg resets this result, and anything that came after it.', ok: 'Take back the result', danger: true })) api('/api/startgg/reset', { method: 'POST', body: { setId: S.id } }).then(() => { toast('Result taken back'); setTimeout(() => { loadSets(); refreshSggTree(true); }, 1500); }).catch(e => toast(e.message, true)); },
+      onLoad: S => { const x = sets.find(y => String(y.id) === String(S.id)); if (x) { const b = document.createElement('button'); b.dataset.set = String(x.id); document.body.appendChild(b); b.click(); b.remove(); } else toast('Refresh the matches first', true); },
+    });
+  }
+  function setSggView(v) {
+    sggView = v; store('sggView', v);
+    $$('#sggView button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
+    $('#sggSets').hidden = v === 'tree'; $('#sggTree').hidden = v !== 'tree'; $('#sggFilter').hidden = v === 'tree';
+    if (v === 'tree') refreshSggTree(false);
+  }
+  $('#sggView').onclick = e => { const b = e.target.closest('[data-v]'); if (b) setSggView(b.dataset.v); };
+  setTimeout(() => setSggView(sggView), 0);
   function renderSets() {
+    renderDqSel();
     const q = norm($('#sggFilter').value);
     const list = sets.filter(s => !q || norm((s.p1 && s.p1.displayName) + ' ' + (s.p2 && s.p2.displayName) + ' ' + s.round).includes(q));
     $('#sggSets').innerHTML = list.length ? list.map(s => `
       <div class="set ${s.id === loadedSetId ? 'loaded' : ''}">
         <div class="set-meta"><b>${esc(s.round || 'Match')}</b>${s.identifier ? `<span>${esc(s.identifier)}</span>` : ''}${s.pool ? `<span>Pool ${esc(s.pool)}</span>` : ''}${s.stream ? `<span>📺 ${esc(s.stream)}</span>` : ''}${s.stateText ? `<span class="st st-${s.state}">${esc(s.stateText)}</span>` : ''}</div>
-        <div class="set-vs"><span>${slotName(s.p1)}</span><i>vs</i><span>${slotName(s.p2)}</span></div>
+        <div class="set-vs"><span>${slotName(s.p1)}${oneClick(s, 1)}</span><i>vs</i><span>${slotName(s.p2)}${oneClick(s, 2)}</span></div>
         <button class="btn sm ${s.id === loadedSetId ? '' : 'primary'}" data-set="${esc(s.id)}">${s.id === loadedSetId ? 'Loaded' : 'Load'}</button>
       </div>`).join('')
       : `<div class="empty"><b>${setMode === 'stream' ? 'Stream queue is empty' : 'No open matches'}</b>${setMode === 'stream' ? 'Assign matches to a stream on start.gg, then refresh.' : 'Matches appear here once the bracket starts.'}</div>`;
@@ -970,7 +879,7 @@
       : 'No upcoming matches yet.';
   }
   $('#sggFilter').oninput = e => { e.stopPropagation(); renderSets(); };
-  $('#sggRefreshSets').onclick = loadSets;
+  $('#sggRefreshSets').onclick = () => { loadSets(); refreshSggTree(true); };
   $$('#sggSetsCard [data-smode]').forEach(t => { t.onclick = () => { setMode = t.dataset.smode; sets = []; $$('#sggSetsCard [data-smode]').forEach(x => x.classList.toggle('on', x === t)); loadSets(); }; });
   $('#sggAuto').onchange = e => { clearInterval(autoTimer); store('sggAuto', e.target.checked ? '1' : '0'); if (e.target.checked) autoTimer = setInterval(() => !document.hidden && loadSets(), 30000); };
   if (store('sggAuto') === '1') { $('#sggAuto').checked = true; autoTimer = setInterval(() => !document.hidden && loadSets(), 30000); }
@@ -1014,8 +923,18 @@
     $('#onlineInfo').hidden = st !== 'online';
     $('#onlineMsg').textContent = tunnel.message || '';
     $('#onlineMsg').style.color = st === 'error' ? 'var(--err)' : '';
-    if (st === 'online') { $('#pubOverlay').value = tunnel.url + '/overlay'; $('#pubControl').value = tunnel.url + '/'; }
+    if (st === 'online' && $('#pubOverlay').dataset.base !== tunnel.url) {
+      $('#pubOverlay').dataset.base = tunnel.url; $('#pubOverlay').value = tunnel.url + '/overlay'; $('#pubControl').value = tunnel.url + '/';
+      $('#pubShort').disabled = false; $('#pubShort').textContent = 'Shorten';
+    }
   }
+  // a much shorter public overlay link from a free link shortener (is.gd): only ever the overlay, never the control link
+  $('#pubShort').onclick = async () => {
+    const b = $('#pubShort'); b.disabled = true; b.textContent = 'Shortening…';
+    try { const r = await api('/api/short/public', { method: 'POST', body: { url: tunnel.url + '/overlay' } }); $('#pubOverlay').value = r.url; b.textContent = 'Shortened'; copy(r.url, 'Short overlay link copied'); }
+    catch (e) { b.disabled = false; b.textContent = 'Shorten'; toast(e.message, true); }
+  };
+  $('#pubControlShow').onclick = () => { const i = $('#pubControl'); i.type = i.type === 'password' ? 'text' : 'password'; $('#pubControlShow').textContent = i.type === 'password' ? 'Show' : 'Hide'; };
   $('#pwShow').onclick = () => { const i = $('#pwInput'); i.type = i.type === 'password' ? 'text' : 'password'; $('#pwShow').textContent = i.type === 'password' ? 'Show' : 'Hide'; };
   $('#pwGen').onclick = () => {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
@@ -1025,7 +944,7 @@
     copy(pw, 'Strong password generated and copied — click Save to use it');
   };
   $('#signoutAll').onclick = async () => {
-    if (!confirm('Sign out every phone and PC that is signed in remotely?')) return;
+    if (!(await BeeboAsk.confirm({ title: 'Sign out every remote device?', text: 'Every phone and PC signed in remotely, team members included, has to sign in again.', ok: 'Sign them all out', danger: true }))) return;
     try { await api('/api/auth/signout-all', { method: 'POST' }); toast('All remote devices signed out'); loadAuth(); } catch (e) { toast(e.message, true); }
   };
   $('#setLanNoPw').onchange = e => saveSettings({ lanNoPassword: e.target.checked }, e.target.checked ? 'Devices on your Wi-Fi can control without a password' : 'Devices on your Wi-Fi now need the password');
@@ -1043,30 +962,34 @@
     if (document.activeElement !== $('#brTitle')) $('#brTitle').value = settings.bracketTitle || '';
     $('#setAutoSwitch').checked = !!settings.autoSwitchLayout;
     $('#setFollowFormat').checked = settings.followFormat !== false;
-    $('#setShowAutoscore').checked = !!settings.showAutoscore; showAutoscoreTab(!!settings.showAutoscore);
     $('#setRefreshReset').checked = settings.refreshOnReset !== false;
+    $('#setLockSplash').checked = settings.lockSplash !== false;
+    $$('#setCols [data-c]').forEach(b => b.classList.toggle('on', b.dataset.c === (settings.overlayColours === 'layout' ? 'layout' : 'team')));
+    $$('#setUp [data-u]').forEach(b => b.classList.toggle('on', b.dataset.u === (['auto', 'ai', 'smart', 'off'].includes(settings.upscale) ? settings.upscale : 'auto')));
+    { const v = Math.round(Number(settings.formatBarOpacity ?? 80)); if (document.activeElement !== $('#setFbo')) $('#setFbo').value = v; $('#setFboV').textContent = v + '%'; }
     $('#setAutoVictory').checked = settings.autoVictory !== false;
-    if ($('#setLockSplash')) $('#setLockSplash').checked = settings.lockSplash !== false;
     $('#setVictoryHold').value = String(settings.victoryHold ?? '8');
+    $('#vicAuto').checked = settings.autoVictory !== false; $('#vicHold').value = String(settings.victoryHold ?? '8');
+    $('#splSeg [data-pane=victory]').classList.toggle('auto', settings.autoVictory !== false);
     renderSound();
     $('#setPotato').checked = !!settings.potatoMode;
+    $('#setLaptop').checked = !!settings.laptopMode;
     potatoPreview();
     renderKeys();
     $('#setLanNoPw').checked = settings.lanNoPassword !== false;
   }
   async function saveSettings(patch, msg) {
-    try { settings = await api('/api/settings', { method: 'POST', body: patch }); renderSettings(); if (msg) toast(msg); } catch (e) { toast(e.message, true); }
+    try { settings = await api('/api/settings', { method: 'POST', body: patch }); renderSettings(); renderVS(); window.dispatchEvent(new CustomEvent('beebo:settings')); if (msg) toast(msg); } catch (e) { toast(e.message, true); }
   }
   $('#setAutoSwitch').onchange = e => saveSettings({ autoSwitchLayout: e.target.checked });
   $('#setFollowFormat').onchange = e => saveSettings({ followFormat: e.target.checked });
-  $('#setShowAutoscore').onchange = e => saveSettings({ showAutoscore: e.target.checked }, e.target.checked ? '🧪 Autoscore tab shown' : 'Autoscore tab hidden');
-  function showAutoscoreTab(on) {            // Autoscore is still experimental: hidden unless Settings › Look & feel turns it on
-    const b = $('nav.rail button[data-tab="autoscore"]'); if (b) b.hidden = !on;
-    if (!on && $('main .tab[data-tab="autoscore"].on')) showTab('match');
-  }
-  $('#setAutoVictory').onchange = e => saveSettings({ autoVictory: e.target.checked }, e.target.checked ? 'The Victory Splash will show when a set ends' : 'The Victory Splash only shows when you ask');
-  if ($('#setLockSplash')) $('#setLockSplash').onchange = e => saveSettings({ lockSplash: e.target.checked }, e.target.checked ? 'The lock-in splash will play in team formats' : 'No lock-in splash in team formats');
-  $('#setVictoryHold').onchange = e => saveSettings({ victoryHold: e.target.value }, e.target.value === '0' ? 'The Victory Splash stays up until you hide it' : `The Victory Splash hides after ${e.target.value} s`);
+  $('#setAutoVictory').onchange = e => saveSettings({ autoVictory: e.target.checked }, e.target.checked ? 'The victory splash will show when a set ends' : 'The victory splash only shows when you ask');
+  $('#setVictoryHold').onchange = e => saveSettings({ victoryHold: e.target.value }, e.target.value === '0' ? 'The victory splash stays up until you hide it' : `The victory splash hides after ${e.target.value} s`);
+  $('#setLaptop').onchange = e => saveSettings({ laptopMode: e.target.checked }, e.target.checked ? '🔋 Laptop mode on — effects rest when nothing is happening' : 'Laptop mode off');
+  $$('#setUp [data-u]').forEach(b => b.onclick = () => saveSettings({ upscale: b.dataset.u }, { auto: 'Small pictures: made bigger (AI when it can)', ai: 'Small pictures: made bigger with AI', smart: 'Small pictures: smart resize', off: 'Small pictures are shown as they are' }[b.dataset.u]));
+  $$('#setCols [data-c]').forEach(b => b.onclick = () => saveSettings({ overlayColours: b.dataset.c }, b.dataset.c === 'layout' ? 'Colours on stream: the layout’s own' : 'Colours on stream: team colours'));
+  { let t = 0; $('#setFbo').oninput = e => { $('#setFboV').textContent = e.target.value + '%'; clearTimeout(t); t = setTimeout(() => saveSettings({ formatBarOpacity: Number(e.target.value) }), 140); }; }
+  $('#setLockSplash').onchange = e => saveSettings({ lockSplash: e.target.checked }, e.target.checked ? 'The lock-in splash plays in team formats' : 'No lock-in splash');
   $('#setRefreshReset').onchange = e => saveSettings({ refreshOnReset: e.target.checked }, e.target.checked ? 'The overlay will refresh when scores are reset' : 'The overlay will no longer refresh on reset');
   // ------------------------------------------------------------ sound (sb-sound.js): stream on/off + volume here, the preview's own level under the preview
   var BS = window.BeeboSound;          // (var: the layout list can ask for the sound test before this line runs)
@@ -1078,9 +1001,9 @@
     $('#sndPill').className = 'pill' + (on ? ' on' : ''); $('#sndPill').textContent = on ? (obs ? 'On · OBS mixer' : `On · ${v}%`) : 'Off';
     $('#pvSndTag').textContent = on ? 'preview' : 'preview · stream off';
   }
-  $('#setSoundOn').onchange = e => saveSettings({ soundOn: e.target.checked }, e.target.checked ? '🔊 Layouts play sound on stream — tick “Control audio via OBS” on the browser source' : '🔇 Layouts are silent on stream');
+  $('#setSoundOn').onchange = e => saveSettings({ soundOn: e.target.checked }, e.target.checked ? '🔊 Your own sounds play on stream — tick “Control audio via OBS” on the browser source' : '🔇 Silent on stream');
   $('#setSoundVol').oninput = e => { $('#setSoundVolV').textContent = e.target.value + '%'; fillRange(e.target); };
-  $('#setSoundVol').onchange = e => { saveSettings({ soundVolume: e.target.value }); if (BS) BS.play('point', { pack: $('#sndPack').value, force: true }); };
+  $('#setSoundVol').onchange = e => { saveSettings({ soundVolume: e.target.value }); };
   function renderPvSound() {
     if (!BS) { $('#pvSnd').hidden = true; return; }
     const p = BS.prefs(); $('#pvVol').value = p.vol; $('#pvVolV').textContent = p.muted ? 'muted' : p.vol + '%'; fillRange($('#pvVol'));
@@ -1090,24 +1013,41 @@
   // the preview's level lives in this browser only (the overlays in the preview read it straight away)
   const pvApply = () => { const f = $('#preview'); try { const w = f.contentWindow, inner = w && w.document.querySelector('iframe:not(.next)'); for (const x of [w, inner && inner.contentWindow]) if (x && x.BeeboSound) x.BeeboSound.apply(); } catch (e) {} };
   $('#pvVol').oninput = e => { BS.setPrefs({ vol: Number(e.target.value), muted: false }); renderPvSound(); pvApply(); };
-  $('#pvVol').onchange = () => BS.play('point', { pack: (overlays.find(x => x.name === active) || {}).sound || 'shattered', force: true });
   $('#pvMute').onclick = () => { BS.setPrefs({ muted: !BS.prefs().muted }); renderPvSound(); pvApply(); };
   addEventListener('storage', e => { if (e.key === 'beebo.sound.preview2') renderPvSound(); });
-  function renderSoundTest() {
-    if (!BS) return;
-    const pack = $('#sndPack').value, g = $('#sndGrid'); g.innerHTML = '';
-    for (const n of BS.names(pack)) { const b = document.createElement('button'); b.className = 'btn sm'; b.textContent = '▶ ' + (BS.labels[n] || n); b.onclick = () => BS.play(n, { pack, force: true }); g.appendChild(b); }
-  }
-  $('#sndPack').onchange = renderSoundTest;
   $('#setObsVolume').onchange = e => saveSettings({ obsVolume: e.target.checked }, e.target.checked ? 'Set the level with the source’s fader in the OBS mixer' : 'Stream volume is set here again');
+  // Refresh OBS (1.12): the app reloads every BeeboScore browser source in OBS through OBS's WebSocket
+  $('#obsRefresh').onclick = async () => {
+    const b = $('#obsRefresh'); b.disabled = true; b.classList.add('busy');
+    try { const r = await api('/api/obs/refresh', { method: 'POST', body: {} }); if (!r.skipped) toast(r.msg || 'Refreshed', !r.ok); }
+    catch (e) { toast(e.message, true); } finally { b.disabled = false; b.classList.remove('busy'); }
+  };
+  // OBS's WebSocket (Settings › OBS connection, 1.12.8): the address and password are kept by the app; the password never leaves this PC
+  async function obsConnect() {
+    if (!window.OBSWebSocket) throw new Error('The OBS connector didn’t load.');
+    const cfg = await api('/api/obs'); let pw = '';
+    if (cfg.hasPassword) { try { pw = (await api('/api/obs/secret')).password || ''; } catch (e) {} }
+    const obs = new window.OBSWebSocket(); await obs.connect(cfg.url || 'ws://127.0.0.1:4455', pw || undefined); return obs;
+  }
+  window.BeeboOBS = { connect: obsConnect, toast: (m, e) => toast(m, e), get local() { return !!info.local; } };
+  { const u = $('#obsWsUrl'), pw = $('#obsWsPw'), pill = $('#obsPill');
+    if (u) api('/api/obs').then(c => { u.value = c.url || ''; pw.placeholder = c.hasPassword ? 'Saved — type to change it' : 'None (OBS without authentication)'; }).catch(() => {});
+    if ($('#obsWsSave')) $('#obsWsSave').onclick = async () => {
+      const b = $('#obsWsSave'); b.disabled = true; pill.textContent = 'Testing…'; pill.className = 'pill';
+      try {
+        const body = { url: u.value.trim() }; if (pw.value) body.password = pw.value;
+        const c = await api('/api/obs/settings', { method: 'POST', body }); pw.value = ''; pw.placeholder = c.hasPassword ? 'Saved — type to change it' : 'None (OBS without authentication)';
+        const obs = await obsConnect(); let v = ''; try { v = (await obs.call('GetVersion')).obsVersion; } catch (e) {} try { obs.disconnect(); } catch (e) {}
+        pill.textContent = 'Connected'; pill.className = 'pill on'; toast(`Connected to OBS${v ? ' ' + v : ''}`);
+      } catch (e) { pill.textContent = 'Can’t reach OBS'; pill.className = 'pill err'; toast(/address/.test(e.message) ? e.message : 'Couldn’t reach OBS — check it’s open, the WebSocket server is on, and the address and password match.', true); }
+      finally { b.disabled = false; }
+    }; }
   $('#sndDock').onclick = () => copy(`${location.origin}/dock`, 'Dock link copied — in OBS: Docks › Custom Browser Docks…');
   $('#sndObs').onclick = async () => {     // every browser source showing a BeeboScore overlay: "Control audio via OBS" on
     const txt = $('#sndObsTxt'); txt.textContent = 'Talking to OBS…';
     try {
       if (!window.OBSWebSocket) throw new Error('The OBS connector didn’t load.');
-      const cfg = await api('/api/autoscore'); let pw = '';
-      if (cfg.hasPassword) { try { pw = (await api('/api/autoscore/secret')).obsPassword || ''; } catch (e) {} }
-      const obs = new window.OBSWebSocket(); await obs.connect(cfg.obsUrl || 'ws://127.0.0.1:4455', pw || undefined);
+      const obs = await obsConnect();
       try {
         const { inputs } = await obs.call('GetInputList', { inputKind: 'browser_source' }); let n = 0, fixed = 0;
         for (const i of inputs) {
@@ -1115,11 +1055,11 @@
           if (!/\/overlay(\/|\?|$)/.test(String(st.url || ''))) continue; n++;
           if (!st.reroute_audio) { await obs.call('SetInputSettings', { inputName: i.inputName, inputSettings: { reroute_audio: true } }); fixed++; }
         }
-        txt.textContent = !n ? '❌ No browser source in OBS shows a BeeboScore layout yet.' : fixed ? `✅ Fixed ${fixed} of ${n} source${n > 1 ? 's' : ''} — set the level in the OBS mixer.` : `✅ All ${n} source${n > 1 ? 's' : ''} can be heard in OBS.`;
+        txt.textContent = !n ? '❌ No browser source in OBS shows a BeeboScore Lite layout yet.' : fixed ? `✅ Fixed ${fixed} of ${n} source${n > 1 ? 's' : ''} — set the level in the OBS mixer.` : `✅ All ${n} source${n > 1 ? 's' : ''} can be heard in OBS.`;
       } finally { try { obs.disconnect(); } catch (e) {} }
-    } catch (e) { txt.textContent = '❌ Couldn’t reach OBS — open OBS and turn on Tools → WebSocket Server Settings (the Autoscore tab has the address and password).'; }
+    } catch (e) { txt.textContent = '❌ Couldn’t reach OBS — open OBS and turn on Tools → WebSocket Server Settings (Settings › OBS connection has the address and password).'; }
   };
-  renderPvSound(); renderSoundTest();
+  renderPvSound();
   $('#setPreviewAnim').checked = store('previewAnim') !== '0';
   $('#setPreviewAnim').onchange = e => { store('previewAnim', e.target.checked ? '1' : '0'); applyPreviewAnim($('#preview')); };
   $('#setQuick').checked = store('qsHidden') !== '1';
@@ -1132,6 +1072,7 @@
     idle: '', checking: 'Checking for updates…', 'up-to-date': "You're on the latest version.",
     available: 'Update found — downloading…', downloading: 'Downloading update…', ready: 'Update downloaded — restart to install.',
     error: 'Could not check for updates.', dev: 'Updates are turned off when running from source.', found: 'Update available.',
+    test: 'This copy doesn’t update itself. New versions of BeeboScore Lite come as a new exe.',
   };
   function renderUpdate() {
     const st = upd.state || 'unsupported';
@@ -1152,21 +1093,21 @@
     $('#updCheck').disabled = st === 'checking' || st === 'downloading' || st === 'no-repo' || st === 'dev' || st === 'test';
     const dismissed = store('updDismissed') === upd.newVersion;
     $('#updBanner').hidden = !(st === 'ready' && info.local !== false && !dismissed);
-    $('#updBannerText').textContent = `BeeboScore ${upd.newVersion || ''} is ready to install.`;
+    $('#updBannerText').textContent = `BeeboScore Lite ${upd.newVersion || ''} is ready to install.`;
     $('#setBadge').hidden = st !== 'ready';
   }
   async function loadUpdate() { try { upd = await api('/api/update'); renderUpdate(); } catch {} }
   $('#updCheck').onclick = async () => { try { upd = await api('/api/update', { method: 'POST', body: { action: 'check' } }); renderUpdate(); } catch (e) { toast(e.message, true); } };
-  // Restart & update: the window is about to close and stay closed while the new exe unpacks itself (its own starting screen takes over
+  // Restart & update: the window is about to close while the new version unpacks or installs itself (a starting screen takes over
   // after a second or so). Say so first, so a closed window is not the only sign that anything is happening.
   const installNow = async () => {
-    if (dirty && !confirm('You have unsent changes. Restart and update anyway?')) return;
+    if (dirty && !(await BeeboAsk.confirm({ title: 'Restart and update?', text: 'You have changes that aren’t on stream yet. Press Update first if you want to send them.', ok: 'Restart and update', danger: true }))) return;
     if ($('#updOver')) return;
     const v = upd.newVersion || '', o = document.createElement('div'); o.id = 'updOver'; o.setAttribute('role', 'alertdialog'); o.setAttribute('aria-live', 'assertive');
     o.style.cssText = 'position:fixed;inset:0;z-index:95;display:grid;place-items:center;padding:24px;background:rgba(4,5,9,.9);text-align:center';
-    o.innerHTML = `<div style="max-width:460px"><div style="font-size:22px;font-weight:800;color:var(--text)">Installing BeeboScore ${esc(v)}</div>`
-      + `<p style="margin:12px 0 0;font-size:15px;line-height:1.5;color:var(--text)">This window will close and BeeboScore will open again by itself. It can take up to 20 seconds.</p>`
-      + `<p style="margin:10px 0 0;font-size:13px;line-height:1.5;color:var(--muted)">If it does not open again, start BeeboScore-${esc(v)}.exe from the folder your current exe is in.</p></div>`;
+    o.innerHTML = `<div style="max-width:460px"><div style="font-size:22px;font-weight:800;color:var(--text)">Starting BeeboScore Lite ${esc(v)}</div>`
+      + `<p style="margin:12px 0 0;font-size:15px;line-height:1.5;color:var(--text)">This window will close and the new version will open by itself. It can take up to 20 seconds.</p>`
+      + `<p style="margin:10px 0 0;font-size:13px;line-height:1.5;color:var(--muted)">If it does not open within a minute, start BeeboScore-Lite-${esc(v)}.exe yourself: it is in the same folder as this one.</p></div>`;
     document.body.appendChild(o);
     await new Promise(r => setTimeout(r, 1800));
     try { await api('/api/update', { method: 'POST', body: { action: 'install' } }); } catch (e) { o.remove(); toast(e.message, true); }
@@ -1189,13 +1130,14 @@
     const need = st ? firstToOf(st) : 0;
     const w = !st || !need ? 0 : (st.p1.score >= need && st.p2.score < need) ? 1 : (st.p2.score >= need && st.p1.score < need) ? 2 : 0;
     $('#winCard').hidden = !w;
+    { const on = !!(st && st.victory && st.victory.show); $('#vicToggle').textContent = on ? '🏆 Hide victory splash' : '🏆 Show victory splash'; $('#vicToggle').classList.toggle('on', on); }
     if (!w) return;
     const winner = st['p' + w], loserP = st['p' + (3 - w)];
     $('#winTitle').textContent = `${winner.name || 'Player ' + w} wins the set ${st['p' + w].score}–${loserP.score}!`;
     const gf = /grand\s*final/i.test(st.round || '') && !/reset/i.test(st.round || '') && winner.loser && !loserP.loser;
     $('#winGF').hidden = !gf;
     const vOn = !!(st.victory && st.victory.show);
-    $('#winVictory').textContent = vOn ? '🏆 Hide Victory Splash' : '🏆 Victory Splash'; $('#winVictory').classList.toggle('on', vOn);
+    $('#winVictory').textContent = vOn ? '🏆 Hide victory splash' : '🏆 Victory splash'; $('#winVictory').classList.toggle('on', vOn);
     $('#winSub').textContent = gf ? 'The player from losers took Grand Finals — time for a bracket reset.' : "What's next?";
     const nx = nextSet();
     $('#winNextMatch').hidden = !nx || gf;
@@ -1208,10 +1150,32 @@
   $('#winScores').onclick = () => pushNow(d => { d.p1.score = 0; d.p2.score = 0; });
   $('#winGF').onclick = () => pushNow(d => { d.round = 'Grand Finals Reset'; d.p1.loser = true; d.p2.loser = true; d.p1.score = 0; d.p2.score = 0; }, 'Bracket reset! Both players marked [L]');
   async function toggleVictory(show) {
-    try { const r = await api('/api/victory', { method: 'POST', body: { show: show === undefined ? 'toggle' : show } }); server = r.state; renderWin(); toast(server.victory && server.victory.show ? 'Victory Splash on stream' : 'Victory Splash hidden'); }
+    try { const r = await api('/api/victory', { method: 'POST', body: { show: show === undefined ? 'toggle' : show } }); server = r.state; renderWin(); toast(server.victory && server.victory.show ? 'Victory splash on stream' : 'Victory splash hidden'); }
     catch (e) { toast(e.message, true); }
   }
   $('#winVictory').onclick = () => toggleVictory();
+  // 1.12: the Splashes card — FullVS / Victory / Pictures, one at a time (remembered)
+  function splPane(k) {
+    if (!['vs', 'victory', 'pics'].includes(k)) k = 'vs';
+    for (const b of document.querySelectorAll('#splSeg button')) { b.classList.toggle('on', b.dataset.pane === k); b.setAttribute('aria-selected', String(b.dataset.pane === k)); }
+    for (const pn of document.querySelectorAll('#vsCard .spl-pane')) pn.hidden = pn.dataset.pane !== k;
+    store('splPane', k);
+  }
+  for (const b of document.querySelectorAll('#splSeg button')) b.onclick = () => splPane(b.dataset.pane);
+  splPane(store('splPane') || 'vs');
+  // Event & commentary: folded away (it's set once a night) with what's in it on the summary line
+  function evcSum() {
+    const v = k => ((document.querySelector(`[data-path="${k}"]`) || {}).value || '').trim();
+    const cs = [v('c1.name'), v('c2.name')].filter(Boolean);
+    $('#evcSum').textContent = [v('event'), v('game'), cs.length ? cs.join(' & ') : ''].filter(Boolean).join(' · ') || 'not set';
+  }
+  $('#evcCard').open = store('evcOpen') === '1';
+  $('#evcCard').addEventListener('toggle', () => store('evcOpen', $('#evcCard').open ? '1' : '0'));
+  $('#evcCard').addEventListener('input', evcSum);
+  window.addEventListener('beebo:state', () => setTimeout(evcSum, 0)); setTimeout(evcSum, 600);
+  $('#vicToggle').onclick = () => toggleVictory();
+  $('#vicAuto').onchange = e => saveSettings({ autoVictory: e.target.checked }, e.target.checked ? 'The victory splash will pop up when a set is won' : 'The victory splash only shows when you ask');
+  $('#vicHold').onchange = e => saveSettings({ victoryHold: e.target.value }, e.target.value === '0' ? 'The victory splash stays up until you hide it' : `The victory splash hides after ${e.target.value} s`);
   $('#winNextMatch').onclick = () => {
     const nx = nextSet(); if (!nx) return;
     const btn = document.createElement('button'); btn.dataset.set = nx.id; document.body.appendChild(btn); btn.click(); btn.remove();
@@ -1221,12 +1185,23 @@
   // viewer matches from a keyboard shortcut (the Twitch tab has the buttons)
   const viewerKey = b => api('/api/remote/action', { method: 'POST', body: b }).catch(e => toast(e.message, true));
   // shared with the Twitch Stuff tab (twitch-panel.js)
-  window.BeeboPanel = { saveSettings: (b, m) => saveSettings(b, m), store: (k, v) => store(k, v), api, toast, esc, copy: (t, m) => copy(t, m), info: () => info, autocomplete: (i, fn) => setupAutocomplete(i, fn), state: () => server, showTab: n => showTab(n), overlays: () => overlays, players: () => players, active: () => active };
+  // "Sure? Press again": a small in-row button asks once more by changing its own label for 3.5 s (shared by every tab)
+  function confirmTwice(b, label) { if (!b) return false; if (b.dataset.sure) { delete b.dataset.sure; clearTimeout(b._sureT); if (b._sureWas != null) b.textContent = b._sureWas; return true; } b.dataset.sure = '1'; b._sureWas = b.textContent; b.textContent = label || 'Sure? Press again'; b._sureT = setTimeout(() => { delete b.dataset.sure; b.textContent = b._sureWas; }, 3500); return false; }
+  window.BeeboPanel = { confirmTwice, ask: window.BeeboAsk, settings: () => settings, score: (k, d) => bump(k, d), draft: () => draft, dirty: () => dirty && mode === 'manual', push: () => push(), saveSettings: (b, m) => saveSettings(b, m), store: (k, v) => store(k, v), api, toast, esc, copy: (t, m) => copy(t, m), shortLink: (p, b) => shortLink(p, b), info: () => info, autocomplete: (i, fn) => setupAutocomplete(i, fn), state: () => server, showTab: n => showTab(n), overlays: () => overlays, active: () => active, players: () => players };
 
   // ------------------------------------------------------------ realtime
   function handle(msg) {
     const d = msg.data;
     switch (msg.type) {
+      case 'obs-replay': if (info.local && window.BeeboReplay) window.BeeboReplay.play(); break;
+      case 'obs-replay2': if (info.local && window.BeeboReplay) { if (d && 'speed' in d) window.BeeboReplay.setSpeed(d.speed); if (d && 'freeze' in d) window.BeeboReplay.freeze(d.freeze); if (d && d.end) window.BeeboReplay.end(); } window.dispatchEvent(new CustomEvent('beebo:replay2', { detail: d })); break;   // 1.12.18
+      case 'show': case 'showlog': case 'rehearsal': case 'media': case 'mirror': case 'show:changed': case 'show:draw': window.dispatchEvent(new CustomEvent('beebo:' + msg.type, { detail: d })); break;   // 1.12.19: show:changed — which cards to read again; show:draw — the replay drawing (the "On stream now" bar)   // 1.12.18: show-tab.js
+      case 'vertical-clip': if (info.local && window.BeeboVertical) window.BeeboVertical.clip(); break;
+      case 'results-make': if (window.BeeboResults) window.BeeboResults.open(); break;
+      case 'obs-scene': if (info.local && window.BeeboOBS && d && d.scene) (async () => { let o = null; try { o = await BeeboOBS.connect(); await o.call('SetCurrentProgramScene', { sceneName: d.scene }); } catch (e) { BeeboOBS.toast(`Couldn’t switch OBS to “${d.scene}”: ${e.message}`, true); } finally { try { o && o.disconnect(); } catch (e) {} } })(); break;   // 1.12.16: an automation's step
+      case 'obs-highlight': if (info.local && window.BeeboHighlights) window.BeeboHighlights.save(d); break;      // 1.12.16: a highlight clip at the end of a set
+      case 'automations': if (window.BeeboAutos) window.BeeboAutos.update(d); break;
+      case 'chapters': if (window.BeeboChapters) window.BeeboChapters.update(d); break;     // 1.12.15: only the app window on the streaming PC talks to OBS
       case 'state':
         if (server && server.updatedAt === d.updatedAt) break;
         server = d;
@@ -1242,29 +1217,23 @@
         break;
       case 'bracket-status': brStatus = d; renderSplash(); window.dispatchEvent(new CustomEvent('beebo:bracket', { detail: d })); break;
       case 'share': window.dispatchEvent(new CustomEvent('beebo:share', { detail: d })); break;
+      case 'upscale': window.dispatchEvent(new CustomEvent('beebo:upscale', { detail: d })); break;
+      case 'koth': window.dispatchEvent(new CustomEvent('beebo:koth', { detail: d })); break;
+      case 'cams': window.dispatchEvent(new CustomEvent('beebo:cams', { detail: d })); break;   // comm-panel.js (1.12.6)
+      case 'top8-ready': window.dispatchEvent(new CustomEvent('beebo:top8ready', { detail: d })); break;   // top8-maker.js (1.12.6)   // koth-panel.js (1.12.6)
       case 'vt': window.dispatchEvent(new CustomEvent('beebo:vt', { detail: d })); break;
       case 'streamdeck-notice': window.dispatchEvent(new CustomEvent('beebo:streamdeck', { detail: d })); break;   // streamdeck-panel.js
-      case 'overlays': loadScreens(); overlays = d; { const a = overlays.find(o => o.active); if (a) active = a.name; } refreshActive(); renderGamePick(); if (editing) refreshEditorFiles(); break;
+      case 'overlays': loadScreens(); overlays = d; { const a = overlays.find(o => o.active); if (a) active = a.name; } refreshActive(); renderGamePick(); break;
       case 'config': if (d.activeOverlay !== active) { active = d.activeOverlay; refreshActive(); loadScreens(); } break;
       case 'players': players = d; refreshChars(); break;
       case 'startgg': sgg = d; renderSgg(); break;
       case 'startgg-auth': if (d.ok) toast(`Signed in to start.gg${d.name ? ' as ' + d.name : ''}`); else toast(d.error || 'start.gg sign-in failed', true); mineAt = 0; loadSgg(); break;
       case 'startgg-progress': $('#sggCount').textContent = `Importing… ${d.page}/${d.total}`; break;
-      case 'settings': settings = d; renderSettings(); break;
+      case 'settings': settings = d; renderSettings(); renderVS(); window.dispatchEvent(new CustomEvent('beebo:settings')); break;   // 1.12.21: the cards drawn by other files hear it too (it used to reach only the ones in this file)
       case 'potato': potatoPreview(d.ver); break;
       case 'sgg-reports': window.dispatchEvent(new CustomEvent('beebo:sggreports', { detail: d })); break;   // report-panel.js
-      case 'latency': window.dispatchEvent(new CustomEvent('beebo:latency', { detail: d })); break;   // drawn by latency-panel.js
-      case 'twitch': window.dispatchEvent(new CustomEvent('beebo:twitch', { detail: d })); break;
-      case 'autoscore': case 'autoscore-cmd': window.dispatchEvent(new CustomEvent('beebo:' + msg.type, { detail: d })); break;
       case 'tunnel': { const was = tunnel.state; tunnel = d; renderTunnel(); window.dispatchEvent(new CustomEvent('beebo:tunnel', { detail: d })); if (d.state === 'online' && was !== 'online') toast("You're online — copy your links in the Stream tab"); break; }
       case 'update': { const was = upd.state; upd = d; renderUpdate(); if (d.state === 'ready' && was !== 'ready') toast(`Update ${d.newVersion} downloaded`); break; }
-      case 'reload':
-        if (editing && d.overlay === editing && $('#edText').value === edLoaded) {
-          api(`/api/overlays/${encodeURIComponent(editing)}/file?path=${encodeURIComponent(edPath)}`).then(t => {
-            if ($('#edText').value === edLoaded && t !== edLoaded) { const pos = $('#edText').selectionStart; edLoaded = t; $('#edText').value = t; $('#edText').selectionStart = $('#edText').selectionEnd = pos; }
-          }).catch(() => {});
-        }
-        break;
     }
   }
   let wsOk = false, everOk = false, pollTimer = null, pollN = 0;
@@ -1282,13 +1251,27 @@
     tick(); pollTimer = setInterval(tick, 1500);
   }
   function stopPolling() { clearInterval(pollTimer); pollTimer = null; }
+  // 1.12.16: smaller updates — the app sends only what changed ("statep"); a missed one asks for the whole state again
+  let stObj = null, stRev = 0;
+  function applyPatch(msg, ws) {
+    const d = msg.data || {};
+    if (msg.type === 'state') { stObj = d; stRev = Number(msg.rev) || 0; return msg; }
+    if (!stObj || !stRev || d.base !== stRev) { try { ws && ws.readyState === 1 && ws.send(JSON.stringify({ type: 'state-full' })); } catch (e) {} return null; }
+    const s = { ...stObj }, copied = new Set();
+    const own = k => { if (!copied.has(k)) { copied.add(k); s[k] = s[k] && typeof s[k] === 'object' && !Array.isArray(s[k]) ? { ...s[k] } : {}; } return s[k]; };
+    for (const p of d.del || []) { if (p.length === 1) delete s[p[0]]; else if (s[p[0]] && typeof s[p[0]] === 'object') delete own(p[0])[p[1]]; }
+    for (const p of d.set || []) { if (p.length === 2) { s[p[0]] = p[1]; copied.add(p[0]); } else own(p[0])[p[1]] = p[2]; }
+    stObj = s; stRev = d.rev;
+    return { type: 'state', data: s, seq: msg.seq, rev: d.rev };
+  }
   function connect() {
     let ws;
     try { ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws'); } catch { startPolling(); return; }
+    ws.onopen = () => { try { ws.send(JSON.stringify({ type: 'patch-ok' })); } catch (e) {} };
     const fallback = setTimeout(() => { if (!wsOk) startPolling(); }, 4000);
     ws.onmessage = e => {
       if (!wsOk) { wsOk = everOk = true; clearTimeout(fallback); stopPolling(); setStatus(true, 'Connected'); }
-      try { handle(JSON.parse(e.data)); } catch (err) { console.error(err); }
+      try { let m = JSON.parse(e.data); if (m.type === 'state' || m.type === 'statep') m = applyPatch(m, ws); if (m) handle(m); } catch (err) { console.error(err); }
     };
     ws.onclose = () => {
       clearTimeout(fallback);
@@ -1309,7 +1292,7 @@
       $('#remoteBanner').hidden = !!info.local;
       if (info.lan) $('#remoteText').textContent = "You're controlling the scoreboard from a device on the streamer's network.";
       $('#verLabel').textContent = `v${info.version} · by Beebo`;
-      if (false && info.testBuild && !$('#testPill')) { $('.brand b').insertAdjacentHTML('afterend', '<span id="testPill" title="Portable beta build: separate data, never auto-updates" style="margin-left:8px;font:700 10px/1 inherit;letter-spacing:1.5px;padding:4px 7px;border-radius:6px;background:#ffb020;color:#111">BETA</span>'); document.title = 'BeeboScore Beta'; }
+      if (info.testBuild && !$('#testPill')) { $('.brand b').insertAdjacentHTML('afterend', '<span id="testPill" title="Test build: separate data, never updates itself" style="margin-left:8px;font:700 10px/1 inherit;letter-spacing:1.5px;padding:4px 7px;border-radius:6px;background:var(--accent,#e9c35e);color:#111">TESTBUILD</span>'); document.title = 'BeeboScore Lite Testbuild'; }
       $('#aboutText').textContent = `Version ${info.version} · Developed by Beebo`;
       const lan = info.local ? info.urls.slice(1) : [];
       if (lan.length) $('#lanInfo').innerHTML = `Control from a phone or tablet on the same Wi-Fi: ${lan.map(u => `<code>${esc(u)}</code>`).join(' ')}`;
@@ -1317,10 +1300,158 @@
       else { $('#miniBtn').hidden = true; if (info.lan) $('#logoutBtn').hidden = true; }
     } catch {}
     try { settings = await api('/api/settings'); renderSettings(); } catch {}
-    try { server = await api('/api/state'); draft = clone(server); render(); renderWin(); } catch {}
+    try { server = await api('/api/state'); draft = clone(server); render(); renderWin(); stateEvent(); } catch {}
     await loadOverlays().catch(e => toast(e.message, true));
+    // the desktop app keeps its window hidden until this is set, so the panel never shows half-built:
+    // a moment for the other panel scripts (Quick start, Format, Screens) to add their cards, then two painted frames
+    setTimeout(() => requestAnimationFrame(() => requestAnimationFrame(() => { window.__panelReady = true; })), 250);
     loadPlayers();
     loadSgg().then(() => { if (sgg.tournament && sgg.eventId) loadSets(); });
     connect();
   })();
+})();
+
+// 1.12.16: the app window's frame-rate cap (public/sb-fps.js; overlays in OBS follow OBS)
+(() => { const s = document.getElementById('setAppFps'); if (!s || !window.BeeboFPS) return; s.value = String(BeeboFPS.cap); if (![...s.options].some(o => o.value === s.value)) s.value = '60';
+  s.onchange = () => { BeeboFPS.set(Number(s.value)); (window.BeeboPanel && BeeboPanel.toast || (() => {}))(Number(s.value) ? `This window draws at most ${s.value} frames a second` : 'This window draws as fast as the screen'); }; })();
+
+
+// 1.12.15: Instant replay. OBS saves its Replay Buffer; the clip goes into a "BeeboScore Replay" scene (with your BeeboScore
+// overlay on top, so the scoreboard and the stinger carry over), the layout's stinger covers the cut there and back, and
+// the clip stays where OBS saved it. Started from the Stream Deck's Replay key or the button in Settings › OBS connection.
+window.BeeboReplay = {
+  busy: false, speed: 100, frozen: false, obs: null, endNow: null,     // 1.12.18: Replay 2.0 — slow motion, freeze-frame, back early
+  async setSpeed(v) { this.speed = Math.max(10, Math.min(100, Number(v) || 100)); if (this.obs && this.busy) try { await this.obs.call('SetInputSettings', { inputName: 'BeeboScore Replay clip', inputSettings: { speed_percent: this.speed } }); } catch (e) {} },
+  async freeze(on) { this.frozen = on === undefined ? !this.frozen : !!on; if (this.obs && this.busy) try { await this.obs.call('TriggerMediaInputAction', { inputName: 'BeeboScore Replay clip', mediaAction: this.frozen ? 'OBS_WEBSOCKET_MEDIA_INPUT_ACTION_PAUSE' : 'OBS_WEBSOCKET_MEDIA_INPUT_ACTION_PLAY' }); } catch (e) {} },
+  end() { if (this.endNow) this.endNow(); },
+  async play() {
+    const X = window.BeeboOBS; if (!X || this.busy) return; this.busy = true;
+    const sleep = ms => new Promise(r => setTimeout(r, ms)), sting = () => fetch('/api/remote/action', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'stinger' }) }).catch(() => {});
+    const SCENE = 'BeeboScore Replay', CLIP = 'BeeboScore Replay clip'; let obs = null;
+    try {
+      obs = await X.connect();
+      const rb = await obs.call('GetReplayBufferStatus').catch(() => null);
+      if (!rb || !rb.outputActive) throw new Error('Turn on OBS’s Replay Buffer first: Settings › Output › Replay Buffer, then Start Replay Buffer in the Controls dock.');
+      const saved = new Promise(res => { const h = ev => { obs.off('ReplayBufferSaved', h); res(ev && ev.savedReplayPath); }; obs.on('ReplayBufferSaved', h); setTimeout(() => res(null), 7000); });
+      await obs.call('SaveReplayBuffer');
+      let file = await saved; if (!file) file = (await obs.call('GetLastReplayBufferReplay').catch(() => ({}))).savedReplayPath;
+      if (!file) throw new Error('OBS didn’t save a replay — try again in a moment.');
+      const { scenes } = await obs.call('GetSceneList');
+      if (!scenes.some(x => x.sceneName === SCENE)) await obs.call('CreateScene', { sceneName: SCENE });
+      const { inputs } = await obs.call('GetInputList'), has = n => inputs.some(i => i.inputName === n);
+      const clip = { local_file: file, is_local_file: true, restart_on_activate: true, close_when_inactive: true, looping: false, speed_percent: this.speed };
+      this.obs = obs; this.frozen = false;
+      if (has(CLIP)) await obs.call('SetInputSettings', { inputName: CLIP, inputSettings: clip });
+      else { await obs.call('CreateInput', { sceneName: SCENE, inputName: CLIP, inputKind: 'ffmpeg_source', inputSettings: clip });
+        // the BeeboScore overlay on top of the clip, the first time
+        for (const i of inputs.filter(i => i.inputKind === 'browser_source')) { const { inputSettings: st } = await obs.call('GetInputSettings', { inputName: i.inputName }); if (/\/overlay(\/|\?|$)/.test(String(st.url || ''))) { await obs.call('CreateSceneItem', { sceneName: SCENE, sourceName: i.inputName }).catch(() => {}); break; } } }
+      const cur = await obs.call('GetCurrentProgramScene'), back = cur.currentProgramSceneName || cur.sceneName;
+      const ended = new Promise(res => { const h = ev => { if (ev && ev.inputName === CLIP) { obs.off('MediaInputPlaybackEnded', h); res(); } }; obs.on('MediaInputPlaybackEnded', h); this.endNow = res; const long = () => setTimeout(() => (this.frozen ? long() : res()), 60000); long(); });
+      sting(); await sleep(450); await obs.call('SetCurrentProgramScene', { sceneName: SCENE });
+      await ended;
+      sting(); await sleep(450); if (back && back !== SCENE) await obs.call('SetCurrentProgramScene', { sceneName: back });
+      X.toast('Replay played — OBS kept the clip in its recordings folder');
+    } catch (e) { X.toast(/connect|reach|ECONN|WebSocket/i.test(e.message) ? 'Couldn’t reach OBS — Settings › OBS connection.' : e.message, true); }
+    finally { try { obs && obs.disconnect(); } catch (e) {} this.busy = false; this.obs = null; this.endNow = null; this.frozen = false; try { fetch('/api/remote/action', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'drawClear' }) }); } catch (e) {} }
+  },
+};
+(() => { const b = document.getElementById('obsReplay'); if (b) b.onclick = () => window.BeeboReplay.play(); })();
+
+// 1.12.15: Player history (Matches tab)
+(() => {
+  const $i = id => document.getElementById(id), card = $i('histCard'); if (!card) return;
+  const esc = v => String(v == null ? '' : v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const when = t => new Date(t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  async function now() {
+    try { const st = await fetch('/api/state').then(r => r.json()), a = st.p1 && st.p1.name, b = st.p2 && st.p2.name; if (!a || !b) { $i('histNow').innerHTML = ''; return; }
+      const m = await fetch(`/api/history/matchup?a=${encodeURIComponent(a)}&b=${encodeURIComponent(b)}`).then(r => r.json());
+      $i('histNow').innerHTML = `<b>${esc(a)}</b> ${m.a.record ? `(${esc(m.a.record)})` : '(new)'} vs <b>${esc(b)}</b> ${m.b.record ? `(${esc(m.b.record)})` : '(new)'} — ${esc(m.view.line || 'First meeting')}`; } catch (e) {}
+  }
+  async function list() {
+    try { const d = await fetch('/api/history?q=' + encodeURIComponent($i('histQ').value.trim())).then(r => r.json());
+      $i('histN').textContent = `${d.size} set${d.size === 1 ? '' : 's'} kept`;
+      $i('histList').innerHTML = d.sets.length ? d.sets.map(r => `<div class="hist-row"><span class="d">${when(r.at)}</span><span class="m"><b class="${r.winner === 1 ? 'w' : ''}">${esc(r.p1.name)}</b>${r.p1.char ? ` <i>${esc(r.p1.char)}</i>` : ''} <span class="s">${r.s1}–${r.s2}</span> <b class="${r.winner === 2 ? 'w' : ''}">${esc(r.p2.name)}</b>${r.p2.char ? ` <i>${esc(r.p2.char)}</i>` : ''}</span><span class="e">${esc([r.event, r.round].filter(Boolean).join(' · '))}</span><button class="ibtn sm" data-at="${r.at}" title="Forget this set">✕</button></div>`).join('')
+        : '<p class="hint">No sets yet — they appear here as sets are won.</p>';
+    } catch (e) {}
+  }
+  $i('histList').onclick = async e => { const b = e.target.closest('[data-at]'); if (!b) return; await fetch('/api/history/remove', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ at: Number(b.dataset.at) }) }).catch(() => {}); list(); now(); };
+  let t = 0; $i('histQ').oninput = () => { clearTimeout(t); t = setTimeout(list, 220); };
+  card.addEventListener('toggle', () => { if (card.open) { list(); now(); } });
+  setInterval(() => { if (card.open && card.offsetParent) { now(); list(); } }, 15000);
+})();
+
+// 1.12.15: Settings › Health — the overlays on stream (and how hard their effects engines work), OBS, the Stream Deck,
+// backups, and anything the app had to restore from its last good copy
+(() => {
+  const box = document.getElementById('health'); if (!box) return;
+  const esc = v => String(v == null ? '' : v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const ago = t => { if (!t) return 'never'; const m = Math.round((Date.now() - t) / 60000); return m < 1 ? 'just now' : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.round(m / 60)} h ago` : `${Math.round(m / 1440)} days ago`; };
+  const LV = ['Full', 'Light', 'Plain look'], KIND = { pc: 'This PC', lan: 'Home network', online: 'Online' };
+  let obsOk = null;
+  async function draw() {
+    let d; try { d = await fetch('/api/health').then(r => r.json()); } catch (e) { box.innerHTML = '<p class="hint">Couldn’t read the app’s health.</p>'; return; }
+    const row = (ok, title, text) => `<div class="hl-row ${ok === true ? 'ok' : ok === false ? 'bad' : ''}"><i></i><b>${title}</b><span>${text}</span></div>`;
+    const ovs = d.overlays.filter(v => v.obs || v.kind === 'pc');
+    const ovLines = ovs.length ? ovs.map(v => { const g = v.gfx; return `${esc(v.layout || 'overlay')} (${KIND[v.kind] || v.kind}${v.obs ? ', OBS' : ''})${g ? ` — ${g.fps} fps, ${g.ms} ms a frame, ${LV[g.level] || ''}${g.contexts ? `, ${g.contexts} graphics context${g.contexts === 1 ? '' : 's'}` : ''}${g.gpu ? ` · ${esc(g.gpu)}` : ''}${g.why ? ` · ${esc(g.why)}` : ''}` : ''}`; }).join('<br>') : 'No overlay is open — add BeeboScore Lite to OBS as a Browser source.';
+    box.innerHTML = [
+      row(ovs.length > 0, 'Overlays', ovLines),
+      row(obsOk, 'OBS', obsOk === null ? 'Not checked yet — press Refresh' : obsOk ? `Connected${obsInfo && obsInfo.fps ? ` · stream at ${obsInfo.fps} fps` : ''}${obsInfo && obsInfo.sources ? ` · ${obsInfo.sources.length} BeeboScore Lite browser source${obsInfo.sources.length === 1 ? '' : 's'}` : ''}` : 'Can’t reach OBS’s WebSocket (Settings › OBS connection)'),
+      ...tips(d, ovs).map(t => row(null, '⚠ ' + t[0], t[1])),
+      row(d.streamdeck ? true : null, 'Stream Deck', d.streamdeck ? 'The BeeboScore Lite plugin is connected' : 'Not connected (fine if you don’t use one)'),
+      ...showRows(d.show),
+      row(d.lastBackup && Date.now() - d.lastBackup < 3 * 864e5 ? true : null, 'Backups', `Last one ${ago(d.lastBackup)} · ${d.backups} kept`),
+      d.restored && d.restored.length ? row(false, 'Recovered', d.restored.map(r => `${esc(r.file)} was damaged — the last good copy was used (${ago(r.at)})`).join('<br>')) : '',
+      row(null, 'App', `Version ${esc(d.version)} · running ${Math.round(d.uptime / 3600 * 10) / 10} h · ${d.memory} MB · ${d.history} sets in Player history${d.autopilot.on ? ' · Run of show on' : ''}${d.tempo ? ` · ${d.tempo} BPM` : ''}`),
+    ].join('');
+  }
+  // 1.12.19: the video tools, the backup PC, sync between PCs, and the show's own OBS sources (with Add to OBS)
+  function showRows(x) {
+    if (!x) return [];
+    const row = (ok, title, text) => `<div class="hl-row ${ok === true ? 'ok' : ok === false ? 'bad' : ''}"><i></i><b>${title}</b><span>${text}</span></div>`, out = [];
+    const b = x.backup || {};
+    out.push(b.standby ? row(b.ok, 'Backup PC', b.ok ? `This PC is the backup and is copying the streaming PC (${b.quiet == null ? '' : b.quiet + ' s ago'})` : `This PC is the backup, but ${esc(b.error || 'the streaming PC isn’t answering')}`)
+      : b.sharing ? row(b.seen && Date.now() - b.seen < 8000 ? true : null, 'Backup PC', b.seen && Date.now() - b.seen < 8000 ? 'A backup PC is copying this one' : 'The link is shared, but no backup PC is copying this one right now') : row(null, 'Backup PC', 'Not set up (fine if you don’t use one)'));
+    const y = x.sync || {};
+    out.push(!y.on ? row(null, 'Sync', 'Off (Settings › Sync between your PCs)') : row(y.ok && !y.error ? true : false, 'Sync', !y.ok ? 'The shared folder isn’t there' : y.error ? esc(y.error) : `Last written ${ago(y.wrote)}${y.waiting ? ` · ${esc(y.waiting)} has newer settings` : ''}`));
+    const src = obsInfo && obsInfo.sources, has = p => src && src.find(s2 => { try { return new URL(s2.url).pathname.replace(/\/+$/, '') === p; } catch (e) { return false; } });
+    for (const [k, p, t, need] of [['music', '/music-player', 'Music (OBS)', true], ['vertical', '/vertical', 'Vertical (OBS)', false], ['venue', '/venue', 'Venue (OBS)', false]]) {
+      const hit = has(p), btn = `<button class="btn xs" type="button" data-add-obs="${k}">➕ Add to OBS</button>`;
+      out.push(row(!src ? null : hit ? true : null, t, !src ? 'Press Refresh to check OBS' : hit ? `Yes (“${esc(hit.name)}”)` : `${need ? 'Not yet' : 'Not in OBS (fine if you don’t use it)'} ${btn}`));
+    }
+    return out;
+  }
+  window.addEventListener('beebo:obs-sources', async () => { await checkObs(); draw(); });
+  // 1.12.16: what's worth changing — several BeeboScore sources (each one is a whole browser of its own in OBS), a source
+  // drawing more frames than the stream, one at the wrong size, or one set to restart whenever its scene comes on
+  let obsInfo = null;
+  function tips(d, ovs) {
+    const out = [], src = obsInfo && obsInfo.sources;
+    const n = src ? src.length : ovs.filter(v => v.obs && v.kind === 'pc').length;
+    if (n > 1) out.push(['Several overlays in OBS', `${n} BeeboScore Lite browser sources are open in OBS${src ? ` (${src.map(s => esc(s.name)).join(', ')})` : ''}. Each one is a whole browser of its own, running all the time. One source showing <code>/overlay</code> is usually enough — add <code>?screen=…</code> sources only for a screen you need somewhere else.`]);
+    if (src) for (const s of src) {
+      if (s.fpsCustom && obsInfo.fps && s.fps > obsInfo.fps) out.push([`“${esc(s.name)}” draws too many frames`, `It's set to ${s.fps} fps but your stream is ${obsInfo.fps} fps: untick “Use custom frame rate” in its properties (or set it to ${obsInfo.fps}).`]);
+      if (s.restart) out.push([`“${esc(s.name)}” restarts`, 'It has “Refresh browser when scene becomes active” on, so it replays its intro every time you switch to that scene. Turn it off in its properties.']);
+      if (s.overlay && (s.w !== 1920 || s.h !== 1080)) out.push([`“${esc(s.name)}” is ${s.w} × ${s.h}`, 'Layouts are made for 1920 × 1080: set its width and height to that and scale the source instead.']);
+    }
+    for (const v of ovs) if (v.gfx && v.gfx.level >= 2) out.push(['An overlay is struggling', `${esc(v.layout || 'An overlay')} (${KIND[v.kind] || v.kind}) has stepped down to the plain look to keep up. Try Laptop mode or Light effects (Settings › Performance).`]);
+    return out;
+  }
+  async function checkObs() {
+    let o = null;
+    try {
+      o = await window.BeeboOBS.connect(); obsOk = true; obsInfo = { sources: [] };
+      try { const v = await o.call('GetVideoSettings'); obsInfo.fps = Math.round(v.fpsNumerator / (v.fpsDenominator || 1) * 100) / 100; } catch (e) {}
+      try {
+        const { inputs } = await o.call('GetInputList', { inputKind: 'browser_source' });
+        for (const i of inputs) {
+          const st = ((await o.call('GetInputSettings', { inputName: i.inputName })) || {}).inputSettings || {}, url = String(st.url || '');
+          if (!/\/(overlay|o\/)|:3[01]\d\d\//.test(url) || !/localhost|127\.0\.0\.1/.test(url)) continue;
+          obsInfo.sources.push({ name: i.inputName, url, overlay: /\/overlay/.test(url), fpsCustom: !!st.fps_custom, fps: Number(st.fps) || 30, restart: !!st.restart_when_active, w: Number(st.width) || 800, h: Number(st.height) || 600 });
+        }
+      } catch (e) {}
+    } catch (e) { obsOk = false; obsInfo = null; }
+    finally { try { o && o.disconnect(); } catch (e) {} }
+  }
+  document.getElementById('healthGo').onclick = async () => { await checkObs(); draw(); };
+  draw(); setInterval(() => { if (box.offsetParent) draw(); }, 5000);
 })();

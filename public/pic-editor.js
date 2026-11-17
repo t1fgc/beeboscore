@@ -2,8 +2,11 @@
  *
  *   Crop        — drag the box or its corners. A wide picture starts with a selection in the shape of the splash panel
  *                 (5:6); a tall one starts whole. Tick or untick "Keep the splash panel's shape" to crop either way.
- *   Background  — remove a green-screen (or any single-colour) background with a chroma key: pick the colour, set how
- *                 much to remove and how soft the edge is. A picture that looks like a green screen has this on already.
+ *   Size        — (1.12.5) a slider that zooms the selection in and out round its middle, so a big picture is quick to frame.
+ *   Background  — (1.12.5) remove it automatically: a small model on this PC finds the player or character and the rest goes
+ *                 see-through (public/bg-remove.js); "keep more / less" moves the cut, "edge" softens it. Or remove a
+ *                 green-screen (or any single-colour) background with a chroma key. A green-screen picture has that on already.
+ *   Previews    — how it will look on the splash and (1.12.5) on a player card, which shows the top of the picture.
  * What's saved is a PNG of the selected area, no taller than the splash panel, with the background made see-through.
  * Everything happens in this window, on this PC; the original file is not changed.
  *
@@ -53,6 +56,7 @@
 .pe-note.warn { color: #ffb86b; }
 .pe-off { opacity: .45; pointer-events: none; }
 .pe-result { display: flex; gap: 12px; align-items: flex-end; }
+.pe-result canvas.pe-card { width: 96px; height: 96px; border-radius: 8px; }
 .pe-result canvas { width: 120px; height: 144px; border-radius: 6px; background: linear-gradient(#171a26, #2a2f42 70%, #1d1c22); flex: none; }
 .pe-foot { display: flex; align-items: center; gap: 10px; padding: 12px 18px 16px; border-top: 1px solid var(--line); }
 .pe-foot .sp { flex: 1; }
@@ -113,7 +117,7 @@
       const pc = document.createElement('canvas'); pc.width = pw; pc.height = ph;
       const pcx = pc.getContext('2d', { willReadFrequently: true }); pcx.imageSmoothingQuality = 'high'; pcx.drawImage(bmp, 0, 0, pw, ph);
       const src = pcx.getImageData(0, 0, pw, ph), screen = guessScreen(src);
-      const st = { lock: true, crop: null, key: { on: !!screen, color: screen || [0, 177, 64], tol: 48, soft: 18, spill: true }, pick: false };
+      const st = { lock: true, crop: null, key: { on: !!screen, color: screen || [0, 177, 64], tol: 48, soft: 18, spill: true }, pick: false, auto: { on: false, keep: 50, soft: 30, mask: null, busy: false, err: '' } };
       const fitCrop = () => { const w = Math.min(W, H * RATIO), h = w / RATIO; st.crop = { x: (W - w) / 2, y: (H - h) / 2, w, h }; };
       // to start with: a picture wider than the panel gets the biggest panel-shaped selection; a tall or narrow one is
       // kept whole (cutting its top and bottom off to make the shape would only lose some of the character)
@@ -121,15 +125,22 @@
 
       const back = document.createElement('div'); back.className = 'pe-back';
       back.innerHTML = `<div class="pe" role="dialog" aria-modal="true" aria-label="Edit the character image">
-  <div class="pe-head"><h2>Character image for ${esc(name)}</h2><span>${W} × ${H}</span></div>
+  <div class="pe-head"><h2>${esc(rules.title || 'Character image for ' + name)}</h2><span>${W} × ${H}</span></div>
   <div class="pe-body">
     <div class="pe-stage"><div class="pe-pic"><canvas></canvas><div class="pe-mask"><div class="pe-shade"></div></div><div class="pe-crop locked">${['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'].map(h => `<i data-h="${h}"></i>`).join('')}</div></div></div>
     <div class="pe-side">
       <section><h3>Crop</h3>
         <label class="pe-check"><input type="checkbox" data-k="lock" checked> Keep the splash panel's shape</label>
+        <div class="pe-row"><span>Size</span><input type="range" data-k="zoom" min="12" max="100" step="1" aria-label="Size of the selection"></div>
         <div class="inline" style="gap:8px;margin-top:8px"><button class="btn sm" data-k="whole">Whole picture</button><button class="btn sm" data-k="fit">Biggest panel shape</button></div>
         <p class="pe-note" data-k="cropNote"></p></section>
       <section><h3>Background</h3>
+        <label class="pe-check"><input type="checkbox" data-k="autoOn"> Remove the background automatically</label>
+        <div data-k="autoBox">
+          <div class="pe-row"><span>Keep</span><input type="range" data-k="autoKeep" min="5" max="95" step="1" aria-label="Keep more or less of the picture"></div>
+          <div class="pe-row"><span>Edge</span><input type="range" data-k="autoSoft" min="0" max="100" step="1" aria-label="Edge softness"></div>
+        </div>
+        <p class="pe-note" data-k="autoNote">Finds the player or character and takes the rest out, on this PC.</p>
         <label class="pe-check"><input type="checkbox" data-k="keyOn"> Remove a green-screen background</label>
         <div data-k="keyBox">
           <div class="pe-row"><span>Colour</span><span class="pe-key"><input type="color" data-k="keyColor" aria-label="Colour to remove"><button class="btn sm" data-k="pick">Pick from the picture</button></span></div>
@@ -139,7 +150,7 @@
         </div>
         <p class="pe-note" data-k="keyNote"></p></section>
       <h3>How it will look</h3>
-      <div class="pe-result"><canvas width="240" height="288"></canvas><p class="pe-note" data-k="outNote" style="margin:0"></p></div>
+      <div class="pe-result"><canvas width="240" height="288"></canvas><canvas class="pe-card" width="240" height="240" title="On a player card"></canvas><p class="pe-note" data-k="outNote" style="margin:0"></p></div>
     </div>
   </div>
   <div class="pe-foot"><span class="pe-note" data-k="err" style="margin:0"></span><span class="sp"></span><button class="btn ghost" data-k="cancel">Cancel</button><button class="btn primary" data-k="save">Save picture</button></div>
@@ -157,6 +168,7 @@
       function paint() {                                 // the working copy with the key applied → the stage, the crop box, the small result
         work = new ImageData(new Uint8ClampedArray(src.data), pw, ph);
         if (st.key.on) keyOut(work.data, st.key.color, st.key.tol, st.key.soft, st.key.spill);
+        if (st.auto.on && st.auto.maskData) window.BeeboBgRemove.apply(work.data, st.auto.maskData, st.auto.keep, st.auto.soft);
         cx.putImageData(work, 0, 0);
         place();
       }
@@ -174,12 +186,21 @@
         const r = res.getContext('2d'); r.clearRect(0, 0, res.width, res.height);
         const s = Math.min(res.width / c.w, res.height / c.h), w = c.w * s, h = c.h * s;
         r.imageSmoothingQuality = 'high'; r.drawImage(cv, c.x * ps, c.y * ps, c.w * ps, c.h * ps, (res.width - w) / 2, res.height - h, w, h);
+        // …and on a player card: square, filled, the top of the picture (the face) kept in view
+        const cc = back.querySelector('.pe-card'), q = cc.getContext('2d'); q.clearRect(0, 0, cc.width, cc.height);
+        q.fillStyle = '#1b1e29'; q.fillRect(0, 0, cc.width, cc.height);
+        const sc = Math.max(cc.width / c.w, cc.height / c.h), cw = c.w * sc, ch = c.h * sc;
+        q.imageSmoothingQuality = 'high'; q.drawImage(cv, c.x * ps, c.y * ps, c.w * ps, c.h * ps, (cc.width - cw) / 2, -(ch - cc.height) * .22, cw, ch);
+        const mw = st.lock ? Math.min(W, H * RATIO) : W, mh = st.lock ? mw / RATIO : H; $('zoom').value = Math.round(Math.max(c.w / mw, c.h / mh) * 100);
       }
       function controls() {
         $('lock').checked = st.lock; $('keyOn').checked = st.key.on; $('keyColor').value = hex(st.key.color); $('tol').value = st.key.tol; $('soft').value = st.key.soft; $('spill').checked = st.key.spill;
         $('keyBox').classList.toggle('pe-off', !st.key.on);
+        $('autoOn').checked = st.auto.on; $('autoKeep').value = st.auto.keep; $('autoSoft').value = st.auto.soft; $('autoBox').classList.toggle('pe-off', !st.auto.on || st.auto.busy);
+        $('autoNote').textContent = st.auto.err || (st.auto.busy ? 'Finding the player… (the first time takes a few seconds)' : st.auto.on ? 'The background is taken out. Slide Keep left if bits of it are left, right if the player is cut into.' : 'Finds the player or character and takes the rest out, on this PC.');
+        $('autoNote').classList.toggle('warn', !!st.auto.err);
         $('pick').textContent = st.pick ? 'Click the background…' : 'Pick from the picture'; pic.classList.toggle('pick', st.pick);
-        $('keyNote').textContent = st.key.on ? (screen && hex(st.key.color) === hex(screen) ? `This looks like a ${screen[2] > screen[1] ? 'blue' : 'green'}-screen picture, so its background is already removed. Untick to keep it.` : 'The chequered squares show what will be see-through.') : 'For a picture taken in front of a green (or blue) screen.';
+        $('keyNote').textContent = st.key.on ? (screen && hex(st.key.color) === hex(screen) ? `This looks like a ${screen[2] > screen[1] ? 'blue' : 'green'}-screen picture, so its background is already removed. Untick to keep it.` : 'The checked squares show what will be see-through.') : 'For a picture taken in front of a green (or blue) screen.';
       }
 
       // ---- crop: move, resize (corners keep the panel's shape when it's locked)
@@ -227,6 +248,15 @@
       back.addEventListener('mousedown', e => { if (e.target === back) e.preventDefault(); });      // a stray click outside doesn't throw the work away
       back.addEventListener('input', e => {
         const t = e.target.dataset.k;
+        if (t === 'zoom') {                                 // the selection grows / shrinks round its middle
+          const c = st.crop, v = Number(e.target.value) / 100, mw = st.lock ? Math.min(W, H * RATIO) : W, mh = st.lock ? mw / RATIO : H;
+          const aspect = c.w / c.h; let w = st.lock ? mw * v : Math.min(W, Math.max(40, Math.max(mw * v, mh * v * aspect))), h = st.lock ? w / RATIO : w / aspect;
+          if (h > H) { h = H; w = h * aspect; }
+          const cxm = c.x + c.w / 2, cym = c.y + c.h / 2;
+          st.crop = { x: clamp(cxm - w / 2, 0, W - w), y: clamp(cym - h / 2, 0, H - h), w, h }; place(); return;
+        }
+        if (t === 'autoKeep') { st.auto.keep = Number(e.target.value); paint(); return; }
+        if (t === 'autoSoft') { st.auto.soft = Number(e.target.value); paint(); return; }
         if (t === 'tol') st.key.tol = Number(e.target.value); else if (t === 'soft') st.key.soft = Number(e.target.value); else if (t === 'keyColor') st.key.color = rgb(e.target.value); else return;
         controls(); paint();
       });
@@ -234,6 +264,18 @@
         const t = e.target.dataset.k;
         if (t === 'lock') { st.lock = e.target.checked; if (st.lock) { const c = st.crop, w = Math.min(c.w, c.h * RATIO), h = w / RATIO; st.crop = { x: c.x + (c.w - w) / 2, y: c.y + (c.h - h) / 2, w, h }; } place(); }
         else if (t === 'keyOn') { st.key.on = e.target.checked; st.pick = false; controls(); paint(); }
+        else if (t === 'autoOn') {
+          st.auto.on = e.target.checked; st.auto.err = '';
+          if (st.auto.on && !st.auto.mask) {
+            if (!window.BeeboBgRemove) { st.auto.on = false; st.auto.err = 'The background remover isn’t available here.'; controls(); return; }
+            st.auto.busy = true; controls(); $('save').disabled = true;
+            window.BeeboBgRemove.mask(pc).then(m => { st.auto.mask = m; st.auto.maskData = m.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, pw, ph).data; })
+              .catch(err => { st.auto.on = false; st.auto.err = (err && err.message) || 'The background couldn’t be removed.'; })
+              .finally(() => { st.auto.busy = false; controls(); paint(); });
+            return;
+          }
+          controls(); paint();
+        }
         else if (t === 'spill') { st.key.spill = e.target.checked; paint(); }
       });
       back.addEventListener('click', async e => {
@@ -249,11 +291,20 @@
             const c = st.crop, o = outSize(), out = document.createElement('canvas'); out.width = o.w; out.height = o.h;
             const ox = out.getContext('2d', { willReadFrequently: true }); ox.imageSmoothingQuality = 'high';
             ox.drawImage(bmp, Math.round(c.x), Math.round(c.y), Math.round(c.w), Math.round(c.h), 0, 0, o.w, o.h);
-            if (st.key.on) { const id = ox.getImageData(0, 0, o.w, o.h); keyOut(id.data, st.key.color, st.key.tol, st.key.soft, st.key.spill); ox.putImageData(id, 0, 0); }
+            if (st.key.on || (st.auto.on && st.auto.mask)) {
+              const id = ox.getImageData(0, 0, o.w, o.h);
+              if (st.key.on) keyOut(id.data, st.key.color, st.key.tol, st.key.soft, st.key.spill);
+              if (st.auto.on && st.auto.mask) {          // the mask, cut and scaled the same way as the picture
+                const mc = document.createElement('canvas'); mc.width = o.w; mc.height = o.h; const mg = mc.getContext('2d', { willReadFrequently: true }); mg.imageSmoothingQuality = 'high';
+                mg.drawImage(st.auto.mask, c.x * ps, c.y * ps, c.w * ps, c.h * ps, 0, 0, o.w, o.h);
+                window.BeeboBgRemove.apply(id.data, mg.getImageData(0, 0, o.w, o.h).data, st.auto.keep, st.auto.soft);
+              }
+              ox.putImageData(id, 0, 0);
+            }
             const as = (type, q) => new Promise((ok, no) => out.toBlob(b => (b ? ok(b) : no(new Error('x'))), type, q));
             let blob = await as('image/png');
             if (blob.size > maxBytes) blob = await as('image/webp', 0.92);          // a very detailed picture: WebP keeps the see-through background and is far smaller
-            close({ blob, w: o.w, h: o.h, keyed: st.key.on });
+            close({ blob, w: o.w, h: o.h, keyed: st.key.on, cut: st.auto.on && !!st.auto.mask });
           } catch { t.disabled = false; t.textContent = 'Save picture'; $('err').textContent = "The picture couldn't be saved. Try a smaller selection."; $('err').classList.add('warn'); }
         }
       });

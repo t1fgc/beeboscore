@@ -1,7 +1,7 @@
-/* BeeboScore (developed by Beebo) — your own pictures on the VS Splash (Matches tab, in the VS Splash card).
+/* BeeboScore (developed by Beebo) — your own pictures on FullVS (Matches tab, in FullVS card).
  *
  *   Name bar   a picture behind each player's name            shown at 920 × 250
- *   Header     a picture across the top of the VS Splash      shown at 1920 × 200
+ *   Header     a picture across the top of FullVS      shown at 1920 × 200
  * Either, both or neither; they show in every layout. A picture of another size is scaled and cropped to fit, here, on
  * this PC, before it is saved (the server checks it again and keeps it in <data>/vs-art).
  *
@@ -151,7 +151,7 @@
     const sample = kind === 'bar' && pic ? `<div class="va-sample${live.scrim ? ' scrim' : ''}" style="--sc:${esc(live.scrimColor || 'transparent')}"><i style="color:${esc(live.accent)};text-shadow:${esc(live.edge)}">Team</i><b style="color:${esc(live.ink)};text-shadow:${esc(live.edge)}">Player name</b><u style="background:${esc(live.chip)};color:${esc(live.ink)}">3<small style="color:${esc(live.accent)}">W</small></u></div>` : '';
     return `<div class="va-slot" data-kind="${kind}">
       <div class="va-prev ${kind}">${pic ? `<img alt="" src="${esc(pic.url)}">${sample}` : `<div class="va-none">${kind === 'bar' ? 'The layout’s own name bar' : 'No header'}</div>`}</div>
-      <div class="va-meta"><b>${kind === 'bar' ? 'Name bar' : 'Header'}</b><small>${kind === 'bar' ? 'Behind each player’s name.' : 'Across the top of the VS Splash.'} Best size ${sz.w} × ${sz.h} px (PNG, WebP or JPG). Other sizes are scaled and cropped to fit.</small></div>
+      <div class="va-meta"><b>${kind === 'bar' ? 'Name bar' : 'Header'}</b><small>${kind === 'bar' ? 'Behind each player’s name.' : 'Across the top of FullVS.'} Best size ${sz.w} × ${sz.h} px (PNG, WebP or JPG). Other sizes are scaled and cropped to fit.</small></div>
       <div class="va-btns"><button class="btn sm" data-act="pick" ${busy ? 'disabled' : ''}>${pic ? 'Replace picture' : 'Choose picture'}</button>${pic ? '<button class="btn sm ghost" data-act="remove">Remove</button>' : ''}<input type="file" accept="image/png,image/webp,image/jpeg" hidden></div>
     </div>`;
   }
@@ -170,10 +170,10 @@
   function draw() {
     if (!view) { root.innerHTML = ''; return; }
     const keep = previewOn;
-    root.innerHTML = `<h3>Your own VS Splash pictures</h3>
-      <p class="va-lead">Use a picture of your own for the bar behind each player’s name, for a header across the top, or both. They show on the VS Splash in every layout.</p>
+    root.innerHTML = `<h3>Your own FullVS pictures</h3>
+      <p class="va-lead">Use a picture of your own for the bar behind each player’s name, for a header across the top, or both. They show on FullVS in every layout.</p>
       <div class="va-grid">${slot('bar')}${slot('header')}</div>${fitBox()}
-      <div class="va-live"><button class="btn sm ghost" data-act="preview">${keep ? 'Hide the preview' : 'Preview the VS Splash'}</button>${keep ? '<div class="va-frame"><iframe title="VS Splash preview" tabindex="-1"></iframe></div>' : ''}</div>`;
+      <div class="va-live"><button class="btn sm ghost" data-act="preview">${keep ? 'Hide the preview' : 'Preview FullVS'}</button>${keep ? '<div class="va-frame"><iframe title="FullVS preview" tabindex="-1"></iframe></div>' : ''}</div>`;
     if (keep) refreshPreview(true);
   }
   let prevT = 0;
@@ -182,7 +182,7 @@
     prevT = setTimeout(() => {
       const box = $('.va-frame'), fr = box && box.querySelector('iframe'); if (!fr) return;
       fr.style.transform = `scale(${box.clientWidth / 1920})`;
-      fr.src = `/overlay/${encodeURIComponent(P.active() || 'shattered')}?sbframe&instant&preview&demo=vs&t=${Date.now()}`;
+      fr.src = `/overlay/${encodeURIComponent(P.active() || 'tekken8-default')}?sbframe&instant&preview&demo=vs&t=${Date.now()}`;
     }, now ? 0 : 350);
   }
   addEventListener('resize', () => { const box = $('.va-frame'), fr = box && box.querySelector('iframe'); if (fr) fr.style.transform = `scale(${box.clientWidth / 1920})`; });

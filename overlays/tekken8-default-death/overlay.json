@@ -1,0 +1,15 @@
+{
+  "title": "Default — Death Battle",
+  "game": "Tekken 8",
+  "family": "Default",
+  "format": "death",
+  "base": "tekken8-default",
+  "description": "Lives on the player bars, every lost life breaks on screen, survivors along the bottom, the final duel.",
+  "colors": [
+    "#151822",
+    "#ff3b5c",
+    "#3b8eff"
+  ],
+  "version": "1",
+  "gen": 2
+}

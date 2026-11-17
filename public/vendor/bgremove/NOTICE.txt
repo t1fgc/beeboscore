@@ -1,0 +1,6 @@
+BeeboScore's automatic background removal (the picture window) runs on this PC with:
+
+- ONNX Runtime Web 1.20.1 (ort.wasm.min.js, ort-wasm-simd-threaded.mjs, ort-wasm-simd-threaded.wasm)
+  Copyright (c) Microsoft Corporation. MIT License — see LICENSE-onnxruntime-web.txt.
+- U²-Net (small, "u2netp") salient object detection model, from the U-2-Net project by Xuebin Qin et al.
+  Apache License 2.0 — https://github.com/xuebinqin/U-2-Net. Converted to ONNX by the rembg project (MIT).

@@ -6,15 +6,15 @@
   const DEFAULTS = {
     p1Up: 'Q', p1Down: 'A', p2Up: 'P', p2Down: 'L',
     update: 'Ctrl+Enter', swap: 'Ctrl+Shift+X', undo: 'Ctrl+Z', resetScores: '', vsToggle: 'Ctrl+I', bracketToggle: '', top8Toggle: '', bracketRefresh: '', bracketSide: '', victoryToggle: '',
-    viewerNext: '', viewerWin: '', viewerLose: '', viewerQueue: '', viewerSplash: '', viewerSidebar: '', autoscoreToggle: '', autoscoreUndo: '', autoscoreConfirm: '', soundToggle: '',
+    soundToggle: '',
+    setTimer: '', h2hLine: '', momentReplay: '', momentsToggle: '', statsStrip: '', gresetSplash: '',                                                          // 1.12.21: the set as it's told
   };
   const LABELS = {
     p1Up: 'Player 1 score +', p1Down: 'Player 1 score −', p2Up: 'Player 2 score +', p2Down: 'Player 2 score −',
-    update: 'Update (send to stream)', swap: 'Swap sides', undo: 'Undo', resetScores: 'Reset scores to 0–0', vsToggle: 'Show / hide VS Splash',
+    update: 'Update (send to stream)', swap: 'Swap sides', undo: 'Undo', resetScores: 'Reset scores to 0–0', vsToggle: 'Show / hide the VS (FullVS or GlassVS)',
     bracketToggle: 'Show / hide bracket splash', top8Toggle: 'Show / hide Top 8 splash', bracketRefresh: 'Refresh the bracket from start.gg', bracketSide: 'Bracket: switch Winners / Losers side', victoryToggle: 'Show / hide the victory splash',
-    viewerNext: 'Viewer matches: next viewer', viewerWin: 'Viewer matches: I won a game', viewerLose: 'Viewer matches: the viewer won a game',
-    viewerQueue: 'Viewer matches: open / close the queue', viewerSplash: 'Viewer matches: show / hide the VS splash', viewerSidebar: 'Viewer matches: show / hide the sidebar',
-    autoscoreToggle: 'Autoscore: on / off', autoscoreUndo: 'Autoscore: undo the last auto point', autoscoreConfirm: 'Autoscore: confirm the point it found', soundToggle: 'Stream sound: on / off',
+    soundToggle: 'Stream sound: on / off',
+    setTimer: 'Set timer: start / stop', h2hLine: 'Head-to-head line: show / hide', momentReplay: 'Moments: replay the last one', momentsToggle: 'Moments: banners on / off', statsStrip: 'Stats strip on FullVS and GlassVS: on / off', gresetSplash: 'Bracket reset splash: show / hide',
   };
   const MODS = ['Control', 'Shift', 'Alt', 'Meta', 'AltGraph', 'CapsLock', 'OS'];
 
@@ -53,5 +53,17 @@
   }
   const esc = s => String(s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
   const html = combo => combo ? combo.split('+').map(p => `<span class="kbd">${esc(p)}</span>`).join('+') : '<span class="kbd off">not set</span>';
-  window.BeeboKeys = { DEFAULTS, LABELS, fromEvent, match, merged, html, hasModifier };
+  /** 1.12.19: what the show's shortcuts do — `send(body)` posts a remote action (the panel's and the mini controller's own helper) */
+  function showActions(send, toast = () => {}) {
+    return {
+      // 1.12.21 (Lite: the set's own extras only)
+      setTimer: () => Promise.resolve(send({ action: 'timer', do: 'toggle' })).then(r => { if (r && r.timer) toast(r.timer.show && r.timer.start && !r.timer.end ? 'Set timer started' : 'Set timer stopped'); }),
+      h2hLine: () => Promise.resolve(send({ action: 'h2h' })).then(r => { if (r && 'h2h' in r) toast(r.h2h ? 'Head-to-head line on' : 'Head-to-head line off'); }),
+      momentReplay: () => Promise.resolve(send({ action: 'moments', do: 'replay' })).then(r => { if (r && r.moments) toast('The moment is back on stream'); }),
+      statsStrip: () => Promise.resolve(send({ action: 'strip', do: 'toggle' })).then(r => { if (r && 'strip' in r) toast(r.strip ? 'Stats strip on' : 'Stats strip off'); }),
+      gresetSplash: () => Promise.resolve(send({ action: 'greset' })).then(r => { if (r && 'greset' in r) toast(r.greset ? 'Bracket reset splash on stream' : 'Bracket reset splash off'); }),
+      momentsToggle: () => Promise.resolve(send({ action: 'moments', do: 'toggle' })).then(r => { if (r && r.moments) toast(r.moments.on ? 'Moment banners on' : 'Moment banners off'); }),
+    };
+  }
+  window.BeeboKeys = { DEFAULTS, LABELS, fromEvent, match, merged, html, hasModifier, showActions };
 })();

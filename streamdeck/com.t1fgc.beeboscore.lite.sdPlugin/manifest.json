@@ -1,0 +1,568 @@
+{
+  "$schema": "https://schemas.elgato.com/streamdeck/plugins/manifest.json",
+  "Name": "BeeboScore Lite",
+  "Version": "1.31.0.0",
+  "Author": "Beebo",
+  "Description": "Control BeeboScore Lite — scores, splashes, start.gg and game formats — from your Stream Deck.",
+  "UUID": "com.t1fgc.beeboscore.lite",
+  "Icon": "imgs/plugin",
+  "Category": "BeeboScore Lite",
+  "CategoryIcon": "imgs/category",
+  "CodePath": "bin/plugin.js",
+  "PropertyInspectorPath": "ui/inspector.html",
+  "SDKVersion": 2,
+  "Software": {
+    "MinimumVersion": "6.4"
+  },
+  "OS": [
+    {
+      "Platform": "windows",
+      "MinimumVersion": "10"
+    },
+    {
+      "Platform": "mac",
+      "MinimumVersion": "12"
+    }
+  ],
+  "Nodejs": {
+    "Version": "20"
+  },
+  "Actions": [
+    {
+      "UUID": "com.t1fgc.beeboscore.lite.score",
+      "Name": "Match · Player score",
+      "Icon": "imgs/actions/score",
+      "Tooltip": "Tap +1, hold −1. Shows the player's name and live score.",
+      "Controllers": [
+        "Keypad",
+        "Encoder"
+      ],
+      "Encoder": {
+        "layout": "$B1",
+        "Icon": "imgs/actions/score-dial",
+        "TriggerDescription": {
+          "Rotate": "Change score",
+          "Push": "+1",
+          "Touch": "+1 (long touch −1)"
+        }
+      },
+      "States": [
+        {
+          "Image": "imgs/keys/score",
+          "ShowTitle": false
+        }
+      ],
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboscore.lite.player",
+      "Name": "Match · Set player",
+      "Icon": "imgs/actions/player",
+      "Tooltip": "Pop-up to type a name or pick a player.",
+      "States": [
+        {
+          "Image": "imgs/keys/player",
+          "ShowTitle": false
+        }
+      ],
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboscore.lite.loser",
+      "Name": "Match · Losers [L]",
+      "Icon": "imgs/actions/loser",
+      "Tooltip": "Mark a player as coming from losers.",
+      "States": [
+        {
+          "Image": "imgs/keys/loser-off",
+          "ShowTitle": false
+        },
+        {
+          "Image": "imgs/keys/loser-on",
+          "ShowTitle": false
+        }
+      ],
+      "DisableAutomaticStates": true,
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboscore.lite.swap",
+      "Name": "Match · Swap sides",
+      "Icon": "imgs/actions/swap",
+      "Tooltip": "Swap Player 1 and Player 2.",
+      "States": [
+        {
+          "Image": "imgs/keys/swap",
+          "ShowTitle": false
+        }
+      ],
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboscore.lite.reset",
+      "Name": "Match · Reset scores",
+      "Icon": "imgs/actions/reset",
+      "Tooltip": "Both scores back to 0–0.",
+      "States": [
+        {
+          "Image": "imgs/keys/reset",
+          "ShowTitle": false
+        }
+      ],
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboscore.lite.undo",
+      "Name": "Match · Undo",
+      "Icon": "imgs/actions/undo",
+      "Tooltip": "Steps back one change. When the last thing that happened was a game format result, it takes that back instead (the key says UNDO RESULT).",
+      "States": [
+        {
+          "Image": "imgs/keys/undo",
+          "ShowTitle": false
+        }
+      ],
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboscore.lite.clear",
+      "Name": "Match · Next set (clear players)",
+      "Icon": "imgs/actions/clear",
+      "Tooltip": "Clear both players for the next set.",
+      "States": [
+        {
+          "Image": "imgs/keys/clear",
+          "ShowTitle": false
+        }
+      ],
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboscore.lite.vs",
+      "Name": "Match · FullVS / VS style",
+      "Icon": "imgs/actions/vs",
+      "Tooltip": "FullVS (the full VS splash) — or the VS style chosen in the app. Tap to show or hide; hold to switch between FullVS and GlassVS.",
+      "States": [
+        {
+          "Image": "imgs/keys/vs-off",
+          "ShowTitle": false
+        },
+        {
+          "Image": "imgs/keys/vs-on",
+          "ShowTitle": false
+        }
+      ],
+      "DisableAutomaticStates": true,
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboscore.lite.playervs",
+      "Name": "Match · GlassVS",
+      "Icon": "imgs/actions/playervs",
+      "Tooltip": "GlassVS: the glass lock-in VS — the two players face to face, pictures framed, names under them. Any match or format; stays up until you press again.",
+      "States": [
+        {
+          "Image": "imgs/keys/playervs-off",
+          "ShowTitle": false
+        },
+        {
+          "Image": "imgs/keys/playervs-on",
+          "ShowTitle": false
+        }
+      ],
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboscore.lite.vsstyle",
+      "Name": "Match · VS style (FullVS ⇄ GlassVS)",
+      "Icon": "imgs/actions/vsstyle",
+      "Tooltip": "Switches what the VS key and the app's VS button play: FullVS or GlassVS. Shows the one chosen.",
+      "States": [
+        {
+          "Image": "imgs/keys/vsstyle-full",
+          "ShowTitle": false
+        },
+        {
+          "Image": "imgs/keys/vsstyle-glass",
+          "ShowTitle": false
+        }
+      ],
+      "DisableAutomaticStates": true,
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboscore.lite.victory",
+      "Name": "Match · Victory splash",
+      "Icon": "imgs/actions/victory",
+      "Tooltip": "Show or hide the full-screen victory splash for the set winner.",
+      "States": [
+        {
+          "Image": "imgs/keys/victory-off",
+          "ShowTitle": false
+        },
+        {
+          "Image": "imgs/keys/victory-on",
+          "ShowTitle": false
+        }
+      ],
+      "DisableAutomaticStates": true,
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboscore.lite.moments",
+      "Name": "Match · Moment banners",
+      "Icon": "imgs/actions/moments",
+      "Tooltip": "Moment banners on or off: match point, comeback, sweep, upset, runback… said on stream by themselves. The key shows the one that’s up.",
+      "States": [
+        {
+          "Image": "imgs/keys/moments",
+          "ShowTitle": false
+        }
+      ],
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboscore.lite.momentreplay",
+      "Name": "Match · Replay the moment",
+      "Icon": "imgs/actions/momentreplay",
+      "Tooltip": "Shows the last moment’s banner on stream again.",
+      "States": [
+        {
+          "Image": "imgs/keys/momentreplay",
+          "ShowTitle": false
+        }
+      ],
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboscore.lite.h2h",
+      "Name": "Match · Head-to-head line",
+      "Icon": "imgs/actions/h2h",
+      "Tooltip": "Shows the head-to-head of the two players on the scoreboard (from Player history) in a line on stream; press again to hide it.",
+      "States": [
+        {
+          "Image": "imgs/keys/h2h",
+          "ShowTitle": false
+        }
+      ],
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboscore.lite.settimer",
+      "Name": "Match · Set timer",
+      "Icon": "imgs/actions/settimer",
+      "Tooltip": "The set timer in the header: tap to start it, tap again to stop it (and again to start over). Hold to take it off the stream.",
+      "States": [
+        {
+          "Image": "imgs/keys/settimer",
+          "ShowTitle": false
+        }
+      ],
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboscore.lite.statsstrip",
+      "Name": "Match · Stats strip",
+      "Icon": "imgs/actions/statsstrip",
+      "Tooltip": "The stats strip under FullVS and GlassVS — each player's seed and record today, and the head-to-head or a runback between them. Press to switch it on or off.",
+      "States": [
+        {
+          "Image": "imgs/keys/statsstrip",
+          "ShowTitle": false
+        }
+      ],
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboscore.lite.greset",
+      "Name": "Match · Bracket reset splash",
+      "Icon": "imgs/actions/greset",
+      "Tooltip": "The Bracket reset splash: full screen, before the second Grand Final set. Press to show it, again to take it off. It also comes up by itself after the reset.",
+      "States": [
+        {
+          "Image": "imgs/keys/greset",
+          "ShowTitle": false
+        }
+      ],
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboscore.lite.fxq",
+      "Name": "Stream · Effects quality",
+      "Icon": "imgs/actions/fxq",
+      "Tooltip": "Steps the layout effects through Auto, Full, Light and Ultra-light (for weak PCs), or sets one. The key shows the current level.",
+      "States": [
+        {
+          "Image": "imgs/keys/fxq",
+          "ShowTitle": false
+        }
+      ],
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboscore.lite.obsrefresh",
+      "Name": "Stream · Refresh OBS",
+      "Icon": "imgs/actions/obsrefresh",
+      "Tooltip": "Reloads the BeeboScore overlay in OBS (a fresh copy, swapped in seamlessly). Nothing else in OBS is touched.",
+      "States": [
+        {
+          "Image": "imgs/keys/obsrefresh",
+          "ShowTitle": false
+        }
+      ],
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboscore.lite.hideall",
+      "Name": "Stream · Hide all splashes",
+      "Icon": "imgs/actions/hideall",
+      "Tooltip": "Takes every full-screen splash off at once — VS, Victory, Bracket, Top 8, Standings, the format and viewer splashes. The scoreboard stays.",
+      "States": [
+        {
+          "Image": "imgs/keys/hideall",
+          "ShowTitle": false
+        }
+      ],
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboscore.lite.stats",
+      "Name": "Stream · Stats card",
+      "Icon": "imgs/actions/stats",
+      "Tooltip": "Shows a player’s stats card on stream (record, characters, head-to-head from Player history); press again to hide it. Pick Player 1 or 2.",
+      "States": [
+        {
+          "Image": "imgs/keys/stats",
+          "ShowTitle": false
+        }
+      ],
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboscore.lite.nextmatch",
+      "Name": "Bracket · Next match (start.gg)",
+      "Icon": "imgs/actions/nextmatch",
+      "Tooltip": "Load the next match from start.gg at 0–0.",
+      "States": [
+        {
+          "Image": "imgs/keys/nextmatch",
+          "ShowTitle": false
+        }
+      ],
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboscore.lite.bracket",
+      "Name": "Bracket · Bracket splash",
+      "Icon": "imgs/actions/bracket",
+      "Tooltip": "Show or hide the full-screen bracket (switches to the Top 8 splash once Top 8 is set).",
+      "States": [
+        {
+          "Image": "imgs/keys/bracket-off",
+          "ShowTitle": false
+        },
+        {
+          "Image": "imgs/keys/bracket-on",
+          "ShowTitle": false
+        }
+      ],
+      "DisableAutomaticStates": true,
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboscore.lite.top8",
+      "Name": "Bracket · Top 8 splash",
+      "Icon": "imgs/actions/top8",
+      "Tooltip": "Show or hide the Top 8 splash.",
+      "States": [
+        {
+          "Image": "imgs/keys/top8-off",
+          "ShowTitle": false
+        },
+        {
+          "Image": "imgs/keys/top8-on",
+          "ShowTitle": false
+        }
+      ],
+      "DisableAutomaticStates": true,
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboscore.lite.standings",
+      "Name": "Bracket · Top 8 standings",
+      "Icon": "imgs/actions/standings",
+      "Tooltip": "Show or hide the Top 8 standings splash (final placements). Works for start.gg events and viewer tournaments.",
+      "States": [
+        {
+          "Image": "imgs/keys/standings-off",
+          "ShowTitle": false
+        },
+        {
+          "Image": "imgs/keys/standings-on",
+          "ShowTitle": false
+        }
+      ],
+      "DisableAutomaticStates": true,
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboscore.lite.bracketside",
+      "Name": "Bracket · Winners / Losers side",
+      "Icon": "imgs/actions/bracketside",
+      "Tooltip": "Jump the bracket splash to the Winners or Losers side (big brackets). Brings the bracket up if it isn't on stream.",
+      "States": [
+        {
+          "Image": "imgs/keys/bracketside",
+          "ShowTitle": false
+        }
+      ],
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboscore.lite.sggreport",
+      "Name": "Bracket · Report result to start.gg",
+      "Icon": "imgs/actions/sggreport",
+      "Tooltip": "Sends the finished set's result to start.gg (the match has to come from the start.gg bracket, and your account has to be able to report).",
+      "States": [
+        {
+          "Image": "imgs/keys/sggreport",
+          "ShowTitle": false
+        }
+      ],
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboscore.lite.fnext",
+      "Name": "Format · Confirm & next match",
+      "Icon": "imgs/actions/fnext",
+      "Tooltip": "Game formats: the battle score; press to confirm a won set and load the next match.",
+      "States": [
+        {
+          "Image": "imgs/keys/fnext",
+          "ShowTitle": false
+        }
+      ],
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboscore.lite.fundo",
+      "Name": "Format · Undo result",
+      "Icon": "imgs/actions/fundo",
+      "Tooltip": "Game formats: undo the last recorded result.",
+      "States": [
+        {
+          "Image": "imgs/keys/fundo",
+          "ShowTitle": false
+        }
+      ],
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboscore.lite.fsplash",
+      "Name": "Format · Splash (board / team VS / champion)",
+      "Icon": "imgs/actions/fsplash",
+      "Tooltip": "Game formats: show / hide the board, Team VS or champion splash.",
+      "States": [
+        {
+          "Image": "imgs/keys/fsplash-off",
+          "ShowTitle": false
+        },
+        {
+          "Image": "imgs/keys/fsplash-on",
+          "ShowTitle": false
+        }
+      ],
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboscore.lite.fbar",
+      "Name": "Format · Format bar",
+      "Icon": "imgs/actions/fbar",
+      "Tooltip": "Show / hide the format bar along the bottom of the layout (teams, survivors, challengers, standings). Lit while on stream.",
+      "States": [
+        {
+          "Image": "imgs/keys/fbar-off",
+          "ShowTitle": false
+        },
+        {
+          "Image": "imgs/keys/fbar-on",
+          "ShowTitle": false
+        }
+      ],
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboscore.lite.fswitch",
+      "Name": "Format · Switch fighter",
+      "Icon": "imgs/actions/fswitch",
+      "Tooltip": "Team Death Battle: after a life is lost, puts the team's next fighter in (they keep their lives). Set P1 or P2.",
+      "States": [
+        {
+          "Image": "imgs/keys/fswitch",
+          "ShowTitle": false
+        }
+      ],
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboscore.lite.flock",
+      "Name": "Format · Lock in",
+      "Icon": "imgs/actions/flock",
+      "Tooltip": "Team Death Battle: locks in the fighters picked for this battle (closes the switch window) — the Player VS pops up. Locked in too early? Press it again to undo.",
+      "States": [
+        {
+          "Image": "imgs/keys/flock",
+          "ShowTitle": false
+        }
+      ],
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboscore.lite.funlock",
+      "Name": "Format · Undo lock-in",
+      "Icon": "imgs/actions/funlock",
+      "Tooltip": "Team Death Battle: takes back the last lock-in and opens the switch window again, until the next set is recorded. Lit while there's a lock-in to undo.",
+      "States": [
+        {
+          "Image": "imgs/keys/funlock",
+          "ShowTitle": false
+        }
+      ],
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.t1fgc.beeboscore.lite.slot",
+      "Name": "BeeboScore key (follows the app)",
+      "Icon": "imgs/actions/slot",
+      "Tooltip": "Does whatever its place on the deck calls for: the match keys on the left, the format's keys on the right. Set up Stream Deck in the app fills a whole deck with these.",
+      "States": [
+        {
+          "Image": "imgs/keys/slot",
+          "ShowTitle": false
+        },
+        {
+          "Image": "imgs/keys/slot",
+          "ShowTitle": false
+        }
+      ],
+      "DisableAutomaticStates": true,
+      "UserTitleEnabled": false
+    }
+  ],
+  "Profiles": [
+    {
+      "Name": "profiles/BeeboScore Lite XL",
+      "DeviceType": 2,
+      "Readonly": false,
+      "DontAutoSwitchWhenInstalled": false,
+      "AutoInstall": false
+    },
+    {
+      "Name": "profiles/BeeboScore Lite",
+      "DeviceType": 0,
+      "Readonly": false,
+      "DontAutoSwitchWhenInstalled": false,
+      "AutoInstall": false
+    }
+  ]
+}

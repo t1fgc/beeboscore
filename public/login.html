@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>BeeboScore — Sign in</title>
+<title>BeeboScore Lite — Sign in</title>
+<script src="/static/beebo-icons.js"></script><script>BI.watch(document, {})</script>
 <style>
   :root { --bg: #0b0d12; --card: #161a23; --line: #262c3b; --text: #eef1f7; --muted: #8b93a7; --accent: #ffc23d; --err: #ff4d5e; }
   * { box-sizing: border-box; }
@@ -21,10 +22,11 @@
 </head>
 <body>
 <form id="f">
-  <div class="logo"><img src="/favicon.ico" alt="" width="34" height="34" style="border-radius:9px"> BeeboScore</div>
+  <div class="logo"><img src="/favicon.ico" alt="" width="34" height="34" style="border-radius:9px"> BeeboScore Lite</div>
   <p>Enter the remote-control password set in the app.</p>
   <label for="pw">Password</label>
-  <input id="pw" type="password" autocomplete="current-password" autofocus required>
+  <input id="nm" type="text" autocomplete="username" placeholder="Your name (team members only)" aria-label="Your name (team members only)" style="margin-bottom:8px">
+  <input id="pw" type="password" autocomplete="current-password" autofocus required aria-label="Password">
   <button type="submit">Sign in</button>
   <div class="err" id="err"></div>
 </form>
@@ -34,10 +36,10 @@
     const err = document.getElementById('err');
     err.textContent = '';
     try {
-      const r = await fetch('/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: document.getElementById('pw').value }) });
+      const r = await fetch('/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: document.getElementById('pw').value, name: document.getElementById('nm').value.trim() }) });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || 'Sign-in failed');
-      location.href = '/';
+      location.href = /^\/(casters|op)?$/.test(d.go || '') ? d.go : '/';
     } catch (x) { err.textContent = x.message; }
   };
 </script>

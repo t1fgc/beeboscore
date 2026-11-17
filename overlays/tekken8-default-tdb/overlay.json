@@ -1,0 +1,15 @@
+{
+  "title": "Default — Team Death Battle",
+  "game": "Tekken 8",
+  "family": "Default",
+  "format": "tdb",
+  "base": "tekken8-default",
+  "description": "Every fighter’s lives above the player bars, the team bar along the bottom (with pictures if you like), switch-ins after a lost life, and the knock-outs.",
+  "colors": [
+    "#151822",
+    "#ff3b5c",
+    "#3b8eff"
+  ],
+  "version": "1",
+  "gen": 2
+}

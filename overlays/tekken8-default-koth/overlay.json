@@ -1,0 +1,15 @@
+{
+  "title": "Default — King of the Hill",
+  "game": "Tekken 8",
+  "family": "Default",
+  "format": "koth",
+  "base": "tekken8-default",
+  "description": "The king wears the crown on their bar with the win streak, challengers queue along the bottom.",
+  "colors": [
+    "#151822",
+    "#ff3b5c",
+    "#3b8eff"
+  ],
+  "version": "1",
+  "gen": 2
+}

@@ -1,0 +1,14 @@
+{
+  "title": "Default",
+  "game": "Tekken 8",
+  "gen": 2,
+  "version": 8,
+  "family": "Default",
+  "order": 0,
+  "colors": [
+    "#151822",
+    "#ff3b5c",
+    "#3b8eff"
+  ],
+  "description": "The app’s own Classic look on stream, in its colours and its own lettering (Beebo Classic, always in capitals): dark slate cards with thin borders, red for 1P, blue for 2P, gold for the round and the win. Plain fades and slides only — no particles, no effects. Has its own VS, Victory, Top 8, bracket and standings screens."
+}

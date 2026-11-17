@@ -1,0 +1,23 @@
+/* BeeboScore — Circuit: a controller's insides. Board green, copper traces, a status LED. Panels and chips: art/ui-themes.js (Layout Designer). */
+@font-face { font-family: 'Orbitron'; font-weight: 700; font-style: normal; font-display: swap; src: url(/static/fonts/orbitron-latin-700-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Chakra Petch'; font-weight: 600; font-style: normal; font-display: swap; src: url(/static/fonts/chakra-petch-latin-600-normal.woff2) format('woff2'); }
+html.theme-circuit {
+  --t-card: url(/static/themes/circuit/card.svg);
+  --t-btn: url(/static/themes/circuit/btn.svg);
+  --t-btnp: url(/static/themes/circuit/btnp.svg);
+  --t-field: url(/static/themes/circuit/field.svg);
+  --t-railon: url(/static/themes/circuit/railon.svg);
+  --t-segon: url(/static/themes/circuit/segon.svg);
+  --t-chip: url(/static/themes/circuit/chip.svg);
+  --t-head: url(/static/themes/circuit/head.svg);
+  --t-orn: url(/static/themes/circuit/orn.svg);
+  --t-arrow: url(/static/themes/circuit/arrow.svg);
+  --t-search: url(/static/themes/circuit/search.svg);
+  --t-bg: url(/static/themes/circuit/bg.svg);
+  --bg: #061009; --bg-2: #0a1a12; --card: #0c2018; --card-2: #123326; --line: #1d4a33; --line-2: #2d6f4c;
+  --text: #e3f7ec; --muted: #8fb8a1; --faint: #5f8a72; --accent: #39ff88; --accent-2: #c9843f; --p1: #ff5a6a; --p2: #4fb4ff; --ok: #39ff88; --err: #ff5a6a;
+  --t-display: 'Orbitron', 'Segoe UI', sans-serif; --t-label: 'Chakra Petch', 'Segoe UI', sans-serif; --t-h2: #e9b46e; --t-brand: #e3f7ec;
+  --t-btn-ink: #e3f7ec; --t-btnp-ink: #062012; --t-segon-ink: #062012; --t-railon-ink: #39ff88; --t-railon-label: #39ff88; --t-p1-ink: #062012; --t-p2-ink: #062012;
+}
+html.theme-circuit .card > h2 { color: #e9b46e; font-size: 13px; letter-spacing: 2px; }
+html.theme-circuit nav.rail { background: #071710; }

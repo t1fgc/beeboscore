@@ -44,7 +44,7 @@
     const go = () => {
       root.classList.remove('sb-instant');
       // instant is for the first frame only: from here on this copy plays everything (a lost life, a K.O., the splashes)
-      // like any other. (It used to stay on, so after a seamless refresh the format moments never played again.)
+      // like any other (it used to stay on, so after a seamless refresh the format moments never played again)
       window.__SB_INSTANT = false;
       requestAnimationFrame(() => requestAnimationFrame(() => { try { parent.postMessage({ sb: 'ready' }, location.origin); } catch (e) {} }));
     };
@@ -70,9 +70,12 @@
   const flagEmoji = cc => (cc = String(cc || '').trim().toUpperCase(), /^[A-Z]{2}$/.test(cc) ? String.fromCodePoint(...[...cc].map(c => 0x1f1a5 + c.charCodeAt(0))) : '');
 
   // player pictures + flags come through BeeboScore's picture cache (instant, offline-safe)
-  const viaCache = u => /^https:\/\/([\w-]+\.)*(start\.gg|flagcdn\.com)\//i.test(String(u || '')) ? '/img?u=' + encodeURIComponent(u) : u;
+  // 1.12.8: q = how many pictures the app has made bigger so far — a new one changes the address, so the bigger copy is fetched
+  let upq = 0;
+  const viaCache = u => /^https:\/\/([\w-]+\.)*(start\.gg|flagcdn\.com)\//i.test(String(u || '')) ? '/img?u=' + encodeURIComponent(u) + (upq && /start\.gg/i.test(u) ? '&q=' + upq : '') : u;
   function enrich(raw) {
     const s = JSON.parse(JSON.stringify(raw));
+    upq = Number(s.fx && s.fx.upv) || 0;
     const ft = /^FT\s*(\d+)$/i.exec(String(s.bestOf || '').trim());
     const bo = ft ? 0 : Number(s.bestOf);
     const firstTo = ft ? Number(ft[1]) : (bo ? Math.ceil(bo / 2) : 0);
@@ -89,7 +92,7 @@
       p.displayName = (p.name || '') + (p.loser ? ' [L]' : '');
       p.fullName = p.team ? `${p.team} | ${p.name || ''}` : (p.name || '');
       p.flag = flagEmoji(cc);
-      p.flagUrl = /^[a-z]{2}$/.test(cc) ? viaCache(`https://flagcdn.com/w80/${cc}.png`) : '';
+      p.flagUrl = /^[a-z]{2}$/.test(cc) ? `/static/flags/${cc}.svg` : '';   // built in: works offline
       if (p.avatar) p.avatar = viaCache(p.avatar);
       p.characterSlug = slug(p.character);
       p.leading = p.score > (Number(o.score) || 0);
@@ -157,7 +160,6 @@
       const v = String(fill(el.getAttribute('data-sb-bg'), s));
       el.style.backgroundImage = v ? `url("${v}")` : 'none';
     });
-    document.documentElement.classList.toggle('sb-off', !!s.hidden);      // the whole overlay hidden (downtime)
     document.querySelectorAll('[data-sb-show]').forEach(el => el.classList.toggle('sb-hidden', !truthy(el.getAttribute('data-sb-show'), s)));
     document.querySelectorAll('[data-sb-hide]').forEach(el => el.classList.toggle('sb-hidden', truthy(el.getAttribute('data-sb-hide'), s)));
     document.querySelectorAll('[data-sb-class]').forEach(el => {
@@ -204,7 +206,7 @@
 
   const style = document.createElement('style');
   style.textContent = '.sb-hidden{display:none!important}' +
-    'body{transition:opacity .5s ease}html.sb-off body,html.sb-leaving body{opacity:0!important;pointer-events:none}html.sb-leaving body{transition:opacity .26s ease}' +
+    'body{transition:opacity .5s ease}html.sb-leaving body{opacity:0!important;pointer-events:none;transition:opacity .26s ease}' +
     'html.sb-instant *,html.sb-instant *::before,html.sb-instant *::after{transition:none!important;animation-delay:0s!important;animation-duration:0s!important}' +
     // potato mode: every animation jumps to its final frame and stays there
     'html.sb-potato *,html.sb-potato *::before,html.sb-potato *::after{transition:none!important;animation-delay:0s!important;animation-duration:0s!important;animation-iteration-count:1!important}' +
@@ -217,11 +219,28 @@
   if (document.fonts) document.fonts.ready.then(fitAll);
 
   // ---- realtime: WebSocket first, falls back to polling (works through any proxy/tunnel)
-  let lastUpdated = 0, lastRev = null, polling = null, wsOk = false, lastSnd = '';
+  let lastUpdated = 0, lastRev = null, polling = null, wsOk = false, lastSig = '';
+  // 1.12.16: smaller updates — the app sends only what changed ("statep"); a missed one asks for the whole state again
+  let stObj = null, stRev = 0;
+  function applyPatch(msg, ws) {
+    const d = msg.data || {};
+    if (msg.type === 'state') { stObj = d; stRev = Number(msg.rev) || 0; return msg; }
+    if (!stObj || !stRev || d.base !== stRev) { try { ws && ws.readyState === 1 && ws.send(JSON.stringify({ type: 'state-full' })); } catch (e) {} return null; }
+    const s = { ...stObj }, copied = new Set();
+    const own = k => { if (!copied.has(k)) { copied.add(k); s[k] = s[k] && typeof s[k] === 'object' && !Array.isArray(s[k]) ? { ...s[k] } : {}; } return s[k]; };
+    for (const p of d.del || []) { if (p.length === 1) delete s[p[0]]; else if (s[p[0]] && typeof s[p[0]] === 'object') delete own(p[0])[p[1]]; }
+    for (const p of d.set || []) { if (p.length === 2) { s[p[0]] = p[1]; copied.add(p[0]); } else own(p[0])[p[1]] = p[2]; }
+    stObj = s; stRev = d.rev;
+    return { type: 'state', data: s, seq: msg.seq, rev: d.rev };
+  }
   function onState(data) {
-    const snd = data && JSON.stringify(data.snd || null);           // Settings › Sound changes arrive without a new update
-    if (!data || (data.updatedAt && data.updatedAt === lastUpdated && snd === lastSnd)) return;
-    lastUpdated = data.updatedAt; lastSnd = snd;
+    // 1.12.12: the whole update is compared, not just its stamp, so a change that arrives without a new stamp (the up-next
+    // list, King of the Hill records, sound / effects / commentary / logo settings, effect cues) always gets through, and
+    // only true repeats (the same update by socket and by polling, a reconnect) are dropped
+    if (!data) return;
+    let sig = ''; try { sig = JSON.stringify(data); } catch (e) { sig = String(Math.random()); }
+    if (sig === lastSig) return;
+    lastSig = sig; lastUpdated = data.updatedAt;
     const run = () => { queue.push(data); if (queue.length > 40) queue.splice(0, queue.length - 40); if (!holdT) drain(); };
     document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', run, { once: true }) : run();
   }
@@ -250,6 +269,7 @@
   if (!viewerId) viewerId = Math.random().toString(36).slice(2, 12);
   let sock = null;
   const say = m => { try { if (REPORT && sock && sock.readyState === 1) sock.send(JSON.stringify(m)); } catch (e) {} };
+  window.addEventListener('beebo:gfx-load', e => say({ type: 'gfx-load', ...(e.detail || {}) }));   // 1.12.11: BeeboFX 3's load, for the panel
   function hello() {
     let tz = '', obs = false;
     try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) {}
@@ -268,8 +288,12 @@
     if (msg.type === 'fx') { document.documentElement.classList.toggle('sb-light', !!(msg.data && msg.data.light)); return; }
     if (msg.type === 'state') { onState(msg.data); ackWhenDrawn(msg.seq, t0); }
     else if (msg.type === 'bracket') { try { window.__SB_BRACKET = msg.data; window.dispatchEvent(new CustomEvent('scoreboard:bracket', { detail: msg.data })); } catch (e) {} }   // framed too: new results arrive live
+    else if (msg.type === 'vtpub') { try { window.__SB_VT = msg.data; window.dispatchEvent(new CustomEvent('scoreboard:vt', { detail: msg.data })); } catch (e) {} }   // the viewer tournament (its join splash)
     else if (FRAMED) return;            // reloads / layout switches: the host page swaps in a fresh copy instead
-    else if (msg.type === 'reload') { if (!msg.data.overlay || msg.data.overlay === OVERLAY) softReload(); }
+    else if (msg.type === 'talk') { try { window.dispatchEvent(new CustomEvent('beebo:talk', { detail: msg.data || {} })); } catch (e) {} }   // 1.12.15
+    else if (msg.type === 'show:draw' || msg.type === 'ext') { try { window.dispatchEvent(new CustomEvent(msg.type === 'ext' ? 'beebo:ext' : 'beebo:' + msg.type, { detail: msg.data || {} })); } catch (e) {} }   // 1.12.18: drawing on replays; extensions' cues
+    else if (msg.type === 'tempo') { try { window.dispatchEvent(new CustomEvent('beebo:tempo', { detail: msg.data || {} })); } catch (e) {} }   // 1.12.15: tap tempo
+    else if (msg.type === 'reload') { if (msg.data.ifLite) { if (window.__SB_LITE_BUNDLE) softReload(); } else if (!msg.data.overlay || msg.data.overlay === OVERLAY) softReload(); }   // 1.12.16: ifLite — effects back on: only pages without the engines
     else if (msg.type === 'active-changed') { if (FOLLOW && msg.data.overlay !== OVERLAY) location.reload(); }
   }
   // A page opened on its own (not inside the OBS host page): fade out, come back as an instant copy (no intro) that fades
@@ -277,8 +301,8 @@
   function softReload() {
     if (q.has('preview') || q.has('potato') || window.__SB_POTATO) return location.reload();
     root.classList.add('sb-leaving');
-    const u = new URL(location.href); u.searchParams.set('instant', ''); u.searchParams.set('t', Date.now());
-    setTimeout(() => location.replace(u.toString().replace('instant=&', 'instant&').replace(/instant=$/, 'instant')), 280);
+    const u = new URL(location.href); u.searchParams.set('instant', 'soft'); u.searchParams.set('t', Date.now());   // soft: a live copy that only skips its intro (1.12.21)
+    setTimeout(() => location.replace(u.toString()), 280);
   }
   if (INSTANT && !FRAMED && /[?&]instant(&|=|$)/.test(location.search)) {
     try { const u = new URL(location.href); u.searchParams.delete('instant'); u.searchParams.delete('t'); history.replaceState(null, '', u.pathname + (u.search || '') + u.hash); } catch (e) {}
@@ -304,12 +328,12 @@
     let ws;
     try { ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws'); }
     catch (e) { startPolling(); return; }
-    sock = ws; ws.onopen = hello;
+    sock = ws; ws.onopen = () => { try { ws.send(JSON.stringify({ type: 'patch-ok' })); } catch (e) {} hello(); };
     const fallback = setTimeout(() => { if (!wsOk) startPolling(); }, 4000);
     ws.onmessage = e => {
       const t0 = performance.now();
       if (!wsOk) { wsOk = true; clearTimeout(fallback); stopPolling(); }
-      try { handle(JSON.parse(e.data), t0); } catch (err) { console.error(err); }
+      try { let m = JSON.parse(e.data); if (m.type === 'state' || m.type === 'statep') m = applyPatch(m, ws); if (m) handle(m, t0); } catch (err) { console.error(err); }
     };
     ws.onclose = () => {
       clearTimeout(fallback);

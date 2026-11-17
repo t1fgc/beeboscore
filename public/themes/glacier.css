@@ -1,0 +1,23 @@
+/* BeeboScore — Glacier: cut ice and frosted glass in cold light. Panels and shards: art/ui-themes.js (Layout Designer). */
+@font-face { font-family: 'Michroma'; font-weight: 400; font-style: normal; font-display: swap; src: url(/static/fonts/michroma-latin-400-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Exo 2'; font-weight: 800; font-style: normal; font-display: swap; src: url(/static/fonts/exo-2-latin-800-normal.woff2) format('woff2'); }
+html.theme-glacier {
+  --t-card: url(/static/themes/glacier/card.svg);
+  --t-btn: url(/static/themes/glacier/btn.svg);
+  --t-btnp: url(/static/themes/glacier/btnp.svg);
+  --t-field: url(/static/themes/glacier/field.svg);
+  --t-railon: url(/static/themes/glacier/railon.svg);
+  --t-segon: url(/static/themes/glacier/segon.svg);
+  --t-chip: url(/static/themes/glacier/chip.svg);
+  --t-head: url(/static/themes/glacier/head.svg);
+  --t-orn: url(/static/themes/glacier/orn.svg);
+  --t-arrow: url(/static/themes/glacier/arrow.svg);
+  --t-search: url(/static/themes/glacier/search.svg);
+  --t-bg: url(/static/themes/glacier/bg.svg);
+  --bg: #071321; --bg-2: #0a1a2b; --card: #0d1d30; --card-2: #14304a; --line: #1f4260; --line-2: #2f6a8f;
+  --text: #eafaff; --muted: #9cc3d6; --faint: #6b93a8; --accent: #8fe3ff; --accent-2: #c9b8ff; --p1: #ff6b8b; --p2: #8fe3ff; --ok: #6ff2c1; --err: #ff6b8b;
+  --t-display: 'Michroma', 'Segoe UI', sans-serif; --t-label: 'Exo 2', 'Segoe UI', sans-serif; --t-h2: #cdf4ff; --t-brand: #eafaff;
+  --t-btn-ink: #eafaff; --t-btnp-ink: #06182a; --t-segon-ink: #06182a; --t-railon-ink: #eafaff; --t-railon-label: #8fe3ff; --t-p1-ink: #06182a; --t-p2-ink: #06182a;
+}
+html.theme-glacier .card > h2 { font-size: 12px; letter-spacing: 2px; }
+html.theme-glacier nav.rail { background: linear-gradient(180deg, #0a1a2b, #071321); }

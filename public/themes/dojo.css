@@ -1,0 +1,32 @@
+/* BeeboScore — Ink Dojo: rice paper, brush ink and a vermilion seal (a light theme). Panels and seals: art/ui-themes.js (Layout Designer). */
+@font-face { font-family: 'Shojumaru'; font-weight: 400; font-style: normal; font-display: swap; src: url(/static/fonts/shojumaru-latin-400-normal.woff2) format('woff2'); unicode-range: U+0000-0025, U+0027-FFFF; }   /* its & reads like ¢: Cinzel draws that one */
+@font-face { font-family: 'Cinzel'; font-weight: 700; font-style: normal; font-display: swap; src: url(/static/fonts/cinzel-latin-700-normal.woff2) format('woff2'); }
+html.theme-dojo {
+  --t-card: url(/static/themes/dojo/card.svg);
+  --t-btn: url(/static/themes/dojo/btn.svg);
+  --t-btnp: url(/static/themes/dojo/btnp.svg);
+  --t-field: url(/static/themes/dojo/field.svg);
+  --t-railon: url(/static/themes/dojo/railon.svg);
+  --t-segon: url(/static/themes/dojo/segon.svg);
+  --t-chip: url(/static/themes/dojo/chip.svg);
+  --t-head: url(/static/themes/dojo/head.svg);
+  --t-orn: url(/static/themes/dojo/orn.svg);
+  --t-arrow: url(/static/themes/dojo/arrow.svg);
+  --t-search: url(/static/themes/dojo/search.svg);
+  --t-bg: url(/static/themes/dojo/bg.svg);
+  color-scheme: light;
+  --bg: #efe6d4; --bg-2: #f7f0e2; --card: #fffaf0; --card-2: #efe5d1; --line: #d9ccb2; --line-2: #b9a888;
+  --text: #1d1a17; --muted: #6a5f50; --faint: #968a75; --accent: #c8361d; --accent-2: #b58a3a; --p1: #c8361d; --p2: #1f5fa8; --ok: #2b8a4b; --err: #c8361d;
+  --t-display: 'Shojumaru', Georgia, serif; --t-label: 'Cinzel', Georgia, serif; --t-h2: #1d1a17; --t-brand: #1d1a17;
+  --t-btn-ink: #1d1a17; --t-btnp-ink: #fff6ea; --t-segon-ink: #fff6ea; --t-railon-ink: #fff6ea; --t-railon-label: #c8361d; --t-p1-ink: #ffffff; --t-p2-ink: #ffffff;
+}
+html.theme-dojo .head { color: var(--text); }
+html.theme-dojo .card > h2 { color: #1d1a17; font-size: 13px; }
+html.theme-dojo nav.rail { background: linear-gradient(90deg, #f3ead8, #ece2cd); }
+html.theme-dojo nav.rail button { color: #5d5243; }
+html.theme-dojo .btn.primary:hover, html.theme-dojo .chip.on, html.theme-dojo .seg button.on { color: #fff6ea; }
+html.theme-dojo .toast { background: #1d1a17; color: #fff6ea; border-color: #1d1a17; }
+html.theme-dojo .pcard { background: #fffdf7; }
+html.theme-dojo .toggle .sw::after { background: #8b7f6c; }
+html.theme-dojo .toggle input:checked + .sw::after { background: #fff6ea; }
+html.theme-dojo ::-webkit-scrollbar-thumb { background: #cdbf9f; }

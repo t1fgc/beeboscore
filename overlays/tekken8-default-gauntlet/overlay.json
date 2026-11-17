@@ -1,0 +1,15 @@
+{
+  "title": "Default — Gauntlet",
+  "game": "Tekken 8",
+  "family": "Default",
+  "format": "gauntlet",
+  "base": "tekken8-default",
+  "description": "One run through a whole line-up: the gauntlet ladder along the bottom, the stage on the player bars.",
+  "colors": [
+    "#151822",
+    "#ff3b5c",
+    "#3b8eff"
+  ],
+  "version": "1",
+  "gen": 2
+}

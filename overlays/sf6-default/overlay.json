@@ -1,0 +1,14 @@
+{
+  "title": "Default",
+  "game": "Street Fighter 6",
+  "gen": 2,
+  "version": 1,
+  "family": "Default",
+  "order": 0,
+  "colors": [
+    "#151822",
+    "#ff3b5c",
+    "#3b8eff"
+  ],
+  "description": "The app’s own Classic look for Street Fighter 6: dark slate cards, red for 1P, blue for 2P, gold for the round — along the top, above the health bars and between the portraits and the timer — in the game’s own shapes, clear of its HUD. Plain fades and slides only."
+}

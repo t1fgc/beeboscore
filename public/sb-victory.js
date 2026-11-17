@@ -3,7 +3,7 @@
  * Injected into every layout. Shown/hidden by state.victory ({ show, side }): BeeboScore puts it up a
  * moment after a set is won (Settings › Scoreboard), from the app, a Stream Deck key or a shortcut.
  *
- * Pick the look with   <meta name="sb-victory" content="shattered">   (styles: shattered, porcelain, oni)
+ * Pick the look with   <meta name="sb-victory" content="shattered">   (styles: shattered, oni)
  * or turn it off with  <meta name="sb-victory" content="off">  (layouts from the Layout Designer draw
  * their own victory screen). <html> gets the class sb-victory-on while it's showing.
  */
@@ -16,11 +16,7 @@
   let style = meta ? String(meta.content || '').trim().toLowerCase() : '';
   if (style === 'off') return;
   const NAME = String(window.__SB_OVERLAY || '').toLowerCase();
-  if (!['shattered', 'porcelain', 'oni'].includes(style)) style = /(^|-)oni($|-)/.test(NAME) ? 'oni' : 'shattered';
-  // Porcelain is Ember's victory screen in white: the same moves (style "shattered"), .vc-pc on top for the colours
-  const PC = style === 'porcelain';
-  if (PC) style = 'shattered';
-  const BASE = 'vc-st-' + style + (PC ? ' vc-pc' : '');
+  if (!['shattered', 'oni'].includes(style)) style = /(^|-)oni($|-)/.test(NAME) ? 'oni' : 'shattered';
   const POTATO = () => document.documentElement.classList.contains('sb-potato') || !!window.__SB_POTATO;
 
   const CSS = `
@@ -112,8 +108,8 @@
 #sb-victory.vc-st-oni .vc-rays{left:0;top:150px;width:1920px;height:330px;border-radius:0;background:url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1920 330' preserveAspectRatio='none'%3E%3Cdefs%3E%3ClinearGradient id='r' x1='0' y1='0' x2='1' y2='0'%3E%3Cstop offset='0' stop-color='%234a0004'/%3E%3Cstop offset='.5' stop-color='%23d61a20'/%3E%3Cstop offset='1' stop-color='%234a0004'/%3E%3C/linearGradient%3E%3CradialGradient id='h' cx='.5' cy='.5' r='.5'%3E%3Cstop offset='0' stop-color='%23ffb347' stop-opacity='.7'/%3E%3Cstop offset='1' stop-color='%23b3060f' stop-opacity='0'/%3E%3C/radialGradient%3E%3C/defs%3E%3Cpolygon points='0,107 60,94 120,97 180,97 240,83 300,86 360,79 420,62 480,49 540,48 600,50 660,35 720,34 780,29 840,13 900,4 960,-4 1020,5 1080,3 1140,14 1200,31 1260,40 1320,39 1380,45 1440,50 1500,74 1560,65 1620,70 1680,93 1740,86 1800,104 1860,94 1920,113 1920,219 1860,233 1800,230 1740,235 1680,247 1620,249 1560,257 1500,260 1440,278 1380,277 1320,285 1260,286 1200,297 1140,313 1080,327 1020,322 960,337 900,328 840,324 780,309 720,297 660,286 600,278 540,281 480,280 420,257 360,263 300,248 240,250 180,239 120,235 60,227 0,225' fill='%23141210' opacity='.92'/%3E%3Cpolygon points='0,117 60,104 120,107 180,107 240,93 300,96 360,89 420,72 480,59 540,58 600,60 660,45 720,44 780,39 840,23 900,14 960,6 1020,15 1080,13 1140,24 1200,41 1260,50 1320,49 1380,55 1440,60 1500,84 1560,75 1620,80 1680,103 1740,96 1800,114 1860,104 1920,123 1920,209 1860,223 1800,220 1740,225 1680,237 1620,239 1560,247 1500,250 1440,268 1380,267 1320,275 1260,276 1200,287 1140,303 1080,317 1020,312 960,327 900,318 840,314 780,299 720,287 660,276 600,268 540,271 480,270 420,247 360,253 300,238 240,240 180,229 120,225 60,217 0,215' fill='url%28%23r%29'/%3E%3Cellipse cx='960' cy='165' rx='520' ry='150' fill='url%28%23h%29'/%3E%3Cpolygon points='194,26 199,33 194,42 187,34' fill='%23e9c35e' opacity='0.54'/%3E%3Cpolygon points='1074,146 1076,149 1074,153 1071,150' fill='%23e9c35e' opacity='0.82'/%3E%3Cpolygon points='251,205 254,208 251,212 249,209' fill='%23e9c35e' opacity='0.66'/%3E%3Cpolygon points='409,88 415,96 409,106 401,98' fill='%23e9c35e' opacity='0.85'/%3E%3Cpolygon points='584,277 587,280 584,285 581,281' fill='%23e9c35e' opacity='0.65'/%3E%3Cpolygon points='1640,205 1642,208 1640,211 1638,208' fill='%23e9c35e' opacity='0.94'/%3E%3Cpolygon points='409,86 415,92 409,101 403,94' fill='%23e9c35e' opacity='0.61'/%3E%3Cpolygon points='569,34 571,37 569,40 566,38' fill='%23e9c35e' opacity='0.74'/%3E%3Cpolygon points='467,191 470,195 467,201 462,196' fill='%23e9c35e' opacity='0.68'/%3E%3Cpolygon points='1842,155 1846,160 1842,167 1836,161' fill='%23e9c35e' opacity='0.88'/%3E%3Cpolygon points='351,54 357,61 351,71 344,63' fill='%23e9c35e' opacity='0.86'/%3E%3Cpolygon points='479,66 484,72 479,80 473,73' fill='%23e9c35e' opacity='0.92'/%3E%3Cpolygon points='377,293 383,300 377,310 370,301' fill='%23e9c35e' opacity='0.75'/%3E%3Cpolygon points='809,44 811,46 809,49 807,47' fill='%23e9c35e' opacity='0.93'/%3E%3Cpolygon points='458,223 461,226 458,231 454,227' fill='%23e9c35e' opacity='0.86'/%3E%3Cpolygon points='1145,100 1148,103 1145,107 1142,104' fill='%23e9c35e' opacity='0.81'/%3E%3Cpolygon points='132,78 136,84 132,90 127,85' fill='%23e9c35e' opacity='0.88'/%3E%3Cpolygon points='1179,92 1185,99 1179,109 1172,101' fill='%23e9c35e' opacity='0.55'/%3E%3Cpolygon points='32,91 36,96 32,102 27,97' fill='%23e9c35e' opacity='0.48'/%3E%3Cpolygon points='338,120 343,126 338,133 333,127' fill='%23e9c35e' opacity='0.52'/%3E%3Cpolygon points='695,274 702,282 695,293 687,284' fill='%23e9c35e' opacity='0.78'/%3E%3Cpolygon points='1327,187 1329,190 1327,194 1324,191' fill='%23e9c35e' opacity='0.47'/%3E%3Cpolygon points='34,282 39,288 34,296 28,289' fill='%23e9c35e' opacity='0.93'/%3E%3Cpolygon points='41,201 45,206 41,212 36,207' fill='%23e9c35e' opacity='0.82'/%3E%3Cpolygon points='612,312 614,315 612,318 610,315' fill='%23e9c35e' opacity='0.72'/%3E%3Cpolygon points='1415,279 1420,285 1415,293 1409,286' fill='%23e9c35e' opacity='0.80'/%3E%3Cpolygon points='1523,285 1526,290 1523,295 1519,290' fill='%23e9c35e' opacity='0.79'/%3E%3Cpolygon points='1730,272 1733,276 1730,282 1725,277' fill='%23e9c35e' opacity='0.85'/%3E%3Cpolygon points='1658,181 1662,187 1658,194 1652,188' fill='%23e9c35e' opacity='0.64'/%3E%3Cpolygon points='1119,195 1121,198 1119,201 1116,198' fill='%23e9c35e' opacity='0.77'/%3E%3Cpolygon points='1907,273 1912,279 1907,287 1901,280' fill='%23e9c35e' opacity='0.64'/%3E%3Cpolygon points='1411,185 1415,189 1411,195 1407,190' fill='%23e9c35e' opacity='0.87'/%3E%3Cpolygon points='161,238 163,240 161,243 159,240' fill='%23e9c35e' opacity='0.75'/%3E%3Cpolygon points='923,78 928,84 923,92 917,85' fill='%23e9c35e' opacity='0.70'/%3E%3Cpolygon points='1180,288 1183,291 1180,296 1176,292' fill='%23e9c35e' opacity='0.46'/%3E%3Cpolygon points='578,215 581,218 578,223 575,219' fill='%23e9c35e' opacity='0.53'/%3E%3Cpolygon points='1739,208 1743,213 1739,219 1734,214' fill='%23e9c35e' opacity='0.90'/%3E%3Cpolygon points='628,212 630,215 628,219 625,215' fill='%23e9c35e' opacity='0.67'/%3E%3Cpolygon points='1547,282 1553,289 1547,299 1540,291' fill='%23e9c35e' opacity='0.64'/%3E%3Cpolygon points='1120,107 1122,110 1120,114 1117,111' fill='%23e9c35e' opacity='0.70'/%3E%3C/svg%3E") center/100% 100% no-repeat;opacity:1;filter:drop-shadow(0 0 30px rgba(179,6,15,.35))}
 #sb-victory.vc-st-oni .vc-art .vc-ink{fill:#141210}
 #sb-victory.vc-st-oni .vc-art .vc-dot{fill:#141210}
-#sb-victory.vc-st-oni .vc-kanji{display:block;position:absolute;right:40px;top:650px;font:900 300px/1 'Yu Mincho','Hiragino Mincho ProN','Noto Serif JP','MS Mincho',serif;color:#141210;opacity:.9;
-  text-shadow:6px 6px 0 rgba(179,6,15,.25)}
+#sb-victory.vc-st-oni .vc-kanji{display:block;position:absolute;right:40px;top:650px;width:300px;height:300px;font-size:300px;line-height:1;color:#141210;opacity:.9;
+  filter:drop-shadow(6px 6px 0 rgba(179,6,15,.25))}
 #sb-victory.vc-st-oni .vc-ghost{color:#141210;opacity:.05}
 #sb-victory.vc-st-oni .vc-round{color:#141210;background:#fbf8f1;box-shadow:inset 0 -3px 0 #141210,0 6px 18px rgba(0,0,0,.12);clip-path:polygon(18px 0,100% 0,calc(100% - 18px) 100%,0 100%)}
 #sb-victory.vc-st-oni .vc-round .vc-event{color:#b3060f}
@@ -130,7 +126,7 @@
 #sb-victory.vc-st-oni .vc-score{background:#141210;clip-path:polygon(10px 0,100% 0,calc(100% - 10px) 100%,0 100%)}
 #sb-victory.vc-st-oni .vc-score i{color:#9b9184;opacity:1}#sb-victory.vc-st-oni .vc-ws{color:#f6dc8c}#sb-victory.vc-st-oni .vc-ls{color:#9b9184}
 #sb-victory.vc-st-oni .vc-def em{color:#141210}
-/* entrance: the paper wipes in with a brush stroke → the sun rises → 勝 stamps → gold title → the name ignites */
+/* entrance: the paper wipes in with a brush stroke → the sun rises → the drawn win mark stamps → gold title → the name ignites */
 #sb-victory.vc-st-oni.vc-in .vc-bg{animation:vc-wipe .55s cubic-bezier(.6,0,.3,1) both}
 #sb-victory.vc-st-oni.vc-in .vc-rays{animation:vc-sun .8s .3s cubic-bezier(.2,.9,.3,1.1) both}
 #sb-victory.vc-st-oni.vc-in .vc-art{animation:vc-wipe .5s .5s cubic-bezier(.6,0,.3,1) both}
@@ -191,37 +187,14 @@ html.sb-potato #sb-victory .vc-frame path{filter:none}
 @keyframes vc-drop{from{opacity:0;transform:translate(-50%,-40px)}}
 @keyframes vc-up{from{opacity:0;transform:translateY(26px)}}
 html.sb-potato #sb-victory *,html.sb-potato #sb-victory{animation:none!important;transition:none!important}
-/* =================================== PORCELAIN: Ember's victory screen glazed white, deep gold =================================== */
-#sb-victory.vc-st-shattered.vc-pc .vc-bg{background:radial-gradient(ellipse 55% 50% at 50% 42%,rgba(246,196,83,.34),transparent 70%),radial-gradient(ellipse 80% 40% at 50% 112%,rgba(255,90,31,.2),transparent 70%),linear-gradient(180deg,#ffffff,#e4e6eb)}
-#sb-victory.vc-st-shattered.vc-pc .vc-rays{background:repeating-conic-gradient(from 0deg at 50% 40%,rgba(217,154,43,.13) 0deg 5deg,transparent 5deg 18deg)}
-#sb-victory.vc-st-shattered.vc-pc .vc-ghost{color:#b98a2a}
-#sb-victory.vc-st-shattered.vc-pc .vc-round{color:#15171d;background:linear-gradient(180deg,#ffffff,#e3e5ea);box-shadow:inset 0 2px 0 #d99a2b,inset 0 0 0 1px rgba(185,138,42,.4)}
-#sb-victory.vc-st-shattered.vc-pc .vc-round .vc-event{color:#a86f12}
-#sb-victory.vc-st-shattered.vc-pc .vc-ava{background:linear-gradient(160deg,#ffe7a3,#d99a2b 40%,#8a5a12)}
-#sb-victory.vc-st-shattered.vc-pc .vc-ava img,#sb-victory.vc-st-shattered.vc-pc .vc-ava .vc-ini{background:linear-gradient(160deg,#ffffff,#e1e3e9);color:#a86f12}
-#sb-victory.vc-st-shattered.vc-pc .vc-team{color:#e2430c}
-#sb-victory.vc-st-shattered.vc-pc .vc-name,#sb-victory.vc-st-shattered.vc-pc .vc-n2{background:linear-gradient(180deg,#b8801a 0%,#8a5a0c 45%,#5a3a05 58%,#a8741a 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-stroke:0}
-#sb-victory.vc-st-shattered.vc-pc .vc-name{filter:drop-shadow(0 3px 0 rgba(255,255,255,.95)) drop-shadow(0 5px 10px rgba(138,90,12,.3))}
-#sb-victory.vc-st-shattered.vc-pc .vc-n2{filter:drop-shadow(0 0 22px rgba(246,196,83,.9))}
-#sb-victory.vc-st-shattered.vc-pc .vc-line{color:#6c7180}
-#sb-victory.vc-st-shattered.vc-pc .vc-score{background:linear-gradient(180deg,#24262e,#0b0c10);box-shadow:inset 0 0 0 1px rgba(246,196,83,.7)}
-#sb-victory.vc-st-shattered.vc-pc .vc-def em{color:#15171d}
-#sb-victory.vc-st-shattered.vc-pc .vc-frame .f1{stroke:#d99a2b;filter:drop-shadow(0 0 5px rgba(217,154,43,.7))}
-#sb-victory.vc-st-shattered.vc-pc .vc-frame .f2{stroke:rgba(185,138,42,.4)}
-#sb-victory.vc-st-shattered.vc-pc .vc-title .vc-tm{background:linear-gradient(180deg,#e8b64a 0%,#c4861c 40%,#8a5a0c 52%,#d99a2b 64%,#a86f12 82%,#5a3a05 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
-  filter:drop-shadow(0 3px 0 rgba(255,255,255,.9)) drop-shadow(0 6px 14px rgba(138,90,12,.28))}
-#sb-victory.vc-st-shattered.vc-pc .vc-t1 span{color:#d99a2b;text-shadow:0 0 18px rgba(246,196,83,.55),0 0 60px rgba(246,196,83,.3)}
-#sb-victory.vc-st-shattered.vc-pc .vc-t2 span{color:#f0b840;text-shadow:0 0 30px rgba(246,196,83,.7),0 0 90px rgba(246,196,83,.4)}
-#sb-victory.vc-st-shattered.vc-pc .vc-pic img{filter:drop-shadow(0 0 30px rgba(217,154,43,.35))}
-
 `;
   const st = document.createElement('style'); st.textContent = CSS;
   (document.head || document.documentElement).appendChild(st);
 
   // ----------------------------------------------------------------------------- DOM
   const root = document.createElement('div');
-  root.id = 'sb-victory'; root.className = BASE; root.setAttribute('aria-hidden', 'true');
-  root.innerHTML = `<div class="vc-bg"></div><div class="vc-rays"></div><svg class="vc-art" viewBox="0 0 1920 1080"></svg><svg class="vc-frame" viewBox="0 0 1920 1080"><path class="f2" d="M70,40H1850L1880,70V1010L1850,1040H70L40,1010V70Z"/><path class="f1" d="M60,28H1860L1892,60V1020L1860,1052H60L28,1020V60Z"/></svg><div class="vc-f2w"><svg class="vc-frame vc-frame2" viewBox="0 0 1920 1080"><path class="f1" d="M60,28H1860L1892,60V1020L1860,1052H60L28,1020V60Z"/></svg></div><div class="vc-kanji">勝</div><div class="vc-ghost"></div>
+  root.id = 'sb-victory'; root.className = 'vc-st-' + style; root.setAttribute('aria-hidden', 'true');
+  root.innerHTML = `<div class="vc-bg"></div><div class="vc-rays"></div><svg class="vc-art" viewBox="0 0 1920 1080"></svg><svg class="vc-frame" viewBox="0 0 1920 1080"><path class="f2" d="M70,40H1850L1880,70V1010L1850,1040H70L40,1010V70Z"/><path class="f1" d="M60,28H1860L1892,60V1020L1860,1052H60L28,1020V60Z"/></svg><div class="vc-f2w"><svg class="vc-frame vc-frame2" viewBox="0 0 1920 1080"><path class="f1" d="M60,28H1860L1892,60V1020L1860,1052H60L28,1020V60Z"/></svg></div><div class="vc-kanji">${window.BI ? window.BI.mark('win') : ''}</div><div class="vc-ghost"></div>
     <div class="vc-pic"><img alt=""></div>
     <div class="vc-round"><span class="vc-event"></span><span class="vc-rnd"></span></div>
     <div class="vc-title"><div class="vc-t1" aria-hidden="true"><span>VICTORY</span></div><div class="vc-t2" aria-hidden="true"><span>VICTORY</span></div><span class="vc-tm">VICTORY</span></div>
@@ -253,7 +226,7 @@ html.sb-potato #sb-victory *,html.sb-potato #sb-victory{animation:none!important
   // ----------------------------------------------------------------------------- particles
   const cv = $('.vc-cv'), ctx = cv.getContext('2d');
   let parts = [], raf = 0, last = 0, ambient = 0;
-  const COL = style === 'oni' ? [[255, 70, 20], [255, 150, 50], [200, 10, 20]] : PC ? [[214, 150, 30], [235, 120, 30], [190, 110, 20]] : [[255, 220, 140], [255, 190, 90], [255, 120, 50]];
+  const COL = style === 'oni' ? [[255, 70, 20], [255, 150, 50], [200, 10, 20]] : [[255, 220, 140], [255, 190, 90], [255, 120, 50]];
   function burst(x, y, n, power, spread = Math.PI * 2, dir = -Math.PI / 2) {
     if (window.SBPerf) n = window.SBPerf.n(n);
     for (let i = 0; i < n; i++) {
@@ -273,7 +246,7 @@ html.sb-potato #sb-victory *,html.sb-potato #sb-victory{animation:none!important
       const [x, y] = onFrame();
       parts.push(style === 'oni'
         ? { x, y, vx: (Math.random() - .5) * 30, vy: -(60 + Math.random() * 90), g: -20, life: 1, decay: 1.4 + Math.random(), size: 3 + Math.random() * 5, c: COL[Math.random() * COL.length | 0], wob: Math.random() * 6 }
-        : { x, y, vx: (Math.random() - .5) * 20, vy: -(10 + Math.random() * 30), g: -5, life: 1, decay: .7 + Math.random() * .6, size: 1 + Math.random() * 2, c: PC ? [222, 160, 40] : [255, 240, 190], wob: Math.random() * 6 });
+        : { x, y, vx: (Math.random() - .5) * 20, vy: -(10 + Math.random() * 30), g: -5, life: 1, decay: .7 + Math.random() * .6, size: 1 + Math.random() * 2, c: [255, 240, 190], wob: Math.random() * 6 });
     }
     const n = style === 'oni' ? 3 : 2;
     for (let i = 0; i < n; i++) parts.push({ x: 200 + Math.random() * 1520, y: 1090, vx: (Math.random() - .5) * 40, vy: -(80 + Math.random() * 160), g: -20,
@@ -288,7 +261,7 @@ html.sb-potato #sb-victory *,html.sb-potato #sb-victory{animation:none!important
     if (ambient && (ambient += dt) > .06) { ambient = 1e-6; if (!P || Math.random() < P.q) rise(); }
     if (dirty) ctx.clearRect(dirty[0] - 2, dirty[1] - 2, dirty[2] - dirty[0] + 4, dirty[3] - dirty[1] + 4);
     let nb = null;
-    ctx.globalCompositeOperation = style === 'oni' || PC ? 'source-over' : 'lighter';   // added light vanishes on white
+    ctx.globalCompositeOperation = style === 'oni' ? 'source-over' : 'lighter';
     parts = parts.filter(p => (p.life -= p.decay * dt) > 0);
     for (const p of parts) {
       p.vy += p.g * dt; p.vx *= .99; p.x += (p.vx + (p.wob ? Math.sin(t / 300 + p.wob) * 30 : 0)) * dt; p.y += p.vy * dt;
@@ -355,7 +328,7 @@ html.sb-potato #sb-victory *,html.sb-potato #sb-victory{animation:none!important
   function show(instant) {
     clear();
     document.documentElement.classList.add('sb-victory-on');
-    root.className = BASE + ' vc-show';
+    root.className = 'vc-st-' + style + ' vc-show';
     refit();
     if (instant || POTATO()) { if (!POTATO()) { ambient = 1e-6; run(); } return; }
     void root.offsetWidth; root.classList.add('vc-in');
@@ -366,9 +339,9 @@ html.sb-potato #sb-victory *,html.sb-potato #sb-victory{animation:none!important
   function hide(instant) {
     clear(); ambient = 0;
     document.documentElement.classList.remove('sb-victory-on');
-    if (instant || POTATO() || !root.classList.contains('vc-show')) { root.className = BASE; parts = []; return; }
+    if (instant || POTATO() || !root.classList.contains('vc-show')) { root.className = 'vc-st-' + style; parts = []; return; }
     root.classList.remove('vc-in'); root.classList.add('vc-out');
-    later(() => { if (!shown) { root.className = BASE; parts = []; } }, 650);
+    later(() => { if (!shown) { root.className = 'vc-st-' + style; parts = []; } }, 650);
   }
   let first = true;
   addEventListener('scoreboard', e => {
@@ -384,7 +357,7 @@ html.sb-potato #sb-victory *,html.sb-potato #sb-victory{animation:none!important
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) return;
     if (shown && root.classList.contains('vc-in')) { clear(); root.classList.remove('vc-in'); const n = $('.vc-name'); n.textContent = n.dataset.txt || n.textContent; }
-    if (!shown && root.className !== BASE) { clear(); root.className = BASE; }
+    if (!shown && root.className !== 'vc-st-' + style) { clear(); root.className = 'vc-st-' + style; }
   });
   window.BeeboVictory = { style };
 })();

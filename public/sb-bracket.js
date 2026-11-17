@@ -387,9 +387,9 @@ html.sb-potato #sb-bracket .br-embers,html.sb-potato #sb-bracket .br-spark{displ
     const k = sb && sb.splash && sb.splash.show;
     if (SHOT) return 'standings';
     if (!k || !['bracket', 'top8', 'standings'].includes(k)) return '';   // the format splashes (fvs / fboard / fwin) are sb-format.js's
-    if (k === 'top8' || k === 'standings') return k;
-    if (model && model.autoTop8 !== false && model.top8 && model.top8.reached) return 'top8';
-    return 'bracket';
+    const want = k === 'top8' || k === 'standings' ? k : model && model.autoTop8 !== false && model.top8 && model.top8.reached ? 'top8' : 'bracket';
+    if (!SHOT && (window.__SB_BRACKET_OWN || []).includes(want) && !(want === 'bracket' && model && model.grid)) return '';   // a Designer layout with its own screen for it draws it (1.12.14: but not a group stage's tables)
+    return want;
   }
   const stateOf = s => s.live ? 'live' : (model && model.next && String(model.next) === String(s.id) && !s.done) ? 'next' : s.done ? 'done' : s.state === 'playing' ? 'playing' : 'wait';
   const scoreText = (p, s) => (p.score == null || (!s.done && !s.live && s.state !== 'playing')) ? '' : (p.score < 0 ? 'DQ' : p.score);
@@ -706,7 +706,7 @@ html.sb-potato #sb-bracket .br-embers,html.sb-potato #sb-bracket .br-spark{displ
     else if (mode === 'standings') info = renderStandings();
     else if (model && model.grid) info = renderGrid();
     else if (model) info = renderBracket();
-    else { root.querySelector('.br-stage').innerHTML = `<div class="sh"><div class="sh-bg"></div><div class="br-msg">${modelTried ? 'Load a start.gg bracket or start a viewer tournament in BeeboScore' : ''}</div></div>`; info = { boxes: new Map(), hot: [] }; }
+    else { root.querySelector('.br-stage').innerHTML = `<div class="sh"><div class="sh-bg"></div><div class="br-msg">${modelTried ? 'Load a start.gg bracket in BeeboScore Lite' : ''}</div></div>`; info = { boxes: new Map(), hot: [] }; }
     root.classList.toggle('t8m', mode === 'top8' || mode === 'standings');
     lastKey = keyNow();
     rememberSigs();

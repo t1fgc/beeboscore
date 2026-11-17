@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="referrer" content="no-referrer">
+<title>BeeboScore — start.gg sign-in</title>
+<!--
+  Relay for "Sign in with start.gg" when the start.gg app only accepts an https redirect URL.
+  Host this page (for example on GitHub Pages), set it as the start.gg app's redirect URL, and put the same URL under
+  BeeboScore › Bracket › start.gg › Advanced. It only passes the one-time code straight to BeeboScore on this PC
+  (127.0.0.1, the port is inside `state`): nothing is stored, logged or sent anywhere else.
+-->
+<style>body{font:16px system-ui,sans-serif;background:#0e0f13;color:#eceef3;display:grid;place-items:center;height:100vh;margin:0}div{text-align:center;max-width:460px}</style>
+</head>
+<body><div id="m">Handing you back to BeeboScore…</div>
+<script>
+(() => {
+  const q = new URLSearchParams(location.search), state = q.get('state') || '', m = /^p(\d{2,5})\.[0-9a-f]{64}$/.exec(state);
+  if (!m) { document.getElementById('m').textContent = 'This sign-in link isn’t valid. Start again from BeeboScore.'; return; }
+  const port = Number(m[1]); if (port < 1024 || port > 65535) return;
+  const out = new URLSearchParams({ state }); for (const k of ['code', 'error']) if (q.get(k)) out.set(k, q.get(k));
+  history.replaceState(null, '', location.pathname);                       // the code doesn't stay in the address bar or history
+  location.replace(`http://127.0.0.1:${port}/startgg/callback?${out}`);
+})();
+</script>
+</body>
+</html>

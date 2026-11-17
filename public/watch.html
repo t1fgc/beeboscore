@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex, nofollow">
+<!--CSP-->
+<title>__TITLE__ — live bracket</title>
+<style>
+  :root { --bg: #0b0c12; --card: #151722; --card2: #1d2030; --line: #2a2e42; --text: #f1f2f7; --muted: #8e94aa; --ac: #ff6a1f; --ac2: #ffb020; --win: #2fd17a; --me: #4fd1ff; --hd: #11131c; --hd2: rgba(17,19,28,.92); --tbd: #555b70; color-scheme: dark; }
+  @media (prefers-color-scheme: light) { :root { --bg: #f4f5f9; --card: #fff; --card2: #eceef4; --line: #d9dce6; --text: #151722; --muted: #616781; --ac: #e2540f; --ac2: #b77400; --win: #128a4c; --me: #0a84b8; --hd: #fff; --hd2: rgba(255,255,255,.94); --tbd: #a3a8b8; color-scheme: light; } .pl.p2 .pn { color: #7d8597 !important; } .pl.p1 .pn { color: #c08a12 !important; } }
+  * { box-sizing: border-box; } [hidden] { display: none !important; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.35 "Segoe UI", system-ui, -apple-system, Roboto, sans-serif; }
+  header { position: sticky; top: 0; z-index: 5; background: linear-gradient(180deg, var(--hd) 70%, var(--hd2)); border-bottom: 1px solid var(--line); padding: 14px 16px 12px; }
+  .top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; max-width: 1400px; margin: 0 auto; }
+  h1 { margin: 0; font-size: clamp(20px, 4vw, 30px); font-weight: 800; letter-spacing: -.01em; flex: 1 1 260px; min-width: 0; overflow-wrap: anywhere; }
+  .pill { font-size: 12px; font-weight: 800; letter-spacing: .1em; padding: 4px 10px; border-radius: 99px; background: var(--card2); color: var(--muted); text-transform: uppercase; display: inline-flex; align-items: center; gap: 6px; }
+  .pill.live { background: rgba(255,106,31,.16); color: var(--ac); } .pill.live::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--ac); animation: p 1.3s infinite; }
+  .pill.done { background: rgba(47,209,122,.14); color: var(--win); } .pill.off { background: rgba(255,77,94,.14); color: #ff7d8a; }
+  @keyframes p { 50% { opacity: .3; } }
+  .sub { color: var(--muted); font-size: 13px; max-width: 1400px; margin: 4px auto 0; }
+  .find { max-width: 1400px; margin: 10px auto 0; display: flex; gap: 8px; }
+  .find input { flex: 1; min-width: 0; font: inherit; color: var(--text); background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+  .find input:focus { outline: 2px solid var(--me); border-color: transparent; }
+  main { max-width: 1400px; margin: 0 auto; padding: 16px; }
+  .me { display: none; margin-bottom: 16px; padding: 14px 16px; border-radius: 12px; background: linear-gradient(90deg, rgba(79,209,255,.16), var(--card)); border: 1px solid rgba(79,209,255,.5); }
+  .me.on { display: block; } .me b { font-size: 18px; } .me small { display: block; color: var(--muted); margin-top: 2px; }
+  .now { display: none; margin-bottom: 16px; padding: 14px 16px; border-radius: 12px; background: linear-gradient(90deg, rgba(255,106,31,.18), var(--card)); border: 1px solid rgba(255,106,31,.5); }
+  .now.on { display: block; } .now .k { font-size: 11px; font-weight: 800; letter-spacing: .14em; color: var(--ac); }
+  .now .m { font-size: 20px; font-weight: 800; margin-top: 4px; overflow-wrap: anywhere; } .now .m i { color: var(--muted); font-style: normal; font-weight: 600; margin: 0 8px; }
+  h2 { font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin: 22px 0 10px; }
+  .cols { display: flex; gap: 14px; overflow-x: auto; padding-bottom: 10px; scroll-snap-type: x proximity; }
+  .col { flex: 0 0 230px; scroll-snap-align: start; display: flex; flex-direction: column; }
+  .col > b { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sets { display: flex; flex-direction: column; justify-content: space-around; gap: 8px; flex: 1; }
+  .set { background: var(--card); border: 1px solid var(--line); border-radius: 9px; overflow: hidden; }
+  .set.live { border-color: var(--ac); box-shadow: 0 0 0 1px var(--ac), 0 0 18px rgba(255,106,31,.25); }
+  .set.next { border-style: dashed; border-color: var(--ac2); }
+  .set .tag { font-size: 10px; font-weight: 800; letter-spacing: .1em; padding: 2px 8px; background: var(--ac); color: #1a0a02; display: block; }
+  .set.next .tag { background: transparent; color: var(--ac2); }
+  .r { display: flex; align-items: center; gap: 8px; padding: 7px 10px; min-height: 34px; }
+  .r + .r { border-top: 1px solid var(--line); }
+  .r span { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
+  .r em { font-style: normal; font-weight: 800; min-width: 22px; text-align: right; color: var(--muted); }
+  .r.w span, .r.w em { color: var(--text); } .r.w em { color: var(--win); }
+  .r.l span { color: var(--muted); text-decoration: line-through; text-decoration-color: rgba(255,106,31,.5); }
+  .r.tbd span { color: var(--tbd); font-style: italic; }
+  .r.hit { background: rgba(79,209,255,.18); } .r.hit span { color: var(--me); text-decoration: none; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+  .stand { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+  .pl { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; }
+  .pl .pn { font-size: 22px; font-weight: 900; width: 52px; color: var(--muted); }
+  .pl.p1 { border-color: #f2c14e; background: linear-gradient(90deg, rgba(242,193,78,.18), var(--card)); } .pl.p1 .pn { color: #f2c14e; }
+  .pl.p2 .pn { color: #cfd5e0; } .pl.p3 .pn { color: #d58b54; }
+  .pl b { font-size: 17px; overflow-wrap: anywhere; } .pl.hit { border-color: var(--me); }
+  .tabs { display: flex; gap: 6px; overflow-x: auto; margin: 18px 0 0; padding-bottom: 4px; }
+  .tabs button, .more { font: inherit; font-size: 13px; font-weight: 700; color: var(--muted); background: var(--card); border: 1px solid var(--line); border-radius: 99px; padding: 6px 12px; cursor: pointer; white-space: nowrap; }
+  .tabs button.on { color: var(--text); border-color: var(--ac); background: color-mix(in srgb, var(--ac) 16%, var(--card)); }
+  .empty { color: var(--muted); padding: 30px 0; text-align: center; }
+  footer { max-width: 1400px; margin: 10px auto 30px; padding: 0 16px; color: #5d6378; font-size: 12px; display: flex; gap: 12px; flex-wrap: wrap; }
+  footer a { color: var(--muted); }
+  .set .stn { font-size: 10px; font-weight: 800; letter-spacing: .1em; padding: 2px 8px; display: block; background: rgba(79,209,255,.16); color: var(--me); }
+  .find button { font: inherit; font-size: 14px; font-weight: 700; color: var(--text); background: var(--card2); border: 1px solid var(--line); border-radius: 10px; padding: 0 12px; cursor: pointer; white-space: nowrap; }
+  .find button.on { border-color: var(--me); color: var(--me); }
+  .alert { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 9; max-width: calc(100% - 32px); padding: 14px 18px; border-radius: 12px; background: var(--me); color: #031018; font-weight: 800; box-shadow: 0 10px 40px rgba(0,0,0,.4); }
+  .tbl { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; margin-bottom: 8px; }
+  .tbl th, .tbl td { padding: 7px 10px; text-align: left; font-size: 14px; border-top: 1px solid var(--line); } .tbl th { color: var(--muted); font-size: 11px; letter-spacing: .1em; border: 0; white-space: nowrap; }
+  .tbl td.n { text-align: right; font-variant-numeric: tabular-nums; width: 3.2em; } .tbl tr.hit td { background: rgba(79,209,255,.18); color: var(--me); } .tbl tr.cut td:first-child { box-shadow: inset 3px 0 var(--win); }
+  .tbls { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+  @media (max-width: 600px) { .col { flex-basis: 78vw; } main { padding: 12px; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="top"><h1 id="t">__TITLE__</h1><span class="pill" id="st">Loading</span><span class="pill" id="left" hidden></span></div>
+  <div class="sub" id="sub"></div>
+  <div class="find"><input id="q" type="search" placeholder="Find yourself — type your name" autocomplete="off" spellcheck="false" aria-label="Find a player"><button id="bell" hidden title="Get a notification when it's your turn (keep this page open)">🔔 Notify me</button></div>
+</header>
+<main>
+  <div class="me" id="me"></div>
+  <div class="now" id="now"></div>
+  <div id="body"><p class="empty">Loading the bracket…</p></div>
+</main>
+<div class="alert" id="alert" role="status" aria-live="assertive" hidden></div>
+<footer><span id="upd"></span><span>View only · made with BeeboScore Lite (developed by Beebo)</span><a id="open" href="#" target="_blank" rel="noopener noreferrer" hidden>Open the live page</a></footer>
+<script type="application/json" id="boot">__BOOT__</script>
+<script>
+(() => {
+  'use strict';
+  const boot = JSON.parse(document.getElementById('boot').textContent || '{}');
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const ord = n => n + (n % 10 === 1 && n % 100 !== 11 ? 'st' : n % 10 === 2 && n % 100 !== 12 ? 'nd' : n % 10 === 3 && n % 100 !== 13 ? 'rd' : 'th');
+  let D = boot.snapshot || null, etag = '', fails = 0, q = '';
+  try { q = localStorage.getItem('beebo.watch.me') || ''; } catch (e) {}
+  $('q').value = q;
+  if (boot.page) { const a = $('open'); a.href = boot.page; a.hidden = false; }
+
+  const hit = n => q && n && n.toLowerCase().includes(q.toLowerCase());
+  const row = (p, s) => `<div class="r${p.w ? ' w' : ''}${p.l ? ' l' : ''}${!p.n ? ' tbd' : ''}${hit(p.n) ? ' hit' : ''}"><span>${esc(p.n || 'TBD')}</span><em>${p.s == null ? '' : p.s < 0 ? 'DQ' : esc(p.s)}</em></div>`;
+  const setH = s => `<div class="set ${s.st}">${s.st === 'live' ? '<span class="tag">ON STREAM</span>' : s.st === 'next' ? '<span class="tag">UP NEXT</span>' : s.stn ? `<span class="stn">STATION ${esc(s.stn)}</span>` : ''}${row(s.a, s)}${row(s.b, s)}</div>`;
+  const tblH = (rows, pool) => `<table class="tbl"><tr><th>${pool ? 'POOL ' + esc(pool) : '#'}</th><th>PLAYER</th><th class="n">W</th><th class="n">L</th><th class="n">+/-</th></tr>${rows.map(r => `<tr class="${hit(r.name) ? 'hit' : ''}${r.cut ? ' cut' : ''}"><td class="n" style="text-align:left">${r.rank}</td><td>${esc(r.name)}${r.dq ? ' (DQ)' : ''}</td><td class="n">${r.w}</td><td class="n">${r.l}</td><td class="n">${r.gd > 0 ? '+' : ''}${r.gd}</td></tr>`).join('')}</table>`;
+  const secSets = (secs, pool) => (secs || []).flatMap(x => x.cols.flatMap(c => c.sets.map(s => ({ ...s, round: (pool ? `Pool ${pool} · ` : '') + c.name }))));
+  const allSets = () => !D ? [] : [...(D.pools ? D.pools.flatMap(p => secSets(p.sections, p.pool)) : secSets(D.sections)), ...((D.grid && D.grid.sets) || []).map(s => ({ ...s, round: D.grid.round }))];
+  let pool = null, allStand = false;     // the pool tab being looked at; show every placement
+
+  function findMe() {
+    const box = $('me');
+    if (!q || !D) { box.className = 'me'; return; }
+    const pl = (D.players || []).filter(p => hit(p.n));
+    if (!pl.length) { box.className = 'me on'; box.innerHTML = `<b>No player called “${esc(q)}”</b><small>Check the spelling — it's the name you signed up with.</small>`; return; }
+    if (pl.length > 3) { box.className = 'me on'; box.innerHTML = `<b>${pl.length} players match “${esc(q)}”</b><small>Type a bit more of your name.</small>`; return; }
+    box.className = 'me on';
+    box.innerHTML = pl.map(p => {
+      if (p.place === 1) return `<div><b>🏆 ${esc(p.n)} — Champion!</b></div>`;
+      if (p.out) return `<div><b>${esc(p.n)} — ${p.place ? ord(p.place) + ' place' : 'out'}</b><small>Thanks for playing!</small></div>`;
+      const s = allSets().find(x => x.st !== 'done' && [x.a.n, x.b.n].includes(p.n));
+      const vs = s ? (s.a.n === p.n ? s.b.n : s.a.n) : '';
+      return `<div><b>${esc(p.n)} — still in</b><small>${s ? (s.st === 'live' ? `Playing now${vs ? ' vs ' + esc(vs) : ''} (${esc(s.round)})` : vs ? `Next: vs ${esc(vs)} · ${esc(s.round)}${s.stn ? ` · <b>Station ${esc(s.stn)}</b>` : s.st === 'next' ? ' · <b>up next on stream</b>' : ''}` : `Next: ${esc(s.round)} — waiting for an opponent`) : D.status === 'done' ? '' : 'Waiting for the next round'}</small></div>`;
+    }).join('');
+  }
+  function render() {
+    if (!D) return;
+    $('t').textContent = D.title; document.title = D.title + ' — live bracket';
+    const st = $('st'); st.className = 'pill ' + (closed || fails > 2 ? 'off' : D.status === 'done' ? 'done' : 'live');
+    st.textContent = closed ? (D.status === 'done' ? 'Link closed — final results' : 'Link closed — last results') : fails > 2 ? 'Offline — last results' : D.status === 'done' ? 'Final results' : 'Live';
+    const lf = $('left'); lf.hidden = D.status === 'done' || !D.entrants; lf.textContent = `${D.left} of ${D.entrants} left`;
+    $('sub').textContent = [D.game, D.sub].filter(Boolean).join(' · ');
+    const now = $('now');
+    if (D.now && D.status !== 'done') { now.className = 'now on'; now.innerHTML = `<div class="k">ON STREAM NOW · ${esc(D.now.round || '')}</div><div class="m">${esc(D.now.a)}<i>vs</i>${esc(D.now.b)}</div>`; } else now.className = 'now';
+    let h = '';
+    if (D.standings && D.standings.length && D.status === 'done') {
+      const st = allStand ? D.standings : D.standings.slice(0, 8);
+      h += `<h2>Final standings</h2><div class="stand">${st.map(s => `<div class="pl p${s.place}${hit(s.name) ? ' hit' : ''}"><span class="pn">${ord(s.place)}</span><b>${esc(s.name)}</b></div>`).join('')}</div>`
+        + (D.standings.length > 8 ? `<p><button class="more" id="more">${allStand ? 'Show the Top 8 only' : `Show all ${D.standings.length} placements`}</button></p>` : '');
+    }
+    if (D.grid && D.grid.table) { const T = D.grid.table; h += `<h2>Standings${D.grid.kind ? ' · ' + esc(D.grid.kind.toLowerCase()) : ''}</h2>` + (T.length && T[0].rows ? `<div class="tbls">${T.map(x => tblH(x.rows, x.pool)).join('')}</div>` : tblH(T, '')); }
+    if (D.grid) h += `<h2>${esc(D.grid.round)} — ${D.grid.sets.length} matches</h2><div class="grid">${D.grid.sets.map(setH).join('')}</div>`;
+    else if (D.pools && D.pools.length > 1) {
+      const cur = D.pools.find(p => p.pool === pool) || D.pools.find(p => q && secSets(p.sections).some(x => hit(x.a.n) || hit(x.b.n))) || D.pools.find(p => p.current) || D.pools[0];
+      h += `<div class="tabs">${D.pools.map(p => `<button class="${p === cur ? 'on' : ''}" data-pool="${esc(p.pool)}">Pool ${esc(p.pool)}${p.current ? ' · on stream' : ''}</button>`).join('')}</div>`;
+      for (const sec of cur.sections) if (sec.cols.length) h += `<h2>${esc(sec.name)}</h2><div class="cols">${sec.cols.map(c => `<div class="col"><b>${esc(c.name)}</b><div class="sets">${c.sets.map(setH).join('')}</div></div>`).join('')}</div>`;
+    }
+    else for (const sec of D.sections || []) if (sec.cols.length) h += `<h2>${esc(sec.name)}</h2><div class="cols">${sec.cols.map(c => `<div class="col"><b>${esc(c.name)}</b><div class="sets">${c.sets.map(setH).join('')}</div></div>`).join('')}</div>`;
+    if (!h) h = '<p class="empty">The bracket isn’t out yet — check back soon.</p>';
+    $('body').innerHTML = h;
+    updLabel();
+    findMe();
+    bellUi();
+  }
+  $('body').addEventListener('click', e => { const b = e.target.closest('[data-pool]'); if (b) { pool = b.dataset.pool; render(); } if (e.target.closest('#more')) { allStand = !allStand; render(); } });
+  $('q').addEventListener('input', e => { q = e.target.value.trim(); try { localStorage.setItem('beebo.watch.me', q); } catch (er) {} render(); mine = myStatus(); });
+
+  let closed = false, gotAt = 0;
+  function updLabel() {
+    if (!D || !D.at) { $('upd').textContent = ''; return; }
+    const s = Math.round((Date.now() - (gotAt || D.at)) / 1000);
+    $('upd').textContent = closed ? 'Final update ' + new Date(D.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : s < 5 ? 'Updated just now' : s < 60 ? `Updated ${s}s ago` : 'Updated ' + new Date(gotAt || D.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+  setInterval(updLabel, 5000);
+  // 🔔 Notify me: while this page is open, a notification (and a banner) when your match is on stream, up next or called to a station
+  let bellOn = false, mine = '';
+  try { bellOn = localStorage.getItem('beebo.watch.bell') === '1'; } catch (e) {}
+  const canNote = 'Notification' in window;
+  function bellUi() {
+    const me = q && D ? (D.players || []).filter(p => hit(p.n)) : [];
+    const b = $('bell'); b.hidden = me.length !== 1 || me[0].out || D.status === 'done';
+    b.classList.toggle('on', bellOn); b.textContent = bellOn ? '🔔 On' : '🔔 Notify me';
+  }
+  function myStatus() {
+    const me = q && D ? (D.players || []).filter(p => hit(p.n)) : [];
+    if (me.length !== 1 || me[0].out) return '';
+    const s = allSets().find(x => x.st !== 'done' && [x.a.n, x.b.n].includes(me[0].n));
+    if (!s || !s.a.n || !s.b.n) return '';
+    const vs = s.a.n === me[0].n ? s.b.n : s.a.n;
+    return s.st === 'live' ? `live|You're on stream now|vs ${vs} · ${s.round}` : s.stn ? `stn${s.stn}|Go to Station ${s.stn}|vs ${vs} · ${s.round}` : s.st === 'next' ? `next|You're up next on stream|vs ${vs} — get ready!` : '';
+  }
+  function ping() {
+    const k = myStatus(), was = mine; mine = k;
+    if (!bellOn || !k || k === was || was === null) return;
+    const [, title, body] = k.split('|');
+    const a = $('alert'); a.textContent = `🔔 ${title} — ${body}`; a.hidden = false; clearTimeout(ping.t); ping.t = setTimeout(() => { a.hidden = true; }, 15000);
+    try { if (navigator.vibrate) navigator.vibrate([200, 100, 200]); } catch (e) {}
+    try { if (canNote && Notification.permission === 'granted') new Notification(title, { body, tag: 'beebo-watch' }); } catch (e) {}
+    if (document.hidden) { const t0 = document.title; let n = 0; const f = setInterval(() => { document.title = n++ % 2 ? t0 : '● ' + title; if (!document.hidden || n > 20) { clearInterval(f); document.title = t0; } }, 1000); }
+  }
+  $('bell').addEventListener('click', async () => {
+    bellOn = !bellOn;
+    if (bellOn && canNote && Notification.permission === 'default') { try { await Notification.requestPermission(); } catch (e) {} }
+    try { localStorage.setItem('beebo.watch.bell', bellOn ? '1' : '0'); } catch (e) {}
+    mine = myStatus(); bellUi();
+    const a = $('alert'); a.textContent = bellOn ? (canNote && Notification.permission === 'granted' ? "🔔 You'll get a notification when it's your turn — keep this page open." : "🔔 Keep this page open — it'll flash and buzz when it's your turn.") : 'Notifications off.'; a.hidden = false; clearTimeout(ping.t); ping.t = setTimeout(() => { a.hidden = true; }, 6000);
+  });
+  $('alert').addEventListener('click', () => { $('alert').hidden = true; });
+  const got = d => { if (!d || !d.title) return; D = d; gotAt = Date.now(); fails = 0; render(); ping(); };
+  // live: one open connection that the app pushes results down; asking every few seconds if that isn't possible
+  function live() {
+    if (!boot.events || !window.EventSource) return poll();
+    let es, opened = false;
+    try { es = new EventSource(boot.events); } catch (e) { return poll(); }
+    es.onopen = () => { opened = true; fails = 0; };
+    es.onmessage = e => { try { got(JSON.parse(e.data)); } catch (er) {} };
+    es.addEventListener('closed', () => { es.close(); closed = true; render(); });
+    es.onerror = () => { if (!opened) { es.close(); poll(); return; } fails++; if (fails > 2) render(); };
+  }
+  async function poll() {
+    if (!boot.data || closed) return;
+    try {
+      const r = await fetch(boot.data, { cache: 'no-store', headers: etag ? { 'If-None-Match': etag } : {}, credentials: 'omit', referrerPolicy: 'no-referrer' });
+      if (r.status === 304) { fails = 0; }
+      else if (r.ok) { etag = r.headers.get('ETag') || ''; got(await r.json()); }
+      else if (r.status === 404 || r.status === 410) { closed = true; render(); return; }      // the link was closed
+      else fails++;
+    } catch (e) { fails++; }
+    if (fails > 2) render();
+    setTimeout(poll, document.hidden ? 15000 : fails ? Math.min(30000, 4000 * fails) : 4000);
+  }
+  render(); mine = myStatus(); live();
+})();
+</script>
+</body>
+</html>

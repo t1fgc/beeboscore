@@ -1,0 +1,14 @@
+# One-click deploy on Render (render.com): New → Blueprint → pick this repo.
+services:
+  - type: web
+    name: beeboscore
+    runtime: docker
+    plan: starter          # an always-on plan; free plans sleep when idle and your overlay would go blank
+    healthCheckPath: /overlay
+    envVars:
+      - key: ADMIN_PASSWORD
+        sync: false        # Render asks you for it during setup
+    disk:
+      name: scoreboard-data
+      mountPath: /data     # keeps your overlays, players and settings across restarts
+      sizeGB: 1

@@ -1,12 +1,60 @@
 # Changelog
 
+## 1.5.0
+
+BeeboScore is now **BeeboScore Lite**: the essentials of BeeboScore in a lighter app. Everything since 1.4.0, the last release on GitHub (1.4.1 was a test build).
+
+### BeeboScore Lite 1.5.0
+- BeeboScore is now BeeboScore Lite: five tabs (Matches, Format, Bracket, Stream and Settings) in a lighter app.
+- One Classic layout for each game: Tekken 8, Street Fighter 6, Avatar Legends and Fatal Fury: City of the Wolves, each kept clear of its game's HUD.
+- Coming from 1.4.0? Your players, pictures, settings and exports came across, and your old BeeboScore Data folder is left as it was.
+- Coming from 1.4.0, sign in to start.gg again on the Bracket tab: sign-ins are locked to the app that made them.
+- Stream Deck: install the new BeeboScore Lite plugin from Settings › Stream Deck, then remove the old BeeboScore Prototype plugin if you had it.
+- start.gg brackets on stream: the bracket, Top 8 and standings splashes, a live bracket page for viewers, and results sent back to start.gg.
+- The OBS link stays http://localhost:3300/overlay, so nothing changes in OBS.
+
+### Moving from 1.4.0
+- **Check for updates** in 1.4.0 finds this version: the release carries a copy named `BeeboScore-1.5.0.exe` for it. From here on the app is `BeeboScore-Lite-x.y.z.exe`, and Lite only offers Lite releases.
+- On its first start after **Restart & update**, Lite waits for 1.4.0 to let go of port 3300, then copies 1.4.0's data from `BeeboScore Data` into `BeeboScore Lite Data` next to the exe: players, player pictures, VS pictures, settings, the match, viewers and exports. Backups, retired layouts and Stream Deck profile backups stay where they were. The 1.4.0 folder is not changed, and the copy happens only once.
+- The first-time setup opens once after the move, so you can pick your game's Classic layout.
+- start.gg sign-ins from 1.4.0 can't be opened by Lite (Windows ties them to the app that saved them), so the Bracket tab asks you to sign in again.
+- Older `BeeboScore-x.y.z.exe` and `BeeboScore-Lite-x.y.z.exe` files in the same folder go to the Recycle Bin.
+
+### New
+- **Five tabs:** **Matches**, **Format**, **Bracket** (start.gg), **Stream** (OBS and Go online) and **Settings**.
+- **Four layouts, one per game, all Classic:** Tekken 8, Street Fighter 6, Avatar Legends and Fatal Fury: City of the Wolves, each kept clear of its game's HUD (health bars, portraits, round counters, timer and meters). Tekken 8's Classic has a version for each game format, with the format bar along the bottom. With **Follow the game** on, picking a game switches to its layout.
+- **FullVS and GlassVS.** FullVS is the full-screen VS splash; GlassVS (the lock-in splash) works in any match and can be put up by hand.
+- **start.gg brackets:** sign in, pick an event, pull its players and matches onto the scoreboard; bracket (Winners and Losers sides), **Top 8** and **standings** splashes; a live bracket page for viewers; results sent back to start.gg.
+- **Game formats** carry over from 1.4.0 (Crew Battle, Team Battle, Gauntlet, Team Death Battle, Death Battle, King of the Hill, League), with Team VS, Board, Champion and Leaderboard splashes.
+- **Undo lock-in** (Team Death Battle): a lock-in made too early can be undone from the Format tab, the Matches tab or the Stream Deck's Lock in key, until the next set is recorded. This replaces 1.4.1's *Reopen switches*.
+- **Go online** with remote-control security: the signed-in devices, **Sign out all devices**, and whether phones and tablets on your Wi-Fi need the password.
+- **First-time setup** in four steps: the game, OBS (it tells you when OBS is showing the overlay) and start.gg.
+- **Control panel looks:** Classic, Ember, Hive, Ink Dojo, Circuit, Street, Glacier, High contrast and your own theme.
+- **Settings:** performance, the OBS connection, keyboard shortcuts, backups, the health check and self-test, accessibility and output size (1080p, 1440p or 4K).
+- **Pop-out preview**, and a control panel that works on a phone.
+- **Stream Deck:** a new plugin, **BeeboScore Lite** (`com.t1fgc.beeboscore.lite`). **Set up Stream Deck** fills a 15-key Stream Deck or a Stream Deck XL, with a row that follows the app.
+
+### Changed
+- The exe is now `BeeboScore-Lite-x.y.z.exe`, and its data folder is `BeeboScore Lite Data`.
+- The layouts make no sound of their own.
+
+### Not in Lite
+- The Ember and Porcelain layouts and the Overlay maker from 1.4.0. Each game has its own Classic layout instead.
+- The Layouts tab and Layout Designer, the Show and Players tabs, Twitch, viewer tournaments and viewer battles, the commentary screen, logo & sponsors, Discord notifications, viewer latency, automations, VOD chapters, the second operator, stations, backup PC, sync, team accounts and extensions.
+
+### For developers
+- `lib/portable-update.js` and `desktop/portable-updater.js`: Check for updates for the portable exe, reading this repository's releases. It only accepts `BeeboScore-Lite-x.y.z.exe`.
+- `.github/workflows/release.yml` attaches `BeeboScore-1.5.0.exe` beside `BeeboScore-Lite-1.5.0.exe` for version 1.5.0 only, so 1.4.0 copies can find it.
+- The Stream Deck plugin also looks for the app on port 3301.
+- `npm run dist` builds the portable exe; `npm run dist:setup` builds an installer (port 3200, data in *Documents › BeeboScore Lite*, no self-update).
+
 ## 1.4.0
 
 Everything since 1.1.8, the last release on GitHub. 1.2.0 to 1.3.9 were test builds; their changes are all listed here.
 
 ### New
 
-- **Game formats.** A new **Formats** tab runs seven kinds of event on top of the scoreboard: **Crew Battle** (winner stays on), **Team Battle** (Sajam Slam style, players paired by tier), **Gauntlet** (one player against a line of challengers), **Team Death Battle**, **Death Battle** (everyone has lives, last one standing wins), **King of the Hill** (winner stays, loser to the back of the queue) and **League** (everyone plays everyone). The format decides who plays next; each set is scored as usual and confirmed with **Confirm & next match** (Ctrl+Alt+Enter; Ctrl+Alt+Z undoes). Rosters can be typed, pasted as a list, taken from the start.gg event, saved and loaded, and results export as CSV. See [docs/FORMATS.md](docs/FORMATS.md).
+- **Game formats.** A new **Formats** tab runs seven kinds of event on top of the scoreboard: **Crew Battle** (winner stays on), **Team Battle** (Sajam Slam style, players paired by tier), **Gauntlet** (one player against a line of challengers), **Team Death Battle**, **Death Battle** (everyone has lives, last one standing wins), **King of the Hill** (winner stays, loser to the back of the queue) and **League** (everyone plays everyone). The format decides who plays next; each set is scored as usual and confirmed with **Confirm & next match** (Ctrl+Alt+Enter; Ctrl+Alt+Z undoes). Rosters can be typed, pasted as a list, taken from the start.gg event, saved and loaded, and results export as CSV. See [docs/FORMATS.md](docs/guide/formats.md).
 - **Team Death Battle.** Two teams; every fighter has 1 to 9 lives, and one life can be worth 1 to 5 lost sets (the first lost set cracks the crest, the last breaks it). After a life is lost a switch window opens (both teams, only the team that lost it, or nobody); **Lock in** closes it, and it also closes by itself on the first point of the next set (not when that point already wins a first-to-1 set: confirming closes it then, so the lock-in never lands on the K.O.). A fighter who is switched out keeps their lives and any crack for when they come back. A fighter can be given extra lives from the Formats tab.
 - **Formats on stream, on both layouts.** Life crests, crowns, tiers and table position on the player bars; a format bar along the bottom with a piece or card per player; Board, Team VS and Champion splashes; the format's own VS Splash; and moments that play by themselves when a result is confirmed (a cracked life, −1 LIFE, SWITCH IN, the K.O. slash and K.O. card, eliminations with their placement, NEXT CHALLENGER, LAST STAND, TIEBREAKER, FINAL DUEL, NEW KING). The overlay picks the format up by itself: nothing changes in OBS.
 - **Matches tab console.** A **Format** menu at the top of Players, and a console above it with the matchup, Confirm & next match, Forfeit, Undo, the On stream buttons and, for Team Death Battle, the switch window with each fighter's lives and **Lock in**. The tab takes the format's colour.

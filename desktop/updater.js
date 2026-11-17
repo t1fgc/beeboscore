@@ -1,57 +1,74 @@
 'use strict';
 /*
- * BeeboScore (developed by Beebo) — updates for the portable exe (Settings › Check for updates).
- * The checking and downloading is in lib/portable-update.js; this file is the desktop side: it gives that code
- * Electron's network stack (so the PC's proxy settings are respected) and does the "Restart & update" hand-over.
- * Nothing is checked or downloaded unless the person asks.
+ * Automatic updates via GitHub Releases (electron-updater).
+ * Every copy of BeeboScore updates from the official releases page:
+ *   https://github.com/t1fgc/beeboscore/releases
+ * Updates download in the background and install when the app closes (or on "Restart & update").
+ * opts.handOver(newVersion) is called just before Restart & update closes the app (update.log, desktop/update-log.js).
+ * opts.autoUpdater: a stand-in for electron-updater (tests only).
  */
-const { spawn } = require('child_process');
-const path = require('path');
-const { createPortableUpdater } = require('../lib/portable-update');
+const CHECK_EVERY = 3 * 60 * 60 * 1000; // 3 hours
+const RELEASES = { owner: 't1fgc', repo: 'beeboscore' };
 
 function createUpdater(app, opts = {}) {
-  if (!app.isPackaged) {   // running from source: nothing to update
-    const st = { supported: true, state: 'dev', version: app.getVersion(), newVersion: '', percent: 0, message: '', checkedAt: 0 };
-    return { status: () => st, onStatus() {}, configure() {}, check: async () => st, install() {} };
-  }
-  const { net, shell } = require('electron');
+  const listeners = new Set();
+  let st = { supported: true, state: 'idle', version: app.getVersion(), newVersion: '', percent: 0, message: '', checkedAt: 0 };     // (never the repository: the app does not show where updates come from)
+  let timer = null, au = null, userInitiated = false, configured = false;
+  const set = patch => { st = { ...st, ...patch }; for (const fn of listeners) fn(st); };
 
-  /**
-   * "Restart & update": start the new exe, then close this copy.
-   *
-   * The new exe is started directly, the way a double-click starts it. (Until 1.1.7 a hidden PowerShell window waited for
-   * this copy to close and then started it; on some PCs that step never ran, and the app closed without coming back.)
-   * Starting it while this copy is still open is safe because:
-   *   · every version unpacks into a temp folder of its own (build.portable.unpackDirName is set per version by
-   *     tools/set-unpack-dir.js), so the new copy never unpacks over this one's files or has them deleted under it
-   *   · unpacking takes several seconds, and this copy closes 0.3 s after the new exe has started; the new copy also
-   *     waits for port 3300 and for the single-instance lock before it goes on (desktop/main.js, --after-update)
-   * If the exe cannot be started, Windows is asked to open it; if that fails too, its folder is shown.
-   */
-  function launch(file) {
-    const log = typeof opts.log === 'function' ? opts.log : () => {};
-    const env = { ...process.env };
-    for (const k of Object.keys(env)) if (/^PORTABLE_EXECUTABLE_/i.test(k)) delete env[k];   // the new exe works out its own folder
-    const name = path.basename(file);
-    let done = false;
-    const close = how => { if (done) return; done = true; log(`Restart & update: ${name} was started ${how}; this copy is closing`); setTimeout(() => app.quit(), 300); };
-    const viaWindows = why => {
-      log(`Restart & update: could not start ${name} directly (${why}); asking Windows to open it`);
-      Promise.resolve(shell.openPath(file)).then(err => { if (err) { log(`Restart & update: Windows could not open it either (${err}); showing its folder`); try { shell.showItemInFolder(file); } catch {} } else close('by Windows'); });
-    };
-    if (process.platform !== 'win32') { try { shell.showItemInFolder(file); } catch {} return; }
-    try {
-      const child = spawn(file, ['--after-update'], { cwd: path.dirname(file), detached: true, stdio: 'ignore', env });
-      child.once('error', e => viaWindows(e && e.message));
-      child.once('spawn', () => { child.unref(); close('directly'); });
-    } catch (e) { viaWindows(e && e.message); }
+  if ((!app.isPackaged && !opts.autoUpdater) || opts.disabled) {
+    set({ state: opts.disabled ? 'test' : 'dev' });
+    return { status: () => st, onStatus: fn => listeners.add(fn), configure() {}, check: async () => st, install() {} };
   }
 
-  return createPortableUpdater({
-    version: app.getVersion(), dir: opts.dir || '', launch,
-    fetchImpl: (url, init) => net.fetch(url, init),
-    api: process.env.BEEBO_UPDATE_API || '',   // for testing only
-  });
+  try { au = opts.autoUpdater || require('electron-updater').autoUpdater; } catch (e) { set({ state: 'error', message: 'Updater not available.' }); }
+  if (au) {
+    au.logger = null;
+    au.allowPrerelease = false;
+    au.on('checking-for-update', () => set({ state: 'checking', message: '' }));
+    au.on('update-not-available', () => set({ state: 'up-to-date', checkedAt: Date.now() }));
+    au.on('update-available', info => set({ state: au.autoDownload ? 'available' : 'found', newVersion: info.version, checkedAt: Date.now() }));
+    au.on('download-progress', p => set({ state: 'downloading', percent: p.percent || 0 }));
+    au.on('update-downloaded', info => set({ state: 'ready', newVersion: info.version, percent: 100 }));
+    au.on('error', err => {
+      let msg = String(err && err.message || err).split('\n')[0];
+      if (/404|Unable to find latest version|No published versions|latest\.yml/i.test(msg)) msg = 'No releases have been published yet.';
+      else if (/ENOTFOUND|ETIMEDOUT|ECONNRESET|net::/i.test(msg)) msg = 'No internet connection.';
+      set({ state: 'error', message: msg.slice(0, 160) });
+    });
+  }
+
+  // Settings no longer choose the source or turn updates off: every copy follows the official releases.
+  function configure() {
+    if (!au || configured) return;
+    // FGC_UPDATE_URL points at a plain web folder instead of GitHub (for testing only)
+    if (process.env.FGC_UPDATE_URL) au.setFeedURL({ provider: 'generic', url: process.env.FGC_UPDATE_URL });
+    else au.setFeedURL({ provider: 'github', owner: RELEASES.owner, repo: RELEASES.repo });
+    au.autoDownload = true;
+    au.autoInstallOnAppQuit = true;
+    configured = true; set({ state: 'idle' });
+    clearInterval(timer);
+    timer = setInterval(() => check(false), CHECK_EVERY);
+    setTimeout(() => check(false), 4000); // check shortly after start
+  }
+
+  async function check(user = true) {
+    if (!au || !configured) return st;
+    if (['checking', 'downloading', 'ready'].includes(st.state)) return st;
+    userInitiated = user;
+    au.autoDownload = true;
+    try { await au.checkForUpdates(); } catch { /* reported through the 'error' event */ }
+    return st;
+  }
+
+  function install() {
+    if (!au || st.state !== 'ready') return false;
+    try { if (opts.handOver) opts.handOver(st.newVersion); } catch {}
+    setImmediate(() => au.quitAndInstall(true, true));      // silent install, then the installer opens the new version
+    return true;
+  }
+
+  return { status: () => st, onStatus: fn => listeners.add(fn), configure, check, install };
 }
 
 module.exports = { createUpdater };

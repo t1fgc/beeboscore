@@ -9,6 +9,7 @@
   --p1: #c1121f; --p2: #0046d5; --accent: #316ac5; --accent-2: #2357a8; --ok: #108010; --err: #c1121f;
   --radius: 3px; --font: Tahoma, Verdana, "Segoe UI", sans-serif; --mono: "Lucida Console", "Courier New", monospace;
   --head-h: 46px;
+  color-scheme: light;
 }
 *, *::before, *::after { animation: none !important; transition: none !important; backdrop-filter: none !important; text-shadow: none !important; scroll-behavior: auto !important; }
 html, body { background: var(--bg); color: #000; font: 12px/1.4 var(--font); }

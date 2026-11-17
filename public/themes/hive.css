@@ -1,0 +1,23 @@
+/* BeeboScore — Hive: honeycomb. Amber and hot pink on night indigo. Panels, buttons and plates: art/ui-themes.js (Layout Designer). */
+@font-face { font-family: 'Russo One'; font-weight: 400; font-style: normal; font-display: swap; src: url(/static/fonts/russo-one-latin-400-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Chakra Petch'; font-weight: 600; font-style: normal; font-display: swap; src: url(/static/fonts/chakra-petch-latin-600-normal.woff2) format('woff2'); }
+html.theme-hive {
+  --t-card: url(/static/themes/hive/card.svg);
+  --t-btn: url(/static/themes/hive/btn.svg);
+  --t-btnp: url(/static/themes/hive/btnp.svg);
+  --t-field: url(/static/themes/hive/field.svg);
+  --t-railon: url(/static/themes/hive/railon.svg);
+  --t-segon: url(/static/themes/hive/segon.svg);
+  --t-chip: url(/static/themes/hive/chip.svg);
+  --t-head: url(/static/themes/hive/head.svg);
+  --t-orn: url(/static/themes/hive/orn.svg);
+  --t-arrow: url(/static/themes/hive/arrow.svg);
+  --t-search: url(/static/themes/hive/search.svg);
+  --t-bg: url(/static/themes/hive/bg.svg);
+  --bg: #0e0a1c; --bg-2: #140d29; --card: #1b1236; --card-2: #251a49; --line: #33255f; --line-2: #4d3a8a;
+  --text: #f4efff; --muted: #a99cc9; --faint: #7a6ea0; --accent: #ffb020; --accent-2: #ff2e88; --p1: #ff2e88; --p2: #3fa8ff; --ok: #3ddc84; --err: #ff4d6d;
+  --t-display: 'Russo One', 'Segoe UI', sans-serif; --t-label: 'Chakra Petch', 'Segoe UI', sans-serif; --t-h2: #ffd57a; --t-brand: #fff3d6;
+  --t-btn-ink: #f4efff; --t-btnp-ink: #1b1030; --t-segon-ink: #1b1030; --t-railon-ink: #ffcf66; --t-railon-label: #ffcf66; --t-p1-ink: #1b1030; --t-p2-ink: #1b1030;
+}
+html.theme-hive .card > h2 { color: #ffd57a; }
+html.theme-hive nav.rail { background: linear-gradient(180deg, #140d29, #0e0a1c); }

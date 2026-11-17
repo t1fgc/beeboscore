@@ -1,0 +1,15 @@
+{
+  "title": "Default — League",
+  "game": "Tekken 8",
+  "family": "Default",
+  "format": "league",
+  "base": "tekken8-default",
+  "description": "Records and table positions on the player bars, a standings ticker along the bottom.",
+  "colors": [
+    "#151822",
+    "#ff3b5c",
+    "#3b8eff"
+  ],
+  "version": "1",
+  "gen": 2
+}

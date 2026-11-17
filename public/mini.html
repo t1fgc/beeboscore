@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BeeboScore Lite Mini</title>
+<script src="/static/beebo-icons.js"></script><script>BI.watch(document, {})</script>
+<link rel="icon" href="/favicon.ico">
+<style>
+  :root { --bg: #0a0b10; --card: #151822; --card-2: #1c2030; --line: #252a3a; --text: #eef1f7; --muted: #8b93a7; --p1: #ff3b5c; --p2: #3b8eff; --accent: #ffb020; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font: 14px/1.3 "Segoe UI Variable", "Segoe UI", system-ui, sans-serif; user-select: none; }
+  body { display: flex; flex-direction: column; gap: 8px; padding: 10px; }
+  .row { display: grid; grid-template-columns: 1fr 52px 64px 52px; gap: 6px; align-items: center; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 8px 8px 8px 12px; border-left: 4px solid var(--p1); }
+  .row.p2 { border-left-color: var(--p2); }
+  .nm { min-width: 0; }
+  .nm b { display: block; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .nm small { color: var(--muted); font-size: 11px; }
+  button { font: inherit; color: inherit; border: 1px solid var(--line); background: var(--card-2); border-radius: 10px; height: 48px; font-size: 24px; font-weight: 700; cursor: pointer; }
+  button:active { transform: scale(.96); }
+  .plus.p1b { background: var(--p1); border-color: var(--p1); }
+  .plus.p2b { background: var(--p2); border-color: var(--p2); }
+  .sc { text-align: center; font-size: 32px; font-weight: 800; }
+  .bar { display: flex; gap: 6px; align-items: center; }
+  .bar button { height: 36px; font-size: 13px; font-weight: 600; padding: 0 12px; }
+  .bar button.on { background: var(--accent); border-color: var(--accent); color: #111; }
+  .round { flex: 1; min-width: 0; color: var(--muted); font-size: 12px; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }   /* 1.12.20: the round, and under it the format — not “Best o…” */
+  .round b { color: var(--accent); display: block; overflow: hidden; text-overflow: ellipsis; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: #5d6579; flex: none; }
+  .dot.on { background: #2fd17a; }
+  .flash { animation: fl .4s; }
+  @keyframes fl { 0% { background: rgba(255,176,32,.25); } }
+</style>
+</head>
+<body>
+  <div class="row p1" id="r1">
+    <div class="nm"><b id="n1">Player 1</b><small id="t1">Player 1</small></div>
+    <button class="minus" data-s="p1" data-d="-1" aria-label="Player 1 minus">−</button>
+    <div class="sc" id="s1">0</div>
+    <button class="plus p1b" data-s="p1" data-d="1" aria-label="Player 1 plus">+</button>
+  </div>
+  <div class="row p2" id="r2">
+    <div class="nm"><b id="n2">Player 2</b><small id="t2">Player 2</small></div>
+    <button class="minus" data-s="p2" data-d="-1" aria-label="Player 2 minus">−</button>
+    <div class="sc" id="s2">0</div>
+    <button class="plus p2b" data-s="p2" data-d="1" aria-label="Player 2 plus">+</button>
+  </div>
+  <div class="bar">
+    <span class="dot" id="dot" title="Connection"></span>
+    <div class="round" id="round"></div>
+    <button id="undo" title="Undo">Undo</button>
+    <button id="swap" title="Swap sides">Swap</button>
+    <button id="reset" title="Reset scores">Reset</button>
+    <button id="vs" title="Show / hide the VS Splash">VS</button>
+  </div>
+<script src="/static/keys.js"></script>
+<script>
+(() => {
+  // Every tap goes straight to stream. Keys follow the shortcuts set in Settings.
+  const $ = id => document.getElementById(id);
+  let st = null;
+  async function api(path, body) {
+    const r = await fetch(path, { method: body ? 'POST' : 'GET', headers: body ? { 'Content-Type': 'application/json' } : {}, body: body ? JSON.stringify(body) : undefined });
+    if (r.status === 401) { location.href = '/login'; throw new Error('sign in'); }
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.error || 'failed');
+    return d;
+  }
+  function render() {
+    if (!st) return;
+    for (const k of [1, 2]) {
+      const p = st['p' + k];
+      $('n' + k).textContent = (p.team ? p.team + ' | ' : '') + (p.name || 'Player ' + k) + (p.loser ? ' [L]' : '');
+      $('t' + k).textContent = [p.character, p.country && p.country.toUpperCase()].filter(Boolean).join(' · ') || 'Player ' + k;
+      if ($('s' + k).textContent !== String(p.score)) { $('s' + k).textContent = p.score; $('r' + k).classList.remove('flash'); void $('r' + k).offsetWidth; $('r' + k).classList.add('flash'); }
+    }
+    $('vs').classList.toggle('on', !!(st.vs && st.vs.show));
+    $('round').innerHTML = `<b>${esc(st.round || '')}</b> ${esc(String(st.bestOf).startsWith('FT') ? 'First to ' + String(st.bestOf).slice(2) : 'Best of ' + st.bestOf)}`;
+  }
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  async function bump(k, d) {
+    if (!st) return;
+    const v = Math.max(0, (Number(st[k].score) || 0) + d);
+    st[k].score = v; render();
+    try { st = await api('/api/state', { [k]: { score: v } }); render(); } catch {}
+  }
+  document.querySelectorAll('[data-s]').forEach(b => b.onclick = () => bump(b.dataset.s, Number(b.dataset.d)));
+  $('swap').onclick = async () => { if (!st) return; try { st = await api('/api/state', { p1: st.p2, p2: st.p1 }); render(); } catch {} };
+  $('vs').onclick = async () => { try { st = await api('/api/vs', { show: 'toggle' }); render(); } catch {} };
+  $('reset').onclick = async () => { try { st = await api('/api/state', { p1: { score: 0 }, p2: { score: 0 } }); render(); } catch {} };
+  $('undo').onclick = async () => { try { const r = await api('/api/state/undo', {}); st = r.state; render(); } catch {} };
+  let shortcuts = BeeboKeys.merged();
+  api('/api/settings').then(s => { shortcuts = BeeboKeys.merged(s.shortcuts); }).catch(() => {});
+  addEventListener('keydown', e => {
+    const action = BeeboKeys.match(e, shortcuts, false);
+    if (!action) return;
+    e.preventDefault();
+    ({ p1Up: () => bump('p1', 1), p1Down: () => bump('p1', -1), p2Up: () => bump('p2', 1), p2Down: () => bump('p2', -1),
+       undo: () => $('undo').click(), swap: () => $('swap').click(), resetScores: () => $('reset').click(), vsToggle: () => $('vs').click(), update: () => {},
+       ...BeeboKeys.showActions(b => api('/api/remote/action', b).catch(() => null)) }[action] || (() => {}))();
+  });
+  function connect() {
+    const ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws');
+    ws.onopen = () => $('dot').classList.add('on');
+    ws.onmessage = e => { let m; try { m = JSON.parse(e.data); } catch { return; } if (m.type === 'state') { st = m.data; render(); } else if (m.type === 'settings') shortcuts = BeeboKeys.merged(m.data.shortcuts); };
+    ws.onclose = () => { $('dot').classList.remove('on'); setTimeout(connect, 1500); };
+  }
+  api('/api/state').then(d => { st = d; render(); }).catch(() => {});
+  connect();
+})();
+</script>
+</body>
+</html>

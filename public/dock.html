@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BeeboScore Lite</title>
+<script src="/static/beebo-icons.js"></script><script>BI.watch(document, {})</script>
+<!-- The BeeboScore dock for OBS (Docks › Custom Browser Docks): sound, scores and the splashes without leaving OBS. -->
+<style>
+[hidden]{display:none!important}   /* 1.12.20: hidden means hidden, whatever display a class sets */
+  :root { --bg: #0e0f13; --card: #17191f; --line: #272a33; --text: #eceef3; --muted: #8b90a0; --accent: #ff5a1f; --gold: #f6c453; --ok: #2fd17a; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); font: 13px/1.3 "Segoe UI Variable", "Segoe UI", system-ui, sans-serif; user-select: none; }
+  body { padding: 8px; display: flex; flex-direction: column; gap: 8px; min-width: 220px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; display: flex; flex-direction: column; gap: 8px; }
+  h2 { margin: 0; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+  h2 .dot { width: 7px; height: 7px; border-radius: 50%; background: #555; } h2 .dot.on { background: var(--ok); }
+  h2 span.r { margin-left: auto; text-transform: none; letter-spacing: 0; }
+  button { font: inherit; color: inherit; border: 1px solid var(--line); background: #20232b; border-radius: 8px; height: 32px; padding: 0 10px; cursor: pointer; font-weight: 600; white-space: nowrap; }
+  button:hover { border-color: #3a3e4a; } button:active { transform: scale(.97); }
+  button.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.big { height: 38px; font-size: 15px; }
+  .row { display: flex; gap: 6px; align-items: center; } .row > * { flex: 1; }
+  .pl { display: grid; grid-template-columns: 1fr 34px 40px 34px; gap: 5px; align-items: center; }
+  .pl b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 14px; }
+  .pl .sc { text-align: center; font-size: 22px; font-weight: 800; }
+  .pl button { height: 34px; padding: 0; font-size: 18px; }
+  input[type=range] { -webkit-appearance: none; appearance: none; height: 22px; background: transparent; cursor: pointer; flex: 1; min-width: 0; }
+  input[type=range]::-webkit-slider-runnable-track { height: 6px; border-radius: 4px; background: linear-gradient(90deg, var(--accent) var(--p, 80%), var(--line) var(--p, 80%)); }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; margin-top: -5px; border-radius: 50%; background: #fff; border: 3px solid var(--accent); }
+  input:disabled { opacity: .35; }
+  .v { flex: 0 0 auto; min-width: 40px; text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+  small { color: var(--muted); }
+  .err { color: #ff8a8a; display: none; } body.off .err { display: block; } body.off .card { opacity: .45; pointer-events: none; }
+</style>
+</head>
+<body>
+<div class="err">Can’t reach BeeboScore Lite — is the app open?</div>
+<div class="card">
+  <h2><span class="dot" id="sDot"></span>Sound<span class="r" id="sTxt">Off</span></h2>
+  <div class="row"><button class="big" id="sOn">🔇 Sound off</button></div>
+  <div class="row"><input type="range" id="sVol" min="0" max="100" step="5" aria-label="Stream volume"><span class="v" id="sVolV">80%</span></div>
+  <small id="sObs" hidden>Level set by this source’s fader in the OBS mixer.</small>
+</div>
+<div class="card">
+  <h2>Score<span class="r" id="round"></span></h2>
+  <div class="pl"><b id="n1">P1</b><button data-sc="1" data-d="-1">−</button><span class="sc" id="s1">0</span><button data-sc="1" data-d="1">+</button></div>
+  <div class="pl"><b id="n2">P2</b><button data-sc="2" data-d="-1">−</button><span class="sc" id="s2">0</span><button data-sc="2" data-d="1">+</button></div>
+</div>
+<div class="card">
+  <h2>On screen</h2>
+  <div class="row"><button id="bVs">VS Splash</button><button id="bWin">Victory</button></div>
+  <div class="row"><button id="xHide">Hide all</button></div>
+  <div class="row" id="fRow" hidden><button id="bBar">Format bar</button></div>
+</div>
+<div class="card" id="brCard" hidden>
+  <h2>Bracket</h2>
+  <div class="row"><button id="bBr">Bracket</button><button id="bT8">Top 8</button><button id="bSt">Standings</button></div>
+</div>
+<script>
+(() => {
+  const $ = s => document.querySelector(s);
+  let st = null;
+  const act = body => fetch('/api/remote/action', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+    .then(r => r.json()).then(r => { if (r && r.status) draw(r.status); }).catch(() => {});
+  const fill = r => r.style.setProperty('--p', r.value + '%');
+  function draw(s) {
+    st = s; document.body.classList.remove('off');
+    const so = s.sound || {}, on = !!so.on;
+    $('#sDot').classList.toggle('on', on); $('#sTxt').textContent = on ? (so.obs ? 'On · OBS mixer' : `On · ${so.vol}%`) : 'Off';
+    $('#sOn').textContent = on ? '🔊 Sound on' : '🔇 Sound off'; $('#sOn').classList.toggle('on', on);
+    if (document.activeElement !== $('#sVol')) { $('#sVol').value = so.vol ?? 80; fill($('#sVol')); $('#sVolV').textContent = (so.vol ?? 80) + '%'; }
+    $('#sVol').disabled = !!so.obs; $('#sObs').hidden = !so.obs;
+    for (const k of [1, 2]) { $('#n' + k).textContent = s['p' + k].name || 'P' + k; $('#s' + k).textContent = s['p' + k].score; }
+    $('#round').textContent = s.round || '';
+    $('#bVs').classList.toggle('on', !!s.vs); $('#bWin').classList.toggle('on', !!s.victory);
+    const br = s.bracket || {}; $('#brCard').hidden = !br.ready;
+    for (const [id, k] of [['#bBr', 'bracket'], ['#bT8', 'top8'], ['#bSt', 'standings']]) $(id).classList.toggle('on', s.splash === k);
+    $('#bSt').disabled = !br.standings;
+    $('#fRow').hidden = !s.format; $('#bBar').classList.toggle('on', s.fbar !== false);
+    $('#bBar').textContent = s.format ? (s.format.kind === 'teams' ? 'Team bar' : s.format.kind === 'elim' ? (s.format.preset === 'koth' ? 'Challenger bar' : 'Survivor bar') : 'Standings bar') : 'Format bar';
+  }
+  $('#sOn').onclick = () => act({ action: 'sound', on: 'toggle' });
+  $('#sVol').oninput = e => { fill(e.target); $('#sVolV').textContent = e.target.value + '%'; };
+  $('#sVol').onchange = e => fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ soundVolume: e.target.value }) }).then(poll);
+  document.querySelectorAll('[data-sc]').forEach(b => b.onclick = () => act({ action: 'score', side: Number(b.dataset.sc), delta: Number(b.dataset.d) }));
+  $('#bVs').onclick = () => act({ action: 'vs', show: 'toggle' });
+  $('#bWin').onclick = () => act({ action: 'victory', show: 'toggle' });
+  $('#bBar').onclick = () => act({ action: 'fbar', show: 'toggle' });
+  $('#bBr').onclick = () => act({ action: 'splash', kind: 'bracket', show: 'toggle' });
+  $('#bT8').onclick = () => act({ action: 'splash', kind: 'top8', show: 'toggle' });
+  $('#bSt').onclick = () => act({ action: 'splash', kind: 'standings', show: 'toggle' });
+  $('#xHide').onclick = () => act({ action: 'hideAll' });
+  function poll() { return fetch('/api/remote/status', { cache: 'no-store' }).then(r => r.json()).then(draw).catch(() => document.body.classList.add('off')); }
+  poll(); setInterval(() => { if (!document.hidden) poll(); }, 1500);
+})();
+</script>
+</body>
+</html>

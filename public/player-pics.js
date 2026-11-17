@@ -1,6 +1,6 @@
 /* BeeboScore (developed by Beebo) — Splash pictures (start.gg tab).
  *
- * For each player: what the VS Splash and the Victory Splash show for them.
+ * For each player: what FullVS, GlassVS and the Victory Splash show for them.
  *   Profile picture  — their start.gg profile picture, in the small frame (the default)
  *   Character image  — a picture uploaded here, shown as a large panel; the small frame is hidden for that player
  * A chosen picture opens in the picture window first (public/pic-editor.js: crop, remove a green-screen background);
@@ -51,7 +51,7 @@
 
   root.innerHTML = `
 <h2>Splash pictures</h2>
-<p class="hint" style="margin:-4px 0 0">Choose what each player shows on the VS Splash and the Victory Splash: their start.gg profile picture, or a character image you upload for them.</p>
+<p class="hint" style="margin:-4px 0 0">Choose what each player shows on FullVS, GlassVS and the Victory Splash: their start.gg profile picture, or a character image you upload for them.</p>
 <p class="pic-spec"><b>Character image:</b> a tall picture, ${RULES.width} × ${RULES.height} px is the best size. PNG, WebP or JPG. After you choose one, a window opens where you can crop it and remove a green-screen background.</p>
 <div class="pic-sub">On the scoreboard now</div>
 <div id="picNow"></div>
@@ -73,6 +73,7 @@
       <span class="pic-nm"><b>${esc(p.name)}</b><small>${note}</small></span>
       <span class="pic-seg" role="group" aria-label="Picture for ${esc(p.name)}"><button data-use="profile" class="${useArt ? '' : 'on'}" aria-pressed="${!useArt}">Profile picture</button><button data-use="art" class="${useArt ? 'on' : ''}" aria-pressed="${useArt}">Character image</button></span>
       <button class="btn sm" data-act="upload">${a && a.url ? 'Replace image' : 'Upload image'}</button>
+      ${useArt || ava ? '<button class="btn sm ghost" data-act="frame" title="Picture size — the same on FullVS, GlassVS and the PlayerCards">⤢ Size</button>' : ''}
       ${a && a.url ? '<button class="btn sm ghost" data-act="remove" title="Delete this player\'s uploaded image">Remove</button>' : ''}
     </div>`;
   }
@@ -135,6 +136,7 @@
         took(await api('/api/player-art', { method: 'PATCH', body: { name, use: use.dataset.use } }));
         toast(use.dataset.use === 'art' ? `${name} now uses the character image` : `${name} now uses the profile picture`);
       } else if (act && act.dataset.act === 'upload') { target = name; $('#picFile').click(); }
+      else if (act && act.dataset.act === 'frame' && window.BeeboPicFrame) { const st = P.state() || {}, p = [st.p1, st.p2, found, known(name)].find(x => x && key(x.name) === key(name)) || {}; BeeboPicFrame.open({ name, src: a && a.use === 'art' && a.url ? a.url : p.avatar || (a && a.url) || '' }); }
       else if (act && act.dataset.act === 'remove') { took(await api('/api/player-art', { method: 'DELETE', body: { name } })); toast(`Removed ${name}'s character image`); }
     } catch (err) { toast(err.message, true); }
   });

@@ -1,5 +1,5 @@
 /* =========================================================================================
-   BeeboScore — "Shattered" UI theme (Settings › Look & feel). Same materials as the
+   BeeboScore — "Shattered" UI theme (Settings › Look & feel). Same materials as the Tekken 8
    Shattered overlay: obsidian glass, ember orange, chrome italic headings, Chakra Petch labels,
    hairline cracks. Only active with <html class="theme-shattered">; Classic stays untouched.
    ========================================================================================= */
@@ -33,6 +33,7 @@ html.theme-shattered .brand b { font: italic 800 20px/1 var(--display); letter-s
   background: linear-gradient(180deg, #fff 0%, #e9ebf0 40%, #8f939d 55%, #d9dce3 80%, #fff 100%); -webkit-background-clip: text; background-clip: text; color: transparent; padding-right: 3px; }
 html.theme-shattered .brand small { font: 600 10px var(--label); letter-spacing: 2px; text-transform: uppercase; color: var(--accent); }
 html.theme-shattered .picker label { font-family: var(--label); letter-spacing: 2px; color: var(--accent); }
+@media (max-width: 1080px) { html.theme-shattered .picker label { letter-spacing: 1px; } }   /* 1.12.21: “Layout · live in OBS” whole in the narrower picker (it ended in … at 1024 wide) */
 html.theme-shattered .picker select { background-color: #0b0c0f; border-color: rgba(255,90,31,.25); border-radius: 2px; font-family: var(--label); letter-spacing: .3px; }
 html.theme-shattered .picker select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(255,90,31,.18); }
 html.theme-shattered .seg { background: #0b0c0f; border-color: rgba(255,90,31,.25); border-radius: 2px; }
@@ -67,6 +68,8 @@ html.theme-shattered .card { position: relative; border-radius: 0; border: 0; ba
 html.theme-shattered .card::before { content: ''; position: absolute; left: 0; top: 0; width: 140px; height: 2px; background: linear-gradient(90deg, #ff5a1f, rgba(255,90,31,0)); }
 html.theme-shattered .card h2 { font: 700 12px var(--label); letter-spacing: 3.5px; color: var(--sub); white-space: nowrap; }
 html.theme-shattered aside.side .card h2 { letter-spacing: 2px; }
+/* 1.12.21: on a phone a long card title takes a second line — on one it ran out of the card (cut by the card's corner) and made the page scroll sideways */
+@media (max-width: 760px) { html.theme-shattered .card h2 { white-space: normal; letter-spacing: 2.5px; line-height: 1.35; } }
 html.theme-shattered aside.side .card h2 .btn { padding-left: 12px; padding-right: 12px; }
 html.theme-shattered .card h2::before { content: ''; width: 8px; height: 8px; background: var(--accent); clip-path: polygon(30% 0, 100% 0, 70% 100%, 0 100%); flex: none; }
 html.theme-shattered .pagetitle { font: italic 800 38px/1 var(--display); letter-spacing: .5px; text-transform: uppercase; padding-right: 6px;
@@ -75,7 +78,7 @@ html.theme-shattered .pagetitle .pill { -webkit-text-fill-color: initial; color:
 
 /* fields */
 html.theme-shattered label.l { font: 600 11px var(--label); letter-spacing: 2px; color: var(--sub); }
-html.theme-shattered input[type=text], html.theme-shattered input[type=number], html.theme-shattered input[type=password], html.theme-shattered input[type=search],
+html.theme-shattered input:not([type]), html.theme-shattered input[type=url], html.theme-shattered input[type=text], html.theme-shattered input[type=number], html.theme-shattered input[type=password], html.theme-shattered input[type=search],
 html.theme-shattered select.f, html.theme-shattered textarea { background: #08090b; border-color: rgba(255,255,255,.08); border-radius: 0; }
 html.theme-shattered input:focus, html.theme-shattered select.f:focus, html.theme-shattered textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(255,90,31,.16), 0 0 18px -6px rgba(255,90,31,.6); }
 html.theme-shattered .toggle .sw { border-radius: 2px; background: #0b0c0f; border-color: rgba(255,255,255,.14); }

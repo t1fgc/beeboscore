@@ -4,9 +4,14 @@ which packages the Google Fonts releases.
 
 SIL Open Font License 1.1 (https://openfontlicense.org):
   Saira Condensed, Chakra Petch (see OFL-Saira.txt, OFL-ChakraPetch.txt),
-  Sedgwick Ave Display, Rubik Wet Paint, Black Ops One, Metal Mania, Russo One, Bungee,
+  Sedgwick Ave Display, Rubik Wet Paint, Black Ops One, Metal Mania, Russo One, Bungee, Fredoka,
   Rubik Bubbles, Patrick Hand, Comfortaa, Sniglet, Bangers, Racing Sans One, Teko, Audiowide,
-  Shojumaru, Cinzel, Kaushan Script, Yuji Syuku.
+  Shojumaru, Cinzel, Kaushan Script, Yuji Syuku,
+  Michroma, Creepster, Alfa Slab One, Playfair Display, Righteous, Orbitron, Exo 2.
 
 Apache License 2.0 (https://www.apache.org/licenses/LICENSE-2.0):
   Permanent Marker, Chewy.
+
+New Rocker — Copyright (c) 2012 Pablo Impallari, Brenda Gallo, Rodrigo Fuenzalida. SIL Open Font License 1.1 (full text: OFL-NewRocker.txt; via @fontsource/new-rocker).
+
+Beebo Classic (1.12.13) — made by BeeboScore from Barlow Semi Condensed, Copyright 2017 The Barlow Project Authors (https://github.com/jpt/barlow). SIL Open Font License 1.1 (full text: OFL-BeeboClassic-Barlow.txt; via @fontsource/barlow-semi-condensed). Changes: lowercase letters drawn as capitals, tabular digits, wider letter spacing, renamed.

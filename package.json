@@ -1,41 +1,40 @@
 {
-  "name": "beeboscore",
-  "productName": "BeeboScore",
-  "version": "1.4.0",
-  "description": "Barebones fighting game scoreboard: matches, start.gg events, go online, 11 layouts and Stream Deck keys.",
+  "name": "beeboscore-lite",
+  "productName": "BeeboScore Lite",
+  "version": "1.5.0",
+  "description": "BeeboScore Lite: the scoreboard, game formats, start.gg and OBS overlays for fighting game streams — the essentials only.",
   "author": {
     "name": "Beebo"
-  },
-  "homepage": "https://github.com/t1fgc/beeboscore",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/t1fgc/beeboscore.git"
-  },
-  "bugs": {
-    "url": "https://github.com/t1fgc/beeboscore/issues"
   },
   "license": "MIT",
   "main": "desktop/main.js",
   "scripts": {
     "start": "electron .",
     "server": "node server.js",
-    "test": "node --test tests/engine.test.mjs",
     "build:streamdeck": "cd streamdeck && npm install && npm run build",
-    "predist": "node tools/set-unpack-dir.js && npm run build:streamdeck",
-    "dist": "electron-builder --win portable --x64 --publish never"
+    "predist": "node tools/set-unpack-dir.js && npm run build:streamdeck && node tools/portable-cache.js",
+    "dist": "electron-builder --win portable --x64 --publish never",
+    "predist:setup": "npm run build:streamdeck",
+    "dist:setup": "electron-builder --win nsis --x64 --publish never",
+    "predist:beta": "npm run build:streamdeck && node tools/portable-cache.js",
+    "dist:beta": "electron-builder --win portable --x64 --publish never -c.appId=com.t1fgc.beeboscore.lite.beta -c.productName=\"BeeboScore Lite Testbuild\" -c.extraMetadata.name=beeboscore-lite-testbuild -c.extraMetadata.productName=\"BeeboScore Lite Testbuild\" '-c.portable.artifactName=BeeboScore Lite Testbuild ${version}.${ext}' -c.portable.unpackDirName=BeeboScoreLiteTestbuild",
+    "test": "node --test test/*/*.test.mjs"
   },
   "engines": {
     "node": ">=18"
+  },
+  "dependencies": {
+    "electron-updater": "^6.6.2"
   },
   "devDependencies": {
     "electron": "45.2.3",
     "electron-builder": "^26.0.12"
   },
   "build": {
-    "appId": "com.t1fgc.beeboscore",
-    "productName": "BeeboScore",
+    "appId": "com.t1fgc.beeboscore.lite",
+    "productName": "BeeboScore Lite",
     "copyright": "Copyright © 2026 Beebo",
-    "artifactName": "BeeboScore-${version}.${ext}",
+    "artifactName": "BeeboScore-Lite-Setup-${version}.${ext}",
     "asar": true,
     "compression": "maximum",
     "electronLanguages": [
@@ -48,14 +47,16 @@
     "files": [
       "server.js",
       "package.json",
+      "README.md",
+      "CHANGELOG.md",
       "lib/**",
       "public/**",
       "overlays/**",
+      "startgg-oauth.json",
       "desktop/*.js",
       "desktop/icon.*",
       "!**/*.map",
-      "!**/{CHANGELOG.md,README.md,readme.md,*.d.ts,test,tests,__tests__,docs,example,examples}/**",
-      "!desktop/beta-setup.config.js"
+      "!**/{CHANGELOG.md,README.md,readme.md,*.d.ts,test,tests,__tests__,docs,example,examples}/**"
     ],
     "win": {
       "target": [
@@ -69,15 +70,29 @@
       "icon": "desktop/icon.ico",
       "legalTrademarks": "Beebo"
     },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "BeeboScore Lite",
+      "installerIcon": "desktop/icon.ico",
+      "uninstallerIcon": "desktop/icon.ico",
+      "uninstallDisplayName": "BeeboScore Lite",
+      "deleteAppDataOnUninstall": false,
+      "include": "desktop/installer.nsh"
+    },
     "portable": {
-      "artifactName": "BeeboScore-${version}.${ext}",
-      "unpackDirName": "BeeboScore-1.4.0",
+      "artifactName": "BeeboScore-Lite-${version}.${ext}",
+      "unpackDirName": "BeeboScoreLite-1.5.0",
+      "useZip": true,
       "splashImage": "desktop/splash.bmp"
     },
     "extraResources": [
       {
-        "from": "streamdeck/dist/com.t1fgc.beeboproto.streamDeckPlugin",
-        "to": "streamdeck/com.t1fgc.beeboproto.streamDeckPlugin"
+        "from": "streamdeck/dist/com.t1fgc.beeboscore.lite.streamDeckPlugin",
+        "to": "streamdeck/com.t1fgc.beeboscore.lite.streamDeckPlugin"
       }
     ]
   }

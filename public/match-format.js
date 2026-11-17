@@ -22,7 +22,7 @@
   sel.onchange = async () => {
     const k = sel.value, { F } = FM.get();
     if ((F && F.preset) === k || (!F && !k)) return;
-    if (F && F.status === 'live' && !window.confirm(k ? `${F.name} is running. Switch to ${NAMES[k]}? The results so far are cleared (rosters stay).` : `Turn ${F.name} off and go back to normal matches? Its results are cleared.`)) { sync(); return; }
+    if (F && F.status === 'live' && !(await BeeboAsk.confirm(k ? { title: `Switch to ${NAMES[k]}?`, text: `${F.name} is running. Its results so far are cleared; the rosters stay.`, ok: `Switch to ${NAMES[k]}`, danger: true } : { title: `Turn ${F.name} off?`, text: 'You go back to normal matches, and its results are cleared.', ok: 'Turn it off', danger: true }))) { sync(); return; }
     try {
       if (!k) { await FM.post({ do: 'clear' }); toast('Back to normal matches'); }
       else { if (F && F.status !== 'setup') await FM.post({ do: 'reset' }); await FM.choose(k); toast(`${EM[k]} ${NAMES[k]} picked — add the players in the Format tab, then start it`); }
@@ -40,12 +40,12 @@
     if (F.kind === 'teams' && F.rules.mode === 'tdb') {
       const t = F.teams[i], vt = V.teams[i], j = t.players.findIndex(p => p.name === x.name), vp = vt.players[j] || {}, lv = Math.max(0, vp.lives || 0), max = F.rules.lives;
       return { name: x.name, tc: t.color, id: `t${i}-${j}`, lives: lv, mp: vt.mp,
-        sub: `${esc(t.tag || t.name)} · <span class="mf-hearts">${'❤'.repeat(lv)}<i>${'❤'.repeat(Math.max(0, max - lv))}</i></span>${lv === 1 ? ' <b class="mf-tag">LAST LIFE</b>' : ''}${vp.hits ? ` · cracked ${vp.hits}/${F.rules.setsPerLife}` : ''} · ${vt.left} of ${vt.size} left` };
+        sub: `${esc(t.name)} · <span class="mf-hearts">${'❤'.repeat(lv)}<i>${'❤'.repeat(Math.max(0, max - lv))}</i></span>${lv === 1 ? ' <b class="mf-tag">LAST LIFE</b>' : ''}${vp.hits ? ` · cracked ${vp.hits}/${F.rules.setsPerLife}` : ''} · ${vt.left} of ${vt.size} left` };
     }
     if (F.kind === 'teams') {
       const t = F.teams[i], vt = V.teams[i];
       const extra = F.rules.mode === 'paired' ? `${vt.points}/${V.goal} pts` : `${vt.left} of ${vt.size} left`;
-      return { name: x.name, tc: t.color, sub: `${esc(t.tag || t.name)} · ${x.coach ? 'coach' : (F.rules.tiers ? 'Tier ' : '#') + x.slot} · ${extra}`, mp: vt.mp };
+      return { name: x.name, tc: t.color, sub: `${esc(t.name)} · ${x.coach ? 'coach' : (F.rules.tiers ? 'Tier ' : '#') + x.slot} · ${extra}`, mp: vt.mp };
     }
     const v = (V.fighters || []).find(f => f.id === x.id) || {};
     if (F.kind === 'elim' && F.rules.mode === 'death') {
@@ -103,28 +103,31 @@
     const open = V.switchOpen, who = V.switching === 'loser' && F.log.length ? [F.log[F.log.length - 1].w === 1 ? 1 : 0] : [0, 1];
     return `<div class="mf-switch${open ? ' open' : ''}"><div class="mf-sw-head"><b>${open ? '🔄 Switch window — who fights next?' : '🔒 Switching opens when a life is lost'}</b>
       <small>${open ? 'Click a fighter to put them in. Benched fighters keep their lives. It locks once the next set starts.' : `${V.lives} ${V.lives === 1 ? 'life' : 'lives'} each · ${V.per === 1 ? '1 set = 1 life' : V.per + ' sets = 1 life'}`}</small>
-      ${open ? '<button class="btn sm primary" data-mf="lock">✓ Lock in</button>' : ''}</div>
+      ${open ? '<button class="btn sm primary" data-mf="lock">✓ Lock in</button>' : V.canUnlock ? '<button class="btn sm" data-mf="unlock" title="Locked in too early? Open the switch window again (until the next set is recorded). The Stream Deck’s Lock in key does the same when pressed again.">↩ Undo lock-in</button>' : ''}</div>
       <div class="mf-sw-teams">${V.teams.map((t, ti) => `<div class="mf-sw-team" style="--tc:${esc(t.color)}"><small>${esc(t.name)} · ${t.livesLeft} lives</small><div>${t.players.map((p, j) => `<button class="mf-sw-p ${p.state}" data-sw="${ti}:${j}" ${!open || p.out || p.state === 'playing' || !who.includes(ti) ? 'disabled' : ''} title="${p.out ? 'Knocked out' : p.state === 'playing' ? 'Fighting now' : open ? 'Switch in' : ''}">${p.pic ? `<img src="${esc(p.pic)}" alt="">` : ''}<b>${esc(p.name)}</b><span>${p.out ? '☠ out' : `${'❤'.repeat(p.lives)}<i>${'❤'.repeat(Math.max(0, V.lives - p.lives))}</i>`}</span></button>`).join('')}</div></div>`).join('')}</div></div>`;
   }
   function sync() { const { F } = FM.get(); const v = F ? F.preset : ''; if (sel.value !== v && document.activeElement !== sel) sel.value = v; }
 
+  // 1.12.19: a forfeit or a knock-out happens straight away, with an Undo (every format change can be undone)
+  const undoToast = msg => toast(msg, { action: '↶ Undo', run: () => FM.post({ do: 'undo' }, '↶ Undone').catch(() => {}), ms: 7000 });
   card.addEventListener('click', async e => {
     const t = e.target.closest('[data-mf],[data-fs],[data-ff],[data-life],[data-sw]'); if (!t || t.disabled) return;
     const { F } = FM.get(); if (!F) return;
     try {
       if (t.dataset.fs) return await FM.post({ do: 'splash', kind: t.dataset.fs, show: 'toggle' });
-      if (t.dataset.ff) { const sd = FM.sides(); const n = t.dataset.ff === '1' ? sd.a.name : sd.b.name; if (window.confirm(`${n} forfeits this match?`)) await FM.post({ do: 'forfeit', side: Number(t.dataset.ff) }); return; }
+      if (t.dataset.ff) { const sd = FM.sides(); const n = t.dataset.ff === '1' ? sd.a.name : sd.b.name; await FM.post({ do: 'forfeit', side: Number(t.dataset.ff) }); undoToast(`${n} forfeits — next match loaded`); return; }
       if (t.dataset.sw) { const [ti, j] = t.dataset.sw.split(':').map(Number); return await FM.post({ do: 'swap', side: ti + 1, index: j }, `🔄 ${F.teams[ti].players[j].name} switches in`); }
-      if (t.dataset.life && /^t[01]-\d+$/.test(t.dataset.life)) { const [ti, j] = t.dataset.life.slice(1).split('-').map(Number), x = F.teams[ti].players[j]; const n = Math.max(0, Math.min(9, (x.lives || 0) + Number(t.dataset.d))); if (n === 0 && !window.confirm(`${x.name} is out?`)) return; return await FM.post({ do: 'lives', id: t.dataset.life, lives: n }); }
-      if (t.dataset.life) { const x = F.fighters.find(y => y.id === t.dataset.life); if (!x) return; const n = Math.max(0, Math.min(9, (x.lives || 0) + Number(t.dataset.d))); if (n === 0 && !window.confirm(`${x.name} is out?`)) return; return await FM.post({ do: 'lives', id: x.id, lives: n }); }
+      if (t.dataset.life && /^t[01]-\d+$/.test(t.dataset.life)) { const [ti, j] = t.dataset.life.slice(1).split('-').map(Number), x = F.teams[ti].players[j]; const n = Math.max(0, Math.min(9, (x.lives || 0) + Number(t.dataset.d))); const r = await FM.post({ do: 'lives', id: t.dataset.life, lives: n }); if (n === 0) undoToast(`${x.name} is out`); return r; }
+      if (t.dataset.life) { const x = F.fighters.find(y => y.id === t.dataset.life); if (!x) return; const n = Math.max(0, Math.min(9, (x.lives || 0) + Number(t.dataset.d))); const r = await FM.post({ do: 'lives', id: x.id, lives: n }); if (n === 0) undoToast(`${x.name} is out`); return r; }
       switch (t.dataset.mf) {
         case 'start': await FM.start(); break;
         case 'confirm': await FM.confirm(); break;
         case 'undo': await FM.post({ do: 'undo' }, '↶ Result undone'); break;
-        case 'end': if (window.confirm('End it now? The best record so far wins.')) await FM.post({ do: 'end' }); break;
-        case 'reset': if (window.confirm('Run it again from the first match? Results are cleared (rosters stay).')) { await FM.post({ do: 'reset' }); await FM.start(); } break;
+        case 'end': if (await BeeboAsk.confirm({ title: `End ${F.name} now?`, text: 'The best record so far wins, and the champion goes on stream.', ok: 'End it now' })) await FM.post({ do: 'end' }); break;
+        case 'reset': if (await BeeboAsk.confirm({ title: 'Run it again from the first match?', text: 'The results are cleared. The rosters stay.', ok: 'Run it again', danger: true })) { await FM.post({ do: 'reset' }); await FM.start(); } break;
         case 'off': await FM.post({ do: 'clear' }); toast('Back to normal matches'); break;
         case 'lock': await FM.post({ do: 'lock' }, '✓ Locked in'); break;
+        case 'unlock': await FM.post({ do: 'unlock' }, '↩ Lock-in undone — pick again'); break;
         case 'fbar': await P.api('/api/remote/action', { method: 'POST', body: { action: 'fbar', show: 'toggle' } }); break;
       }
     } catch (er) {}

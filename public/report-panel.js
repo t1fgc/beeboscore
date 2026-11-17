@@ -8,7 +8,7 @@
   let R = { v: 0, mode: 'ask', can: false, list: [] };
   const take = x => { if (x && (x.v || 0) >= (R.v || 0)) R = x; render(); };   // answers can arrive after a newer push
   const HINT = {
-    off: 'Results stay in BeeboScore — report them on start.gg yourself.',
+    off: 'Results stay in BeeboScore Lite — report them on start.gg yourself.',
     ask: 'When a set is won, the win card on the Match tab gets a "📤 Report" button.',
     auto: 'Sent by itself 10 seconds after a set is won (fix a mis-click before then). Needs an account that can report for this tournament.',
   };

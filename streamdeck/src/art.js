@@ -3,6 +3,7 @@
  * Key artwork for the BeeboScore Stream Deck plugin. Every key is drawn as a 144×144 SVG so it
  * can show live data (names, scores, on/off). Also used by build.js to write the static images.
  */
+const VT = '#7c3aed', VT2 = '#c3a2ff';
 const P1 = '#e63950', P2 = '#2f8bff', BEE = '#ffb020', INK = '#0e1017', SYNC = '#29c6ff', TW = '#9146ff', TW2 = '#c3a2ff', OKG = '#35dc84';
 const FONT = "font-family=\"'Segoe UI', 'Helvetica Neue', Arial, sans-serif\"";
 
@@ -21,7 +22,32 @@ function frame(inner, { bg = INK, accent = null, dim = false } = {}) {
 }
 const label = (t, y = 128, size = 17, fill = '#fff', ls = 1.5) => `<text x="72" y="${y}" ${FONT} font-size="${size}" font-weight="800" fill="${fill}" text-anchor="middle" letter-spacing="${ls}">${esc(t)}</text>`;
 
-const { ICONS } = require('./icons');
+// The glyphs are Layout Designer designs (art/streamdeck.js → src/designer-art.json, built by tools/designer-art/build.js).
+// Each is drawn in two tones; '#fff' (the key's idle white) keeps the placeholder so the key's group colour fills it in.
+const DA = require('./designer-art.json');
+const MAIN = '#fffffe', SOFT = '#fffffd';
+function glyph(name, c = '#fff', soft) {
+  const g = DA['g.' + name] || '';
+  if (c === '#fff' && !soft) return g;                                  // idle: painted in the group's colours by grouped()
+  return g.split(MAIN).join(c).split(SOFT).join(soft || c);
+}
+const ICONS = {
+  cube3d: (c, s2) => glyph('cube3d', c, s2),
+  speaker: (c, on = true) => glyph(on ? 'speaker' : 'speakerOff', c),
+  reset: (c, s2) => glyph('reset', c, s2), swap: (c, s2) => glyph('swap', c, s2), undo: (c, s2) => glyph('undo', c, s2), next: (c, s2) => glyph('next', c, s2), clear: (c, s2) => glyph('clear', c, s2),
+  layout: (c, s2) => glyph('layout', c, s2), screen: (c, s2) => glyph('screen', c, s2), bracket: (c, s2) => glyph('bracket', c, s2), refresh: (c, s2) => glyph('resync', c, s2), pull: (c, s2) => glyph('pull', c, s2),
+  upload: (c, s2) => glyph('upload', c, s2), eye: (c, s2) => glyph('eye', c, s2), bolt: (c, s2) => glyph('bolt', c, s2), trophy: (c, s2) => glyph('trophy', c, s2), twitch: (c, s2) => glyph('chat', c, s2),
+  mic: (c, s2) => glyph('mic', c, s2), leader: (c, s2) => glyph('leader', c, s2),
+  swords: (c, s2) => glyph('swords', c, s2), board: (c, s2) => glyph('board', c, s2), crown: (c, s2) => glyph('crown', c, s2), pencil: (c, s2) => glyph('pencil', c, s2), person: (c, s2) => glyph('person', c, s2),
+  personPlus: (c, s2) => glyph('personPlus', c, s2), vs: (c, s2) => glyph('vs', c, s2), plus1: (c, s2) => glyph('plus1', c, s2), podium: (c, s2) => glyph('podium', c, s2), top8: (c, s2) => glyph('top8', c, s2),
+  loser: (c, s2) => glyph('loser', c, s2), chatLink: (c, s2) => glyph('chatLink', c, s2), chatNext: (c, s2) => glyph('chatNext', c, s2), queue: (c, s2) => glyph('queue', c, s2), sidebar: (c, s2) => glyph('sidebar', c, s2),
+  scan: (c, s2) => glyph('scan', c, s2), switchArrows: (c, s2) => glyph('switchArrows', c, s2), lock: (c, s2) => glyph('lock', c, s2), unlock: (c, s2) => glyph('unlock', c, s2), tempo: (c, s2) => glyph('tempo', c, s2), pilot: (c, s2) => glyph('pilot', c, s2), replay: (c, s2) => glyph('replay', c, s2), ticket: (c, s2) => glyph('ticket', c, s2), formatBar: (c, s2) => glyph('formatBar', c, s2),
+  flow: (c, s2) => glyph('flow', c, s2), chapter: (c, s2) => glyph('chapter', c, s2), statsCard: (c, s2) => glyph('statsCard', c, s2), sponsor: (c, s2) => glyph('sponsor', c, s2),   // 1.12.16
+  // 1.12.18: the show
+  ...Object.fromEntries(['rundown', 'countdown', 'schedule', 'walkin', 'storyline', 'evstats', 'season', 'rehearsal', 'slowmo', 'freeze', 'drawClear', 'clip', 'results', 'picks', 'poll', 'twpred', 'music', 'duck', 'ext', 'cdPlus',
+    'moments', 'momentReplay', 'h2h', 'setTimer', 'statsStrip', 'gresetSplash'].map(n => [n, (c, s2) => glyph(n, c, s2)])),      // 1.12.21: the set as it's told
+  confirm: (c, s2) => glyph('confirm', c, s2), controller: (c, s2) => glyph('controller', c, s2), sides: (c, s2) => glyph('sides', c, s2), hexLife: (c, s2) => glyph('hexLife', c, s2),
+};
 
 // ---------------------------------------------------------------- keys
 const art = {
@@ -34,21 +60,38 @@ const art = {
       + label(hint, 132, mode === 'tapHold' ? 11 : 18, 'rgba(255,255,255,.75)', mode === 'tapHold' ? 0 : 1),
       { accent: c, dim: offline });
   },
-  reset: ({ offline } = {}) => frame(`<g transform="translate(18,8) scale(.75)">${ICONS.reset('#fff')}</g>` + label('RESET'), { accent: BEE, dim: offline }),
+  reset: ({ offline, hint } = {}) => frame(`<g transform="translate(18,${hint ? 2 : 8}) scale(.75)">${ICONS.reset('#fff')}</g>` + (hint ? label('RESET', 114, 16) + label(hint, 134, 11, 'rgba(255,255,255,.6)', 1) : label('RESET')), { accent: BEE, dim: offline }),
   swap: ({ offline } = {}) => frame(`<g transform="translate(18,8) scale(.75)">${ICONS.swap('#fff')}</g>` + label('SWAP'), { accent: BEE, dim: offline }),
-  undo: ({ offline } = {}) => frame(`<g transform="translate(18,8) scale(.75)">${ICONS.undo('#fff')}</g>` + label('UNDO'), { accent: BEE, dim: offline }),
+  // Electrocute 1P / 2P: a bolt in the player's colour, crackling
+  undo: ({ offline, label: l } = {}) => frame(`<g transform="translate(18,8) scale(.75)">${ICONS.undo('#fff')}</g>` + label(l || 'UNDO', 128, l ? 14 : 17), { accent: BEE, dim: offline }),
+  // 1.12.3: Hide all — every splash off at once (lit while anything full-screen is up)
+  hideAll: ({ on = false, offline = false } = {}) => frame(`<g transform="translate(24,4) scale(.66)">${glyph('hideAll', on ? '#29c6ff' : '#fff')}</g>` + label('HIDE ALL', 116, 16, '#fff', 2) + label(on ? 'SPLASH UP' : 'NOTHING UP', 135, 11, on ? '#7fe0ff' : 'rgba(255,255,255,.5)', 1.5), { dim: offline }),
   nextmatch: ({ offline, label: l } = {}) => frame(`<g transform="translate(6,-12) scale(.92)">${ICONS.next(BEE)}</g>` + label(l || 'NEXT MATCH', 130, 15), { dim: offline }),
   clear: ({ offline } = {}) => frame(`<g transform="translate(14,2) scale(.8)">${ICONS.clear('#fff')}</g>` + label('NEXT SET', 130, 16), { accent: BEE, dim: offline }),
-  vs({ on = false, offline = false } = {}) {
+  // FullVS (1.12.6's name for the VS Splash)
+  vs({ on = false, hint = '', offline = false } = {}) {
+    const g = hint ? `<g transform="translate(30,6) scale(.6)">` : `<g transform="translate(22,10) scale(.7)">`;
     return on
-      ? frame(`<text x="72" y="92" ${FONT} font-size="74" font-weight="900" font-style="italic" fill="${INK}" text-anchor="middle">VS</text>` + label('ON AIR', 128, 16, INK, 3), { bg: BEE, dim: offline })
-      : frame(`<text x="72" y="92" ${FONT} font-size="74" font-weight="900" font-style="italic" fill="none" stroke="#fff" stroke-width="3" text-anchor="middle">VS</text>` + label('VS SPLASH', 128, 15, 'rgba(255,255,255,.7)', 2), { dim: offline });
+      ? frame(`${g}${ICONS.vs(INK)}</g>` + label('ON AIR', hint ? 112 : 128, 16, INK, 3) + (hint ? label(hint, 132, 10, 'rgba(14,16,23,.7)', 1) : ''), { bg: BEE, dim: offline })
+      : frame(`${g}${ICONS.vs('#fff')}</g>` + label('FULLVS', hint ? 112 : 128, 16, '#fff', 2) + (hint ? label(hint, 132, 10, 'rgba(255,255,255,.5)', 1) : ''), { dim: offline });
+  },
+  // 1.12.10: the layout's stinger over the stream, now (between two OBS scenes, on a big moment)
+  stinger({ offline = false } = {}) {
+    return frame(`<g transform="translate(36,8) scale(.5)">${ICONS.bolt('#fff')}</g>` + label('STINGER', 104, 16, '#fff', 2) + label('PLAY IT NOW', 128, 10, 'rgba(255,255,255,.5)', 1.2), { dim: offline });
+  },
+  // the commentary screen (1.12.6): lit while on stream; shows how many cameras are live
+  comm({ on = false, live = 0, offline = false } = {}) {
+    return frame(`<g transform="translate(36,8) scale(.5)">${ICONS.mic(on ? INK : '#fff')}</g>` + label(on ? 'ON AIR' : 'COMMENTARY', 104, on ? 16 : 13, on ? INK : '#fff', 1.5) + label(live ? `${live} ${live === 1 ? 'CAMERA' : 'CAMERAS'} LIVE` : 'NO CAMERAS', 128, 10, on ? 'rgba(14,16,23,.7)' : 'rgba(255,255,255,.5)', 1.2), { bg: on ? BEE : undefined, dim: offline });
+  },
+  // which VS the VS button plays: FullVS or GlassVS (a tap switches)
+  vsStyle({ glass = false, offline = false } = {}) {
+    return frame(`<g transform="translate(36,8) scale(.5)">${ICONS.switchArrows('#fff', glass ? '#9fd8ff' : BEE)}</g>` + label('VS STYLE', 96, 12, 'rgba(255,255,255,.6)', 2) + label(glass ? 'GLASSVS' : 'FULLVS', 122, 18, glass ? '#9fd8ff' : BEE, 1.5), { dim: offline });
   },
   player({ side = 1, name = '', offline = false } = {}) {
     const c = sideColor(side), n = short(name || 'Set name', 12);
     return frame(`<g transform="translate(36,14) scale(.5)">${ICONS.person('#fff')}</g>`
       + `<text x="72" y="104" ${FONT} font-size="${fit(n, 8, 22, 13)}" font-weight="800" fill="#fff" text-anchor="middle">${esc(n)}</text>`
-      + label(`PLAYER ${side} ✎`, 132, 13, 'rgba(255,255,255,.7)', 1.5), { accent: c, dim: offline });
+      + label(`PLAYER ${side}`, 132, 13, 'rgba(255,255,255,.7)', 1.5) + `<g transform="translate(${side === 1 ? 104 : 108},121) scale(.11)">${ICONS.pencil('rgba(255,255,255,.7)')}</g>`, { accent: c, dim: offline });
   },
   bracket({ on = false, offline = false, label: l } = {}) {
     return on
@@ -88,42 +131,39 @@ const art = {
   },
   postlink({ ready = false, offline = false, flash = false } = {}) {
     const C = '#9147ff';
-    const bubble = `<path d="M24 30h96a10 10 0 0 1 10 10v44a10 10 0 0 1-10 10H62l-22 18v-18H24a10 10 0 0 1-10-10V40a10 10 0 0 1 10-10z" fill="${flash ? '#fff' : ready ? C : '#2b2d36'}"/>`;
-    const link = `<g fill="none" stroke="${flash ? C : '#fff'}" stroke-width="7" stroke-linecap="round"><path d="M60 70l24-24"/><path d="M52 62l-6 6a10 10 0 0 0 14 14l6-6"/><path d="M92 54l6-6a10 10 0 0 0-14-14l-6 6"/></g>`;
-    return frame(bubble + link + label(flash ? 'POSTED' : ready ? 'POST LINK' : 'NOT SHARED', 132, ready ? 15 : 12, ready || flash ? '#fff' : 'rgba(255,255,255,.45)', 1.5), { bg: '#0a0a0e', accent: ready ? C : null, dim: offline });
+    return frame(`<g transform="translate(18,6) scale(.75)" opacity="${ready || flash ? 1 : .45}">${ICONS.chatLink(flash ? '#fff' : ready ? '#fff' : '#8d919d', flash ? '#fff' : ready ? C : '#3a3d48')}</g>`
+      + label(flash ? 'POSTED' : ready ? 'POST LINK' : 'NOT SHARED', 132, ready ? 15 : 12, ready || flash ? '#fff' : 'rgba(255,255,255,.45)', 1.5), { bg: flash ? C : '#0a0a0e', dim: offline });
   },
   sggReport({ ready = false, sent = false, mode = 'ask', offline = false, flash = false } = {}) {
-    const C = '#3f8cff', on = ready || sent;
-    const arrow = `<g fill="none" stroke="${flash || sent ? '#fff' : on ? C : 'rgba(255,255,255,.4)'}" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"><path d="M72 84V30"/><path d="M50 52l22-22 22 22"/><path d="M34 76v20h76V76"/></g>`;
-    return frame(arrow + label(flash ? 'SENT!' : sent ? 'REPORTED' : ready ? 'REPORT' : mode === 'off' ? 'REPORTS OFF' : 'NO RESULT', 132, on ? 15 : 12, on ? '#fff' : 'rgba(255,255,255,.45)', 1.5), { bg: sent ? '#1c4fa8' : '#0a0a0e', accent: ready && !sent ? C : null, dim: offline });
+    const C = '#4f7dff', on = ready || sent;
+    return frame(`<g transform="translate(20,4) scale(.72)">${ICONS.upload(flash || sent ? '#fff' : on ? '#fff' : 'rgba(255,255,255,.4)', flash || sent ? '#fff' : on ? C : 'rgba(255,255,255,.25)')}</g>`
+      + label(flash ? 'SENT!' : sent ? 'REPORTED' : ready ? 'REPORT' : mode === 'off' ? 'REPORTS OFF' : 'NO RESULT', 132, on ? 15 : 12, on ? '#fff' : 'rgba(255,255,255,.45)', 1.5), { bg: sent ? '#1c3fa8' : '#0a0a0e', dim: offline });
   },
   standings({ on = false, ready = false, offline = false } = {}) {
     const GOLD = '#f2c14e';
-    const bars = [[52, 40, 1], [16, 62, 2], [88, 74, 3]].map(([x, y, n]) => `<rect x="${x}" y="${y}" width="36" height="${108 - y}" fill="${on ? '#fff' : n === 1 ? GOLD : '#3a3d48'}" opacity="${on ? (n === 1 ? 1 : .7) : 1}"/><text x="${x + 18}" y="${y + 26}" ${FONT} font-size="22" font-weight="900" fill="${on ? '#5a0812' : n === 1 ? '#2a1a04' : '#fff'}" text-anchor="middle">${n}</text>`).join('');
-    return frame(bars + label(on ? 'ON AIR' : ready ? 'STANDINGS' : 'NO RESULTS', 132, ready || on ? 15 : 12, on ? '#fff' : ready ? 'rgba(255,255,255,.8)' : 'rgba(255,255,255,.45)', 1.5),
-      { bg: on ? '#c3132d' : '#0a0a0e', accent: on ? null : GOLD, dim: offline });
+    return frame(`<g transform="translate(20,2) scale(.72)" opacity="${on || ready ? 1 : .5}">${ICONS.podium(on ? '#fff' : GOLD, on ? 'rgba(255,255,255,.75)' : '#6b6f7c')}</g>`
+      + label(on ? 'ON AIR' : ready ? 'STANDINGS' : 'NO RESULTS', 132, ready || on ? 15 : 12, on ? '#fff' : ready ? 'rgba(255,255,255,.8)' : 'rgba(255,255,255,.45)', 1.5),
+      { bg: on ? '#c3132d' : '#0a0a0e', dim: offline });
   },
   top8({ on = false, offline = false, label: l } = {}) {
     const CR = '#e0263f';
-    const body = `<g transform="translate(30,34) scale(.8)" opacity="${on ? .4 : .95}">${ICONS.bolt(on ? '#fff' : '#c9d4ff')}</g>`
-      + `<text x="58" y="44" ${FONT} font-size="26" font-weight="900" font-style="italic" fill="${on ? '#fff' : '#e8eaf0'}" text-anchor="middle" letter-spacing="3">TOP</text>`
-      + `<text x="58" y="108" ${FONT} font-size="76" font-weight="900" font-style="italic" fill="${on ? '#fff' : CR}" text-anchor="middle">8</text>`
+    const body = `<g transform="translate(34,14) scale(.66)">${ICONS.top8(on ? '#fff' : '#fff', on ? 'rgba(255,255,255,.5)' : CR)}</g>`
+      + `<text x="30" y="40" ${FONT} font-size="20" font-weight="900" font-style="italic" fill="${on ? '#fff' : '#e8eaf0'}" text-anchor="middle" letter-spacing="2">TOP</text>`
       + label(on ? 'ON AIR' : (l || 'SPLASH'), 132, l && !on ? 13 : 16, on ? '#fff' : 'rgba(255,255,255,.7)', on ? 3 : (l ? 1 : 2));
     const bg = on ? '' : `<defs><radialGradient id="t8g" cx=".5" cy="1" r=".9"><stop offset="0" stop-color="#5a0812"/><stop offset="1" stop-color="#0a0a0e"/></radialGradient></defs><rect width="144" height="144" fill="url(#t8g)"/>`;
-    return frame(bg + body, { bg: on ? CR : '#0a0a0e', accent: on ? null : CR, dim: offline });
+    return frame(bg + body, { bg: on ? CR : '#0a0a0e', dim: offline });
   },
   loser({ side = 1, on = false, offline = false } = {}) {
     const c = sideColor(side);
-    return frame(`<text x="72" y="90" ${FONT} font-size="66" font-weight="900" fill="${on ? INK : '#fff'}" text-anchor="middle">[L]</text>`
+    return frame(`<g transform="translate(26,8) scale(.64)">${ICONS.loser(on ? INK : '#fff', on ? INK : c)}</g>`
       + label(`PLAYER ${side}`, 128, 15, on ? INK : 'rgba(255,255,255,.7)', 2), { bg: on ? c : INK, accent: on ? null : c, dim: offline });
   },
   // ---- viewer matches (Twitch Stuff)
   viewerNext({ next = '', count = 0, busy = false, offline = false } = {}) {
     const n = short(next || '', 12);
-    return frame(`<g transform="translate(10,22) scale(.22)">${ICONS.twitch(TW2)}</g><text x="132" y="44" ${FONT} font-size="26" font-weight="900" fill="#fff" text-anchor="end">${count}</text>`
-      + `<g transform="translate(46,40) scale(.36)">${ICONS.next('#fff')}</g>`
-      + `<text x="72" y="110" ${FONT} font-size="${n ? fit(n, 9, 19, 12) : 14}" font-weight="800" fill="${n ? '#fff' : 'rgba(255,255,255,.55)'}" text-anchor="middle">${esc(n || 'QUEUE EMPTY')}</text>`
-      + label(busy ? 'LOADING…' : 'NEXT VIEWER', 132, 13, TW2, 1.5), { accent: TW, dim: offline });
+    return frame(`<g transform="translate(16,10) scale(.5)">${ICONS.chatNext('#fff')}</g><text x="132" y="50" ${FONT} font-size="28" font-weight="900" fill="#fff" text-anchor="end">${count}</text>`
+      + `<text x="72" y="104" ${FONT} font-size="${n ? fit(n, 9, 19, 12) : 14}" font-weight="800" fill="${n ? '#fff' : 'rgba(255,255,255,.55)'}" text-anchor="middle">${esc(n || 'QUEUE EMPTY')}</text>`
+      + label(busy ? 'LOADING…' : 'NEXT VIEWER', 132, 13, TW2, 1.5), { dim: offline });
   },
   viewerResult({ who = 'streamer', s = 0, v = 0, playing = true, offline = false } = {}) {
     const me = who !== 'viewer', col = me ? OKG : TW2;
@@ -135,37 +175,17 @@ const art = {
   viewerQueue({ open = false, count = 0, offline = false } = {}) {
     return open
       ? frame(`<text x="72" y="52" ${FONT} font-size="22" font-weight="900" fill="${INK}" text-anchor="middle" letter-spacing="2">QUEUE</text><text x="72" y="100" ${FONT} font-size="44" font-weight="900" fill="${INK}" text-anchor="middle">OPEN</text>` + label(`${count} WAITING`, 130, 14, INK, 1.5), { bg: OKG, dim: offline })
-      : frame(`<text x="72" y="52" ${FONT} font-size="22" font-weight="900" fill="rgba(255,255,255,.7)" text-anchor="middle" letter-spacing="2">QUEUE</text><text x="72" y="100" ${FONT} font-size="38" font-weight="900" fill="#fff" text-anchor="middle">CLOSED</text>` + label(count ? `${count} WAITING` : 'TAP TO OPEN', 130, 13, 'rgba(255,255,255,.6)', 1.5), { accent: TW, dim: offline });
-  },
-  // ---- Autoscore (experimental)
-  autoscore({ on = false, state = 'off', pending = null, offline = false } = {}) {
-    const eye = c => `<circle cx="72" cy="56" r="30" fill="none" stroke="${c}" stroke-width="7"/><circle cx="72" cy="56" r="11" fill="${c}"/>`;
-    if (!on) return frame(eye('rgba(255,160,160,.75)') + label('AUTO OFF', 116, 16, '#ffb3b3', 2) + label('EXPERIMENTAL', 134, 10, 'rgba(255,200,200,.6)', 1.5), { bg: '#4a0d14', dim: offline });
-    if (pending) return frame(eye(INK) + label('CONFIRM?', 116, 17, INK, 2) + label(short(pending.name, 12).toUpperCase(), 134, 11, INK, 1), { bg: BEE, dim: offline });
-    const armed = state === 'armed';
-    return frame(eye(armed ? INK : '#fff') + label(armed ? 'WATCHING' : state === 'waiting' ? 'WAIT 0–0' : 'STARTING', 116, 15, armed ? INK : '#fff', 1.5) + label('AUTO ON', 134, 11, armed ? INK : OKG, 2), { bg: armed ? OKG : '#0f3b24', dim: offline });
-  },
-  autoscoreUndo({ ready = false, offline = false } = {}) {
-    return frame(`<g transform="translate(18,6) scale(.75)" opacity="${ready ? 1 : .4}">${ICONS.undo('#fff')}</g>` + label('UNDO AUTO', 126, 14, ready ? '#fff' : 'rgba(255,255,255,.5)', 1.5), { accent: OKG, dim: offline });
-  },
-  autoscoreConfirm({ pending = null, offline = false } = {}) {
-    return pending
-      ? frame(`<text x="72" y="74" ${FONT} font-size="54" font-weight="900" fill="${INK}" text-anchor="middle">+1</text>` + label(short(pending.name, 11).toUpperCase(), 108, 15, INK, 1) + label('TAP TO ADD', 132, 12, INK, 1.5), { bg: BEE, dim: offline })
-      : frame(`<text x="72" y="80" ${FONT} font-size="54" font-weight="900" fill="rgba(255,255,255,.35)" text-anchor="middle">+1</text>` + label('NOTHING TO OK', 126, 12, 'rgba(255,255,255,.55)', 1), { accent: BEE, dim: offline });
-  },
-  autoscoreResync({ offline = false } = {}) {
-    return frame(`<g transform="translate(22,4) scale(.7)">${ICONS.refresh('#fff')}</g>` + label('RESYNC', 126, 15, '#fff', 2), { accent: OKG, dim: offline });
+      : frame(`<text x="72" y="52" ${FONT} font-size="22" font-weight="900" fill="rgba(255,255,255,.7)" text-anchor="middle" letter-spacing="2">QUEUE</text><text x="72" y="100" ${FONT} font-size="31" font-weight="900" fill="#fff" text-anchor="middle">CLOSED</text>` + label(count ? `${count} WAITING` : 'TAP TO OPEN', 130, 13, 'rgba(255,255,255,.6)', 1.5), { accent: TW, dim: offline });
   },
   viewerSidebar({ on = true, offline = false } = {}) {
-    const bar = c => `<rect x="30" y="22" width="26" height="76" rx="3" fill="${c}"/><rect x="62" y="30" width="54" height="10" rx="3" fill="${c}" opacity=".5"/><rect x="62" y="48" width="54" height="10" rx="3" fill="${c}" opacity=".5"/><rect x="62" y="66" width="54" height="10" rx="3" fill="${c}" opacity=".5"/>`;
     return on
-      ? frame(bar('#fff') + label('ON SCREEN', 128, 15, '#fff', 2), { bg: TW, dim: offline })
-      : frame(`<g opacity=".45">${bar('#fff')}</g>` + label('SIDEBAR OFF', 128, 13, 'rgba(255,255,255,.7)', 1.5), { accent: TW, dim: offline });
+      ? frame(`<g transform="translate(26,6) scale(.64)">${ICONS.sidebar('#fff')}</g>` + label('ON SCREEN', 128, 15, '#fff', 2), { bg: TW, dim: offline })
+      : frame(`<g transform="translate(26,6) scale(.64)" opacity=".55">${ICONS.sidebar('#fff')}</g>` + label('SIDEBAR OFF', 128, 13, 'rgba(255,255,255,.7)', 1.5), { dim: offline });
   },
   viewerSplash({ on = false, ready = true, offline = false } = {}) {
     return on
-      ? frame(`<text x="72" y="92" ${FONT} font-size="70" font-weight="900" font-style="italic" fill="#fff" text-anchor="middle">VS</text>` + label('ON AIR', 128, 16, '#fff', 3), { bg: TW, dim: offline })
-      : frame(`<text x="72" y="92" ${FONT} font-size="70" font-weight="900" font-style="italic" fill="none" stroke="${ready ? TW2 : 'rgba(255,255,255,.35)'}" stroke-width="3" text-anchor="middle">VS</text>` + label(ready ? 'VIEWER VS' : 'NO MATCH', 128, 14, 'rgba(255,255,255,.7)', 2), { accent: TW, dim: offline });
+      ? frame(`<g transform="translate(22,10) scale(.7)">${ICONS.vs('#fff')}</g>` + label('ON AIR', 128, 16, '#fff', 3), { bg: TW, dim: offline })
+      : frame(`<g transform="translate(22,10) scale(.7)" opacity="${ready ? 1 : .4}">${ICONS.vs('#fff')}</g>` + label(ready ? 'VIEWER VS' : 'NO MATCH', 128, 14, ready ? 'rgba(255,255,255,.8)' : 'rgba(255,255,255,.45)', 1.5), { dim: offline });
   },
   // game formats: the confirm key shows the score of the battle and lights up green when a result is waiting
   formatNext({ score = '', label: l = '', pending = false, done = false, none = false, offline = false } = {}) {
@@ -174,45 +194,126 @@ const art = {
       + (l ? `<text x="72" y="30" ${FONT} font-size="13" font-weight="700" fill="${pending ? INK : 'rgba(255,255,255,.6)'}" text-anchor="middle">${esc(short(l, 18))}</text>` : '')
       + label(pending ? 'CONFIRM ›' : 'NEXT MATCH', 128, 15, pending ? INK : 'rgba(255,255,255,.7)', 1.5), { bg: pending ? OKG : undefined, dim: offline });
   },
+  // 1.12.5: the team formats' Player VS (the lock-in splash): lit while it's up
+  // GlassVS (the lock-in VS; 1.12.5's Player VS) — any match since 1.12.6
+  playerVs({ on = false, hint = '', offline = false } = {}) {
+    return on
+      ? frame(`<g transform="translate(30,8) scale(.6)">${ICONS.swords(INK)}</g>` + label('GLASSVS', 112, 16, INK, 1.5) + label(hint || 'ON AIR', 132, hint ? 10 : 12, INK, hint ? 1 : 2), { bg: BEE, dim: offline })
+      : frame(`<g transform="translate(30,8) scale(.6)">${ICONS.swords('#fff')}</g>` + label('GLASSVS', 112, 16, '#fff', 1.5) + label(hint || 'SHOW', 132, hint ? 10 : 11, 'rgba(255,255,255,.55)', 1.5), { dim: offline });
+  },
+  // 1.12.5: Team Death Battle — lock in the fighters picked for this battle (closes the switch window)
+  // 1.12.13: once locked (until the next set is recorded) the same key undoes it — PRESS TO UNDO
+  formatLock({ open = false, none = false, undo = false, offline = false } = {}) {
+    return frame(`<g transform="translate(36,6) scale(.5)">${ICONS.lock(open ? '#fff' : undo ? BEE : '#5d616c')}</g>` + label(undo ? 'LOCKED' : 'LOCK IN', 112, 18, open || undo ? '#fff' : '#8d919d', 2)
+      + label(none ? 'NO TEAM DEATH BATTLE' : open ? 'PICKS READY?' : undo ? 'PRESS TO UNDO' : 'LOCKED', 132, none ? 9 : 11, open || undo ? 'rgba(255,255,255,.7)' : 'rgba(255,255,255,.45)', 1.2), { dim: offline });
+  },
+  // 1.12.16: run an automation (picked in the key's settings) — lit while it runs
+  automation({ name = '', running = false, missing = false, offline = false } = {}) {
+    const n = String(name || 'AUTOMATION').toUpperCase(), short = n.length > 13 ? n.slice(0, 12) + '…' : n;
+    return frame(`<g transform="translate(36,4) scale(.5)">${ICONS.flow(running ? INK : missing ? '#5d616c' : BEE)}</g>` + label(running ? 'RUNNING' : 'RUN', 112, 16, running ? INK : '#fff', 2)
+      + label(missing ? 'PICK ONE' : short, 132, short.length > 10 ? 9 : 11, running ? 'rgba(14,16,23,.75)' : 'rgba(255,255,255,.65)', 1.2), { bg: running ? BEE : undefined, dim: offline });
+  },
+  // 1.12.16: mark a VOD chapter now — says MARKED for a moment
+  chapter({ flash = '', offline = false } = {}) {
+    return frame(`<g transform="translate(36,4) scale(.5)">${ICONS.chapter(flash ? '#fff' : BEE)}</g>` + label(flash || 'CHAPTER', 112, flash ? 18 : 15, '#fff', 2) + label(flash ? 'IN THE VOD' : 'MARK NOW', 132, 10, 'rgba(255,255,255,.6)', 1.6), { dim: offline });
+  },
+  // 1.12.16: the caster stats card for one player — lit while it's on stream
+  stats({ side = 1, name = '', on = false, offline = false } = {}) {
+    const n = String(name || `PLAYER ${side}`).toUpperCase(), short = n.length > 12 ? n.slice(0, 11) + '…' : n;
+    return frame(`<g transform="translate(36,4) scale(.5)">${ICONS.statsCard(on ? INK : '#fff')}</g>` + label(on ? 'ON AIR' : 'STATS', 112, 16, on ? INK : '#fff', 2)
+      + label(short, 132, short.length > 9 ? 10 : 12, on ? 'rgba(14,16,23,.75)' : 'rgba(255,255,255,.65)', 1.2), { bg: on ? BEE : undefined, dim: offline });
+  },
+  // 1.12.16: sponsors — tap: the next one now · hold: the rotation on / off
+  sponsor({ on = false, none = false, offline = false } = {}) {
+    return frame(`<g transform="translate(36,4) scale(.5)">${ICONS.sponsor(none ? '#5d616c' : on ? BEE : '#8d919d')}</g>` + label(none ? 'SPONSORS' : 'SPONSOR', 112, 15, none ? '#8d919d' : '#fff', 1.6)
+      + label(none ? 'NONE ADDED' : on ? 'NEXT · HOLD: OFF' : 'OFF · HOLD: ON', 132, 9, 'rgba(255,255,255,.6)', 1.2), { dim: offline });
+  },
+  // 1.12.15: instant replay
+  replay({ offline = false } = {}) {
+    return frame(`<g transform="translate(36,4) scale(.5)">${ICONS.replay(BEE)}</g>` + label('REPLAY', 112, 17, '#fff', 2) + label('FROM OBS', 132, 10, 'rgba(255,255,255,.6)', 1.6), { dim: offline });
+  },
+  // 1.12.15: Run of show — on/off, and what it's doing
+  autopilot({ on = false, running = false, step = '', offline = false } = {}) {
+    const S = { victory: 'VICTORY', 'after victory': 'VICTORY', stinger: 'STINGER', bracket: 'BRACKET', 'next match': 'NEXT MATCH', 'back to the scoreboard': 'SCOREBOARD', paused: 'PAUSED', done: 'WAITING' };
+    return frame(`<g transform="translate(36,4) scale(.5)">${ICONS.pilot(on ? BEE : '#5d616c')}</g>` + label(on ? 'AUTO ON' : 'AUTO OFF', 112, 15, on ? '#fff' : '#8d919d', 1.5)
+      + label(on ? (running ? (S[step] || 'RUNNING') : (S[step] || 'WAITING')) : 'RUN OF SHOW', 132, 10, on ? 'rgba(255,255,255,.7)' : 'rgba(255,255,255,.45)', 1.4), { dim: offline });
+  },
+  // 1.12.15: tap tempo — looks set to "On the beat" pulse with it; shows the tempo once it has one
+  tempo({ bpm = 0, offline = false } = {}) {
+    return frame(`<g transform="translate(36,4) scale(.5)">${ICONS.tempo(bpm ? BEE : '#8d919d')}</g>` + label(bpm ? String(bpm) : 'TAP', 112, bpm ? 22 : 18, '#fff', bpm ? 1 : 2)
+      + label(bpm ? 'BPM · TAP' : 'TEMPO', 132, 11, 'rgba(255,255,255,.6)', 1.6), { dim: offline });
+  },
+  // 1.12.14: its own key for taking a lock-in back (the Lock in key does it too, pressed again) — lit while there's one to undo
+  formatUnlock({ ready = false, none = false, offline = false } = {}) {
+    return frame(`<g transform="translate(36,6) scale(.5)">${ICONS.unlock(ready ? BEE : '#5d616c')}</g>` + label('UNDO', 112, 18, ready ? '#fff' : '#8d919d', 2)
+      + label(none ? 'NO TEAM DEATH BATTLE' : 'LOCK-IN', 132, none ? 9 : 12, ready ? 'rgba(255,255,255,.7)' : 'rgba(255,255,255,.45)', 1.4), { dim: offline });
+  },
   formatUndo({ ready = false, offline = false } = {}) {
     return frame(`<g transform="translate(36,26) scale(.5)">${ICONS.undo(ready ? BEE : '#5d616c')}</g>` + label('UNDO', 110, 18, ready ? '#fff' : '#8d919d') + label('RESULT', 130, 13, 'rgba(255,255,255,.6)'), { dim: offline });
   },
   formatSplash({ kind = 'fboard', on = false, offline = false } = {}) {
-    const t = { fvs: 'TEAM VS', fboard: 'BOARD', fwin: 'CHAMPION' }[kind] || 'BOARD', ic = { fvs: '⚔', fboard: '☰', fwin: '🏆' }[kind] || '☰';
-    return frame(`<text x="72" y="82" ${FONT} font-size="54" font-weight="900" fill="${on ? INK : BEE}" text-anchor="middle">${ic}</text>` + label(on ? 'ON AIR' : t, 128, on ? 16 : 15, on ? INK : '#fff', 2), { bg: on ? BEE : undefined, dim: offline });
+    const t = { fvs: 'TEAM VS', fboard: 'BOARD', fwin: 'CHAMPION', flead: 'LEADERBOARD' }[kind] || 'BOARD', ic = { fvs: ICONS.swords, fboard: ICONS.board, fwin: ICONS.crown, flead: ICONS.leader }[kind] || ICONS.board;
+    return frame(`<g transform="translate(32,10) scale(.56)">${ic(on ? INK : '#fff')}</g>` + label(on ? 'ON AIR' : t, 128, on ? 16 : t.length > 9 ? 12 : 15, on ? INK : '#fff', 2), { bg: on ? BEE : undefined, dim: offline });
   },
   // the format bar along the bottom of the layout (teams, survivors, challengers, standings): lit while on stream
-  overlay({ hidden = false, offline = false } = {}) {     // the whole overlay on / hidden (downtime)
-    const eye = `<path d="M72 34C46 34 28 54 22 64c6 10 24 30 50 30s44-20 50-30C116 54 98 34 72 34z" fill="none" stroke="${hidden ? '#fff' : BEE}" stroke-width="7" stroke-linejoin="round"/>`
-      + (hidden ? `<path d="M30 26l84 76" stroke="#fff" stroke-width="8" stroke-linecap="round"/>` : `<circle cx="72" cy="64" r="16" fill="${BEE}"/>`);
-    return frame(eye + label(hidden ? 'HIDDEN' : 'OVERLAY ON', 128, hidden ? 18 : 14, '#fff', 2), { bg: hidden ? '#c2302b' : undefined, dim: offline });
-  },
   // Team Death Battle: put in the next fighter of one team (while the switch window is open)
   formatSwitch({ side = 1, open = false, none = false, name = '', lives = 0, max = 0, color = '', offline = false } = {}) {
     const c = /^#[0-9a-f]{6}$/i.test(color) ? color : side === 2 ? '#3fb6ff' : '#ff5a1f';
     const hexes = Array.from({ length: Math.min(6, max) }, (_, k) => { const x = 72 - (Math.min(6, max) - 1) * 10 + k * 20; return `<path d="M${x} 82l8 4.6v9.2l-8 4.6-8-4.6v-9.2z" fill="${k < lives ? c : 'none'}" stroke="${c}" stroke-width="2.4" opacity="${k < lives ? 1 : .45}"/>`; }).join('');
-    const arrows = `<g fill="none" stroke="${open ? '#fff' : '#7a7f8c'}" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"><path d="M40 40h52l-12-12M104 60H52l12 12"/></g>`;
-    const lock = `<g fill="none" stroke="#7a7f8c" stroke-width="6"><rect x="52" y="38" width="40" height="30" rx="5"/><path d="M60 38v-8a12 12 0 0 1 24 0v8"/></g>`;
-    return frame((none ? lock : open ? arrows : lock) + (none ? '' : hexes) + label(none ? 'NO TEAM DEATH BATTLE' : open ? (name || `P${side} SWITCH`) : `P${side} · ${name || 'LOCKED'}`, 128, none ? 11 : (name || '').length > 10 ? 13 : 16, '#fff', 1) + `<text x="72" y="24" ${FONT} font-size="13" font-weight="800" fill="${c}" text-anchor="middle" letter-spacing="2">${open ? `P${side} · SWITCH` : 'SWITCH'}</text>`, { accent: c, dim: offline });
+    const arrows = `<g transform="translate(40,14) scale(.44)">${ICONS.switchArrows(open ? '#fff' : '#7a7f8c', open ? c : '#5d616c')}</g>`;
+    const lock = `<g transform="translate(44,14) scale(.4)">${ICONS.lock('#7a7f8c')}</g>`;
+    return frame((none ? lock : open ? arrows : lock) + (none ? '' : hexes) + label(none ? 'NO TEAM DEATH BATTLE' : open ? (name || `P${side} SWITCH`) : `P${side} · ${name || 'LOCKED'}`, 128, none ? 11 : (name || '').length > 10 ? 13 : 16, '#fff', 1) + `<text x="56" y="22" ${FONT} font-size="12" font-weight="800" fill="${c}" text-anchor="middle" letter-spacing="1.5">${open ? `P${side} · SWITCH` : 'SWITCH'}</text>`, { accent: c, dim: offline });
   },
   formatBar({ on = false, kind = '', offline = false } = {}) {
     const t = { teams: 'TEAM BAR', elim: 'SURVIVORS', koth: 'CHALLENGERS', league: 'STANDINGS' }[kind] || 'FORMAT BAR';
-    const c = on ? INK : BEE;
-    const bars = `<rect x="22" y="78" width="100" height="18" rx="2" fill="${c}"/><rect x="50" y="64" width="44" height="32" rx="2" fill="${c}"/>`
-      + `<rect x="26" y="81" width="18" height="12" fill="${on ? BEE : '#111'}"/><rect x="100" y="81" width="18" height="12" fill="${on ? BEE : '#111'}"/>`
-      + `<path d="M58 28h28l-14 22z" fill="${on ? INK : '#fff'}" transform="${on ? 'rotate(180 72 39)' : ''}"/>`;
-    return frame(bars + label(on ? 'ON AIR' : t, 126, on ? 16 : 14, on ? INK : '#fff', 2), { bg: on ? BEE : undefined, dim: offline });
+    return frame(`<g transform="translate(26,4) scale(.64)">${ICONS.formatBar(on ? INK : '#fff')}</g>` + label(on ? 'ON AIR' : t, 126, on ? 16 : 14, on ? INK : '#fff', 2), { bg: on ? BEE : undefined, dim: offline });
   },
   // viewer tournament: signups (lit while open, with the count) and confirm & next match (green when a match is won)
   vtSignup({ open = false, count = 0, started = false, offline = false } = {}) {
-    return frame(`<text x="72" y="66" ${FONT} font-size="44" font-weight="900" fill="${open ? INK : BEE}" text-anchor="middle">${started ? '🏆' : count}</text>`
-      + label(started ? 'BRACKET ON' : open ? 'SIGNUPS OPEN' : 'SIGNUPS', 104, 13, open ? INK : '#fff', 1.5) + label('!enter', 128, 13, open ? INK : 'rgba(255,255,255,.55)'), { bg: open ? BEE : undefined, dim: offline });
+    return frame((started ? `<g transform="translate(40,18) scale(.44)">${ICONS.trophy(open ? '#fff' : VT2)}</g>` : `<text x="72" y="70" ${FONT} font-size="44" font-weight="900" fill="${open ? '#fff' : VT2}" text-anchor="middle">${count}</text>`)
+      + label(started ? 'STARTED' : open ? 'SIGN-UPS OPEN' : 'SIGN-UPS', 106, 13, '#fff', 1.5) + label(started ? 'BRACKET IS ON' : '!enter', 128, 13, 'rgba(255,255,255,.7)'), { bg: open ? VT : undefined, dim: offline });
   },
   vtNext({ now = '', won = false, done = false, champion = '', offline = false } = {}) {
     const bg = won ? '#1f9d55' : undefined;
-    return frame((done ? `<text x="72" y="70" ${FONT} font-size="46" font-weight="900" fill="${BEE}" text-anchor="middle">🏆</text>` + label(champion || 'CHAMPION', 112, 15, '#fff')
-      : ICONS.next(won ? '#fff' : BEE) + label(won ? 'CONFIRM' : 'NEXT', 112, 15, '#fff') + label(now || 'VIEWER MATCH', 132, 11, 'rgba(255,255,255,.7)')), { bg, dim: offline });
+    return frame((done ? `<g transform="translate(40,16) scale(.44)">${ICONS.trophy(BEE)}</g>` + label(champion || 'CHAMPION', 112, 15, '#fff')
+      : `<g transform="translate(36,26) scale(.5)">${ICONS.next(won ? '#fff' : VT2)}</g>` + label(won ? 'CONFIRM ›' : 'NEXT MATCH', 106, 15, '#fff', 1.5) + label(short(now || 'NO MATCH YET', 20), 128, 11, 'rgba(255,255,255,.75)', 0)), { bg, dim: offline });
   },
+  // viewer tournament: the "how to join" splash, and its bracket on stream
+  vtJoin({ on = false, count = 0, open = false, ready = true, offline = false } = {}) {
+    return on
+      ? frame(`<g transform="translate(28,4) scale(.6)">${ICONS.ticket('#fff', '#fff')}</g>` + label('ON AIR', 104, 15, '#fff', 3) + label(`${count} IN`, 128, 13, 'rgba(255,255,255,.85)', 1), { bg: VT, dim: offline })
+      : frame(`<g transform="translate(28,4) scale(.6)" opacity="${ready ? 1 : .45}">${ICONS.ticket('#fff')}</g>`
+        + label('JOIN SPLASH', 110, 13, '#fff', 1.5) + label(ready ? (open ? `${count} IN · OPEN` : `${count} IN`) : 'NOT SET UP', 130, 11, 'rgba(255,255,255,.6)', 1), { dim: offline });
+  },
+  vtBracket({ on = false, ready = true, offline = false } = {}) {
+    return on
+      ? frame(`<g transform="translate(16,8) scale(.72)">${ICONS.bracket('#fff')}</g>` + label('ON AIR', 128, 16, '#fff', 3), { bg: VT, dim: offline })
+      : frame(`<g transform="translate(16,8) scale(.72)">${ICONS.bracket(ready ? VT2 : '#5d616c')}</g>` + label(ready ? 'TOURNEY BRACKET' : 'NOT STARTED', 128, 12, ready ? '#fff' : '#8d919d', 1), { dim: offline });
+  },
+  // effects quality (1.11): the gauge and the level; pressing steps Auto → Full → Light → Ultra-light (or sets one)
+  fxq({ q = 'auto', offline = false } = {}) {
+    const name = { auto: 'AUTO', full: 'FULL', light: 'LIGHT', off: 'NO ENGINE', ultra: 'ULTRA-LIGHT' }[q] || 'AUTO', lit = q === 'ultra' ? '#35dc84' : q === 'full' ? '#ffb020' : '#29c6ff';
+    return frame(`<g transform="translate(28,4) scale(.62)">${glyph('gauge', lit)}</g>` + label('EFFECTS', 112, 13, 'rgba(255,255,255,.65)', 2) + label(name, 134, name.length > 8 ? 14 : 17, '#fff'), { dim: offline });
+  },
+  // Refresh OBS (1.12): reloads every BeeboScore browser source in OBS; flashes DONE (or what went wrong) after a press
+  obsRefresh({ flash = '', offline = false } = {}) {
+    const ok = flash === 'DONE', bad = flash && !ok;
+    return frame(`<g transform="translate(26,6) scale(.64)">${glyph('obsRefresh', bad ? '#ff5a5a' : ok ? '#35dc84' : '#29c6ff')}</g>` + label('REFRESH', 112, 15, '#fff', 2) + label(flash || 'OBS', 134, flash ? 13 : 15, bad ? '#ff8a8a' : ok ? '#7df0b0' : 'rgba(255,255,255,.65)', 2), { dim: offline });
+  },
+  // the BeeboScore key (1.12, bottom-right of the match section): connected or not, and whether the deck shows 1v1 or a format
+  status({ offline = false, section = 'solo', format = '' } = {}) {
+    const c = offline ? '#8d919d' : '#ffb020';
+    return frame(`<text x="72" y="58" ${FONT} font-size="30" font-weight="900" fill="${c}" text-anchor="middle" letter-spacing="1">BEEBO</text>`
+      + `<text x="72" y="84" ${FONT} font-size="17" font-weight="800" fill="#fff" text-anchor="middle" letter-spacing="4">SCORE</text>`
+      + label(offline ? 'APP CLOSED' : section === 'solo' ? '1V1 KEYS' : short(format || 'FORMAT', 16), 124, 12, offline ? '#ff8a8a' : 'rgba(255,255,255,.7)', 1.5), { dim: offline });
+  },
+  // 1.12.8: "Everything, in pages" — turns the deck's page; shows where you are and what's next
+  page({ page = 0, total = 2, name = '', next = '', offline = false } = {}) {
+    const dots = Array.from({ length: total }, (_, i) => `<circle cx="${72 + (i - (total - 1) / 2) * 16}" cy="104" r="${i === page ? 5 : 3.5}" fill="${i === page ? '#ffb020' : 'rgba(255,255,255,.35)'}"/>`).join('');
+    return frame(`<path d="M58 30 L86 54 L58 78" fill="none" stroke="#ffb020" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>` + dots
+      + label(short(name || 'PAGE', 12), 126, 12, '#fff', 1.5) + label(next ? '▸ ' + short(next, 10) : '', 20, 10, 'rgba(255,255,255,.6)', 1.5), { dim: offline });
+  },
+  blank() { return frame(''); },
   // stream sound: on/off (lit while on), or a louder / quieter key showing the level
   sound({ on = false, vol = 60, mode = 'toggle', offline = false } = {}) {
     if (mode === 'up' || mode === 'down') return frame(`<g transform="translate(26,14) scale(.64)">${ICONS.speaker(on ? BEE : '#8d919d', true)}</g>`
@@ -224,41 +325,9 @@ const art = {
     const t = short(name || 'Pick a screen', 22), words = t.split(' '), lines = [];
     for (const w of words) { if (lines.length && (lines[lines.length - 1] + ' ' + w).length <= 11) lines[lines.length - 1] += ' ' + w; else lines.push(w); }
     const ls = lines.slice(0, 2), ink = on ? INK : '#fff';
-    return frame(`<g transform="translate(44,14) scale(.39)">${ICONS.layout(on ? INK : BEE)}</g>`
+    return frame(`<g transform="translate(44,14) scale(.39)">${ICONS.screen(on ? INK : '#fff')}</g>`
       + ls.map((l, i) => `<text x="72" y="${ls.length === 1 ? 100 : 90 + i * 22}" ${FONT} font-size="${fit(l, 9, 20, 13)}" font-weight="800" fill="${ink}" text-anchor="middle">${esc(l)}</text>`).join('')
       + label(missing ? 'NOT IN LAYOUT' : on ? 'ON AIR' : 'SCREEN', 134, 12, on ? INK : 'rgba(255,255,255,.65)', 1.5), { bg: on ? BEE : undefined, dim: offline || missing });
-  },
-  // Hide all splashes: everything full-screen goes (VS, Victory, the format's Board / Team VS / Champion); the scoreboard stays
-  hideAll({ any = false, offline = false } = {}) {
-    const panes = `<rect x="30" y="24" width="72" height="50" rx="5" fill="none" stroke="${any ? '#fff' : 'rgba(255,255,255,.45)'}" stroke-width="6"/><rect x="44" y="38" width="72" height="50" rx="5" fill="${any ? '#c2302b' : INK}" stroke="${any ? '#fff' : 'rgba(255,255,255,.45)'}" stroke-width="6"/>`
-      + `<path d="M66 50l28 26M94 50L66 76" stroke="#fff" stroke-width="7" stroke-linecap="round" opacity="${any ? 1 : .5}"/>`;
-    return frame(panes + label(any ? 'HIDE ALL' : 'NOTHING UP', 124, any ? 16 : 13, any ? '#fff' : 'rgba(255,255,255,.55)', 2) + label('SPLASHES', 140, 10, 'rgba(255,255,255,.55)', 2), { accent: any ? '#c2302b' : '#555a66', dim: offline });
-  },
-  // Team Death Battle: close the switch window (both teams have picked)
-  formatLock({ open = false, none = false, offline = false } = {}) {
-    const c = open ? '#fff' : '#7a7f8c';
-    const lock = `<g fill="none" stroke="${c}" stroke-width="8" stroke-linejoin="round"><rect x="44" y="56" width="56" height="42" rx="6" fill="${open ? c : 'none'}"/><path d="M56 56V44a16 16 0 0 1 32 0v12"/></g>`;
-    return frame(lock + label(none ? 'NO TEAM DEATH BATTLE' : open ? 'LOCK IN' : 'LOCKED', 128, none ? 11 : 17, open ? '#fff' : 'rgba(255,255,255,.6)', 1.5), { dim: offline });
-  },
-  // a forfeit for one side (hold the key: it can't be pressed by accident)
-  formatForfeit({ side = 1, name = '', none = false, offline = false } = {}) {
-    const c = sideColor(side);
-    const flag = `<path d="M44 26v92" stroke="${none ? '#5d616c' : '#fff'}" stroke-width="7" stroke-linecap="round"/><path d="M48 30h52l-10 16 10 16H48z" fill="${none ? '#5d616c' : '#fff'}"/>`;
-    return frame(flag + `<text x="72" y="102" ${FONT} font-size="${fit(short(name || `PLAYER ${side}`, 12), 9, 17, 11)}" font-weight="800" fill="${none ? '#8d919d' : c}" text-anchor="middle">${esc(short(name || `PLAYER ${side}`, 12).toUpperCase())}</text>`
-      + label(none ? 'FORFEIT' : 'HOLD · FORFEIT', 128, 12, 'rgba(255,255,255,.7)', 1), { accent: c, dim: offline });
-  },
-  // the running format, in its colour (or "Normal match")
-  formatBadge({ name = '', color = '', offline = false } = {}) {
-    const words = String(name || 'NORMAL MATCH').split(' '), lines = [];
-    for (const w of words) { if (lines.length && (lines[lines.length - 1] + ' ' + w).length <= 9) lines[lines.length - 1] += ' ' + w; else lines.push(w); }
-    const c = color || '#8d919d', ls = lines.slice(0, 3), y0 = 78 - (ls.length - 1) * 13;
-    return frame(`<rect y="10" width="144" height="134" fill="${c}" opacity=".16"/>` + ls.map((l, i) => `<text x="72" y="${y0 + i * 26}" ${FONT} font-size="${fit(l, 8, 24, 14)}" font-weight="900" fill="#fff" text-anchor="middle">${esc(l)}</text>`).join('')
-      + label(color ? 'FORMAT' : 'NO FORMAT', 134, 11, color || 'rgba(255,255,255,.55)', 2.5), { accent: c, dim: offline });
-  },
-  blank: ({ offline = false } = {}) => frame('', { bg: '#0a0b10', dim: offline }),
-  // reload the overlay in OBS (the browser source starts clean; through the OBS link the fresh copy fades in)
-  refresh({ busy = false, offline = false } = {}) {
-    return frame(`<g transform="translate(22,4) scale(.7)">${ICONS.refresh(busy ? BEE : '#fff')}</g>` + label(busy ? 'REFRESHING' : 'REFRESH', 118, busy ? 14 : 17, '#fff', 2) + label('OBS', 138, 11, 'rgba(255,255,255,.6)', 3), { accent: SYNC, dim: offline });
   },
   layout({ title = '', mode = 'next', offline = false } = {}) {
     const t = short(title || 'Layout', 22), words = t.split(' '), lines = [];
@@ -270,49 +339,110 @@ const art = {
   },
 };
 
+// 1.12.18: the show's keys — one shape: the glyph, a name, a line under it; lit (the group's colour) while it's on stream
+art.show = ({ g, name, sub = '', on = false, offline = false, flash = '' } = {}) => {
+  const big = flash || name, top = sub ? 4 : 10;
+  return on
+    ? frame(`<g transform="translate(30,${top}) scale(.58)">${ICONS[g](INK)}</g>` + label(big, sub ? 108 : 124, fit(big, 10, 16, 11), INK, 1.5) + (sub ? label(sub, 130, fit(sub, 14, 12, 9), 'rgba(14,16,23,.72)', .8) : ''), { bg: BEE, dim: offline })
+    : frame(`<g transform="translate(30,${top}) scale(.58)">${ICONS[g]('#fff')}</g>` + label(big, sub ? 108 : 124, fit(big, 10, 16, 11), '#fff', 1.5) + (sub ? label(sub, 130, fit(sub, 14, 12, 9), 'rgba(255,255,255,.55)', .8) : ''), { dim: offline });
+};
 // White-on-transparent glyphs for the Stream Deck action list (20×20 / 40×40).
 const listIcon = inner => `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 144 144">${inner}</svg>`;
-const LIST = {
-  score: listIcon(`<text x="72" y="104" ${FONT} font-size="88" font-weight="900" fill="#fff" text-anchor="middle">+1</text>`),
-  reset: listIcon(ICONS.reset('#fff')), swap: listIcon(ICONS.swap('#fff')), undo: listIcon(ICONS.undo('#fff')),
-  nextmatch: listIcon(ICONS.next('#fff')), clear: listIcon(ICONS.clear('#fff')), layout: listIcon(ICONS.layout('#fff')), screen: listIcon(ICONS.layout('#fff') + `<circle cx="112" cy="112" r="18" fill="#fff"/>`),
-  fswitch: listIcon('<g fill="none" stroke="#fff" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"><path d="M26 54h86l-20-20M118 92H32l20 20"/></g>'),
-  fnext: listIcon(ICONS.next('#fff')), fundo: listIcon(ICONS.undo('#fff')), fsplash: listIcon(`<text x="72" y="104" ${FONT} font-size="84" font-weight="900" fill="#fff" text-anchor="middle">⚔</text>`),
-  player: listIcon(ICONS.person('#fff')), vtopen: listIcon(ICONS.person('#fff') + `<text x="112" y="130" ${FONT} font-size="44" font-weight="900" fill="#fff" text-anchor="middle">+</text>`), vtnext: listIcon(ICONS.next('#fff')), sound: listIcon(ICONS.speaker('#fff')), fbar: listIcon('<rect x="18" y="84" width="108" height="26" rx="3" fill="#fff"/><rect x="48" y="64" width="48" height="46" rx="3" fill="#fff"/>'),
-  bracket: listIcon(ICONS.bracket('#fff')),
-  bracketrefresh: listIcon(ICONS.pull('#fff')),
-  victory: listIcon(ICONS.trophy('#fff')),
-  bracketside: listIcon(`<rect x="10" y="34" width="56" height="76" rx="8" fill="#fff"/><text x="38" y="88" ${FONT} font-size="46" font-weight="900" font-style="italic" fill="#000" text-anchor="middle">W</text><rect x="78" y="34" width="56" height="76" rx="8" fill="none" stroke="#fff" stroke-width="8"/><text x="106" y="88" ${FONT} font-size="46" font-weight="900" font-style="italic" fill="#fff" text-anchor="middle">L</text>`),
-  latency: listIcon(ICONS.eye('#fff')),
-  viewernext: listIcon(`<g transform="translate(0,0) scale(.55)">${ICONS.twitch('#fff')}</g><g transform="translate(52,40) scale(.62)">${ICONS.next('#fff')}</g>`),
-  viewerresult: listIcon(`<text x="72" y="104" ${FONT} font-size="76" font-weight="900" fill="#fff" text-anchor="middle">+1</text>`),
-  viewerqueue: listIcon(`<rect x="24" y="30" width="96" height="18" rx="5" fill="#fff"/><rect x="24" y="63" width="96" height="18" rx="5" fill="#fff" opacity=".75"/><rect x="24" y="96" width="96" height="18" rx="5" fill="#fff" opacity=".5"/>`),
-  autoscore: listIcon(`<circle cx="72" cy="72" r="40" fill="none" stroke="#fff" stroke-width="10"/><circle cx="72" cy="72" r="15" fill="#fff"/>`),
-  autoscoreundo: listIcon(ICONS.undo('#fff')),
-  autoscoreconfirm: listIcon(`<text x="72" y="100" ${FONT} font-size="76" font-weight="900" fill="#fff" text-anchor="middle">+1</text>`),
-  autoscoreresync: listIcon(ICONS.refresh('#fff')),
-  viewersidebar: listIcon(`<rect x="26" y="24" width="34" height="96" rx="5" fill="#fff"/><rect x="70" y="34" width="50" height="14" rx="4" fill="#fff" opacity=".6"/><rect x="70" y="60" width="50" height="14" rx="4" fill="#fff" opacity=".6"/><rect x="70" y="86" width="50" height="14" rx="4" fill="#fff" opacity=".6"/>`),
-  viewersplash: listIcon(`<text x="72" y="100" ${FONT} font-size="76" font-weight="900" font-style="italic" fill="#fff" text-anchor="middle">VS</text>`),
-  sggreport: listIcon('<g fill="none" stroke="#fff" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"><path d="M72 88V28"/><path d="M48 52l24-24 24 24"/><path d="M30 80v24h84V80"/></g>'),
-  overlay: listIcon('<path d="M72 34C46 34 28 54 22 64c6 10 24 30 50 30s44-20 50-30C116 54 98 34 72 34z" fill="none" stroke="#fff" stroke-width="9" stroke-linejoin="round"/><circle cx="72" cy="64" r="15" fill="#fff"/>'),
-  postlink: listIcon('<path d="M24 30h96a10 10 0 0 1 10 10v44a10 10 0 0 1-10 10H62l-22 18v-18H24a10 10 0 0 1-10-10V40a10 10 0 0 1 10-10z" fill="#fff"/>'),
-  standings: listIcon('<rect x="54" y="34" width="36" height="76" fill="#fff"/><rect x="14" y="58" width="36" height="52" fill="#fff" opacity=".7"/><rect x="94" y="72" width="36" height="38" fill="#fff" opacity=".5"/>'),
-  top8: listIcon(ICONS.bolt('#fff') + `<text x="66" y="100" ${FONT} font-size="62" font-weight="900" font-style="italic" fill="#fff" text-anchor="middle">8</text>`),
-  vs: listIcon(`<text x="72" y="100" ${FONT} font-size="80" font-weight="900" font-style="italic" fill="#fff" text-anchor="middle">VS</text>`),
-  refresh: listIcon(ICONS.refresh('#fff')),
-  hideall: listIcon('<rect x="18" y="20" width="84" height="60" rx="6" fill="none" stroke="#fff" stroke-width="9"/><rect x="42" y="44" width="84" height="60" rx="6" fill="#000" stroke="#fff" stroke-width="9"/><path d="M70 60l28 28M98 60L70 88" stroke="#fff" stroke-width="9" stroke-linecap="round"/>'),
-  slot: listIcon('<rect x="14" y="14" width="50" height="50" rx="8" fill="#fff"/><rect x="80" y="14" width="50" height="50" rx="8" fill="#fff" opacity=".6"/><rect x="14" y="80" width="50" height="50" rx="8" fill="#fff" opacity=".6"/><rect x="80" y="80" width="50" height="50" rx="8" fill="none" stroke="#fff" stroke-width="9"/>'),
-  loser: listIcon(`<text x="72" y="100" ${FONT} font-size="72" font-weight="900" fill="#fff" text-anchor="middle">[L]</text>`),
-};
+const LIST = Object.fromEntries(Object.entries({
+  score: 'plus1', reset: 'reset', swap: 'swap', undo: 'undo', nextmatch: 'next', clear: 'clear', layout: 'layout', screen: 'screen',
+  fswitch: 'switchArrows', fnext: 'confirm', fundo: 'undo', fsplash: 'swords', fbar: 'formatBar', playervs: 'swords', vsstyle: 'switchArrows', comm: 'mic', flock: 'lock', funlock: 'unlock', tempo: 'tempo', autopilot: 'pilot', replay: 'replay', automation: 'flow', chapter: 'chapter', stats: 'statsCard', sponsor: 'sponsor', player: 'person', vtopen: 'personPlus', vtnext: 'next', sound: 'speaker', fxq: 'gauge', obsrefresh: 'obsRefresh', hideall: 'hideAll', slot: 'layout', stinger: 'bolt',
+  bracket: 'bracket', bracketrefresh: 'pull', victory: 'trophy', bracketside: 'sides', latency: 'eye', viewernext: 'chatNext', viewerresult: 'plus1',
+  viewerqueue: 'queue', viewersidebar: 'sidebar', viewersplash: 'vs',
+  sggreport: 'upload', postlink: 'chatLink', standings: 'podium', top8: 'top8', vs: 'vs', loser: 'loser', vtjoin: 'ticket', vtbracket: 'bracket',
+  rundown: 'rundown', countdown: 'countdown', schedule: 'schedule', walkin: 'walkin', storyline: 'storyline', evstats: 'evstats', season: 'season', rehearsal: 'rehearsal', replayslow: 'slowmo', replayfreeze: 'freeze', drawclear: 'drawClear',
+  clip: 'clip', results: 'results', picks: 'picks', poll: 'poll', twpred: 'twpred', music: 'music', duck: 'duck', ext: 'ext',      // 1.12.18
+  cdplus: 'cdPlus',                                                                                                   // 1.12.19
+  moments: 'moments', momentreplay: 'momentReplay', h2h: 'h2h', settimer: 'setTimer',                                   // 1.12.21
+  statsstrip: 'statsStrip', greset: 'gresetSplash',                                                                    // 1.12.23
+}).map(([k, g]) => [k, listIcon(glyph(g))]));
 
-// A format key wears the running format's colour: a frame round the key and a corner flag, so a glance at the deck
-// tells you which format it is set up for (the same colours as the Matches tab in the app)
-function tint(svg, color) {
-  if (!/^#[0-9a-f]{6}$/i.test(color || '')) return svg;
-  const t = `<g data-fmt="${color}"><rect x="3.5" y="3.5" width="137" height="137" rx="8" fill="none" stroke="${color}" stroke-width="7"/><path d="M144 0v34L110 0z" fill="${color}"/></g>`;
-  return svg.replace(/<\/svg>$/, t + '</svg>');
+// ---------------------------------------------------------------- groups: every key shows which part of the app it belongs to
+// (Stream Deck lists a plugin's actions under one heading, so the groups are told apart by name, order and colour)
+const GROUPS = {
+  match: { color: '#ffb020', name: 'Match' }, stream: { color: '#29c6ff', name: 'Stream' }, bracket: { color: '#4f7dff', name: 'Bracket' },
+  format: { color: '#ff6a1a', name: 'Format' }, vt: { color: '#9d5cff', name: 'Viewer tournament' }, vm: { color: '#ff5fa2', name: 'Viewer matches' },
+  show: { color: '#b6f03a', name: 'The show' },          // 1.12.18: rundown, screens, replays, viewers
+};
+const GROUP_OF = {
+  score: 'match', player: 'match', loser: 'match', swap: 'match', reset: 'match', undo: 'match', clear: 'match', vs: 'match', playervs: 'match', vsstyle: 'match', victory: 'match',
+  moments: 'match', momentreplay: 'match', h2h: 'match', settimer: 'match',      // 1.12.21: the set as it's told
+  statsstrip: 'match', greset: 'match',                                           // 1.12.23: the splashes tell the story
+  layout: 'stream', screen: 'stream', comm: 'stream', sound: 'stream', latency: 'stream', fxq: 'stream', obsrefresh: 'stream', hideall: 'stream', stinger: 'stream', tempo: 'stream', autopilot: 'stream', replay: 'stream', automation: 'stream', chapter: 'stream', stats: 'stream', sponsor: 'stream',
+  nextmatch: 'bracket', bracket: 'bracket', top8: 'bracket', standings: 'bracket', bracketside: 'bracket', bracketrefresh: 'bracket', sggreport: 'bracket', postlink: 'bracket',
+  fnext: 'format', fundo: 'format', fsplash: 'format', fbar: 'format', fswitch: 'format', flock: 'format', funlock: 'format',
+  vtopen: 'vt', vtjoin: 'vt', vtbracket: 'vt', vtnext: 'vt',
+  viewernext: 'vm', viewerresult: 'vm', viewerqueue: 'vm', viewersplash: 'vm', viewersidebar: 'vm',
+  rundown: 'show', countdown: 'show', schedule: 'show', walkin: 'show', storyline: 'show', evstats: 'show', season: 'show', rehearsal: 'show', replayslow: 'show', replayfreeze: 'show', drawclear: 'show',
+  clip: 'show', results: 'show', picks: 'show', poll: 'show', twpred: 'show', music: 'show', duck: 'show', ext: 'show', cdplus: 'show',
+};
+const FORMAT_NAMES = { crew: 'CREW BATTLE', sajam: 'TEAM BATTLE', gauntlet: 'GAUNTLET', death: 'DEATH BATTLE', koth: 'KING OF THE HILL', league: 'LEAGUE', tdb: 'TEAM DEATH BATTLE' };
+/** 1.12.17 — the keys, redrawn. Every key is a tile of dark glass with its group's colour round the edge, a soft light of that
+ * colour rising from below, the group's badge (Designer-made: a star, a screen, bracket lines, a hexagon, a controller, a chat
+ * bubble) in a disc at the top right, and — for the format and viewer-tournament keys — a pill naming what it works on.
+ * A key that's on air turns into a lit tile of its group's colour (and gets a slow shine, see shine()); one that can't be used
+ * right now is greyed out with the reason (disabled()). start.gg keys (blue, bracket lines) never look like viewer-tournament
+ * keys (violet, controller). */
+const hexRgb = c => [1, 3, 5].map(i => parseInt(c.slice(i, i + 2), 16));
+const mixHex = (a, b, k) => '#' + hexRgb(a).map((v, i) => Math.round(v + (hexRgb(b)[i] - v) * k).toString(16).padStart(2, '0')).join('');
+function grouped(svg, action, tag = '') {
+  if (!svg) return svg;
+  const gk = GROUP_OF[action], g = GROUPS[gk];
+  if (!g) return svg.split(MAIN).join('#fff').split(SOFT).join('#fff');
+  // lit = the key's own background is a colour (on air), not the dark one: BEE means "the group's colour", green (a result
+  // to confirm) stays green, and a key with a colour of its own (a losers mark in red, a posted link) keeps it
+  const bgM = svg.match(/<rect width="144" height="144" fill="(#[0-9a-fA-F]{6})"\/>/), bg = bgM ? bgM[1].toLowerCase() : '';
+  const lum = bg ? hexRgb(bg).reduce((a, v, i) => a + v * [.2126, .7152, .0722][i], 0) / 255 : 0;
+  const lit = lum > .16, hot = bg === OKG, litC = !lit ? '' : bg === BEE ? (gk === 'match' ? BEE : null) : bg;
+  svg = svg.split(MAIN).join(mixHex(g.color, '#ffffff', .3)).split(SOFT).join(g.color);
+  const c = g.color, top = mixHex(c, '#ffffff', .28), deep = mixHex(c, '#000000', .38), id = `k${gk}${hot ? 'h' : lit ? 'l' + (litC || '').slice(1) : 'd'}`;   // ids unique per look (pictures drawn side by side share one page)
+  // the tile: dark glass (or, on air, lit in the group's colour — green stays green: a result waiting to be confirmed)
+  const face = lit
+    ? (hot ? `<defs><linearGradient id="${id}f" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5df0a0"/><stop offset="1" stop-color="#1fa862"/></linearGradient></defs>`
+           : `<defs><linearGradient id="${id}f" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${litC ? mixHex(litC, '#ffffff', .22) : top}"/><stop offset="1" stop-color="${litC ? mixHex(litC, '#000000', .3) : deep}"/></linearGradient></defs>`)
+      + `<rect width="144" height="144" fill="#07080c"/><rect x="3" y="3" width="138" height="138" rx="22" fill="url(#${id}f)"/><rect x="3" y="3" width="138" height="66" rx="22" fill="#ffffff" fill-opacity=".14"/>`
+    : `<defs><linearGradient id="${id}f" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1b1f2b"/><stop offset="1" stop-color="#0a0b11"/></linearGradient>`
+      + `<radialGradient id="${id}g" cx=".5" cy="1.1" r=".85"><stop offset="0" stop-color="${c}" stop-opacity=".42"/><stop offset="1" stop-color="${c}" stop-opacity="0"/></radialGradient></defs>`
+      + `<rect width="144" height="144" fill="#07080c"/><rect x="3" y="3" width="138" height="138" rx="22" fill="url(#${id}f)"/><rect x="3" y="3" width="138" height="138" rx="22" fill="url(#${id}g)"/>`
+      + `<rect x="5" y="5" width="134" height="40" rx="20" fill="#ffffff" fill-opacity=".045"/>`;
+  svg = svg.replace(/<rect width="144" height="144" fill="[^"]*"\/>/, face);
+  const edge = `<rect x="4" y="4" width="136" height="136" rx="21" fill="none" stroke="${lit ? '#ffffff' : c}" stroke-opacity="${lit ? .5 : .62}" stroke-width="2.5"/>`;
+  const badge = `<circle cx="124" cy="20" r="13" fill="${lit ? '#0e1017' : c}" fill-opacity="${lit ? .55 : 1}"/>` + `<g transform="translate(-4,8)">${(DA['b.' + gk] || '').replace(/^<g transform="translate\(110 0\)">.*?<\/g>/, '').split('#0e1017').join(lit ? c : '#0e1017')}</g>`;
+  const t = short(tag, 18);
+  const pill = tag ? `<rect x="7" y="8" width="${Math.min(100, 12 + t.length * 6.2).toFixed(0)}" height="18" rx="9" fill="${lit ? '#0e1017' : c}" fill-opacity="${lit ? .55 : .95}"/><text x="${(7 + Math.min(100, 12 + t.length * 6.2) / 2).toFixed(0)}" y="21" ${FONT} font-size="${fit(t, 13, 10.5, 7.5)}" font-weight="900" fill="${lit ? c : '#0e1017'}" text-anchor="middle" letter-spacing=".4">${esc(t)}</text>` : '';
+  return svg.replace(/<rect width="144" height="10" fill="[^"]*"\/>/, '').replace(/<\/svg>$/, edge + pill + badge + `<!--sb:${hot ? 'hot' : lit ? 'lit' : 'idle'}-->` + '</svg>');
 }
+const inner = svg => String(svg).replace(/^<svg[^>]*>/, '').replace(/<\/svg>\s*$/, '');
+const reid = (x, p) => x.replace(/id="([\w-]+)"/g, `id="${p}$1"`).replace(/url\(#([\w-]+)\)/g, `url(#${p}$1)`).replace(/href="#([\w-]+)"/g, `href="#${p}$1"`);
+const wrap = body => `<svg xmlns="http://www.w3.org/2000/svg" width="144" height="144" viewBox="0 0 144 144">${body}</svg>`;
+/** a key that can't be used right now (no format running, no tournament, nobody has won yet…): greyed out, and why */
+function disabled(svg, reason = '') {
+  const r = short(String(reason || 'NOT NOW').toUpperCase(), 18);
+  return wrap(`<g opacity=".3">${inner(svg)}</g><rect x="3" y="3" width="138" height="138" rx="22" fill="#0b0c11" fill-opacity=".45"/><rect x="4" y="4" width="136" height="136" rx="21" fill="none" stroke="#5d616c" stroke-opacity=".7" stroke-width="2" stroke-dasharray="7 6"/>`
+    + `<rect x="10" y="${116 - 4}" width="124" height="24" rx="12" fill="#1c1f28" stroke="#3b3f4b" stroke-width="1.5"/><text x="72" y="${116 + 12}" ${FONT} font-size="${fit(r, 13, 12, 8)}" font-weight="900" fill="#9aa0ad" text-anchor="middle" letter-spacing=".6">${esc(r)}</text><!--sb:off-->`);
+}
+/** the change from one key picture to another, e (0 → 1): the old one lifts away and fades, the new one rises in */
+function blend(a, b, e) {
+  const k = e * e * (3 - 2 * e), up = (1 - k) * 12, s = .92 + .08 * k;
+  return wrap(`<g opacity="${(1 - k).toFixed(3)}" transform="translate(0,${(-k * 12).toFixed(1)})">${reid(inner(a), 'o')}</g>`
+    + `<g opacity="${k.toFixed(3)}" transform="translate(${(72 * (1 - s)).toFixed(2)},${(72 * (1 - s) + up).toFixed(2)}) scale(${s.toFixed(3)})">${inner(b)}</g>`);
+}
+/** a lit key's shine: a soft diagonal band of light that sweeps across it (phase 0 → 1), and a breathing edge */
+function shine(svg, phase, hot = false) {
+  const x = -90 + phase * 330, glow = .35 + .35 * Math.sin(phase * Math.PI * 2);
+  return wrap(inner(svg) + `<defs><linearGradient id="ksh" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity="${hot ? .5 : .32}"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>`
+    + `<g transform="translate(${x.toFixed(1)},0) skewX(-18)"><rect x="0" y="3" width="44" height="138" fill="url(#ksh)"/></g>`
+    + `<rect x="3" y="3" width="138" height="138" rx="22" fill="none" stroke="#ffffff" stroke-opacity="${glow.toFixed(2)}" stroke-width="3"/>`);
+}
+/** pressed: the key gives a little under your finger */
+const pressed = svg => wrap(`<rect width="144" height="144" fill="#07080c"/><g transform="translate(5.04,5.04) scale(.93)">${inner(svg)}</g>`);
+const stateOf = svg => { const m = /<!--sb:(\w+)-->/.exec(svg || ''); return m ? m[1] : 'idle'; };
+/** the action-list icon in its group's colour */
+const tinted = (svg, action) => { const g = GROUPS[GROUP_OF[action]], c = g ? g.color : '#fff'; return svg.split(MAIN).join(c).split(SOFT).join(c).replace(/#fff\b/g, c); };
+
 const dataUrl = svg => 'data:image/svg+xml;charset=utf8,' + encodeURIComponent(svg);
-// 1.4: the keys BeeboScore Prototype puts on the deck have new pictures (keys.js)
-Object.assign(art, require('./keys').keys);
-module.exports = { art, LIST, dataUrl, tint, P1, P2, BEE, ICONS };
+module.exports = { art, LIST, dataUrl, P1, P2, BEE, GROUPS, GROUP_OF, FORMAT_NAMES, grouped, tinted, disabled, blend, shine, pressed, stateOf };

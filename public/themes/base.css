@@ -1,0 +1,93 @@
+/* =========================================================================================
+   BeeboScore (developed by Beebo) — what the five Designer themes share (Settings › Look & feel:
+   Hive, Ink Dojo, Circuit, Street, Glacier). Each theme's panels, buttons, fields, tab plates and
+   ornaments are Layout Designer designs (art/ui-themes.js → public/themes/<theme>/*.svg), stretched
+   around the panel's boxes nine-slice style: corners keep their shape, edges stretch.
+   Only active with <html class="ui-x theme-…">; Classic and Ember stay untouched.
+   ========================================================================================= */
+html.ui-x body { background: var(--t-bgc, var(--bg)) var(--t-bg) repeat; background-attachment: fixed; }
+html.ui-x ::selection { background: color-mix(in srgb, var(--accent) 40%, transparent); }
+html.ui-x ::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--accent) 35%, var(--card-2)); border-color: var(--bg); }
+
+/* the header: a plate drawn in the Designer */
+html.ui-x .head { background: none; border-bottom: 0; border-image: var(--t-head) 0 60 10 60 fill / 0 60px 10px 60px stretch; box-shadow: 0 10px 24px -18px rgba(0,0,0,.7); }
+html.ui-x .brand b { font: 400 19px/1 var(--t-display); letter-spacing: .5px; color: var(--t-brand, var(--text)); }
+html.ui-x .brand small, html.ui-x .picker label { font-family: var(--t-label); letter-spacing: 1.5px; color: var(--accent); }
+html.ui-x .brand img { border-radius: 0; filter: drop-shadow(0 2px 4px rgba(0,0,0,.35)); }
+
+/* the tab rail: the tab you're on sits on its own plate */
+html.ui-x nav.rail { background: var(--t-rail, transparent); border-right: 1px solid var(--line); }
+html.ui-x nav.rail button { border-radius: 0; font-family: var(--t-label); letter-spacing: .4px; position: relative; }
+html.ui-x nav.rail button:hover { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+/* the active tab: the theme's badge sits behind the icon only, and the label sits clear below it (it used to be stretched
+   over icon and label together, so the label crossed the badge's edges) */
+html.ui-x nav.rail button { padding-top: 12px; gap: 9px; }
+html.ui-x nav.rail button.on { background: none; color: var(--t-railon-label, var(--accent)); }
+html.ui-x nav.rail button.on::before { content: ''; position: absolute; left: 50%; top: 1px; width: 56px; height: 44px; transform: translateX(-50%);
+  background: var(--t-railon) center / contain no-repeat; pointer-events: none; }
+html.ui-x nav.rail button.on svg { position: relative; z-index: 1; color: var(--t-railon-ink, var(--accent)); }
+
+/* panels */
+html.ui-x .card { background: none; border: 0; border-radius: 0; border-image: var(--t-card) 48 fill / 48px stretch; padding: 22px 22px 20px; }
+html.ui-x .card h2 { font-family: var(--t-display); font-weight: 400; font-size: 14px; letter-spacing: 1.2px; color: var(--t-h2, var(--text)); }
+html.ui-x .card > h2::before { content: ''; flex: none; width: 26px; height: 22px; margin-right: 2px; background: var(--t-orn) left center / contain no-repeat; }
+html.ui-x .pagetitle { font-family: var(--t-display); font-weight: 400; letter-spacing: .5px; }
+html.ui-x .pcard, html.ui-x .mg-team, html.ui-x .mg-score, html.ui-x .bv-set, html.ui-x .mg-row, html.ui-x .set, html.ui-x .fmt-team { border-radius: 4px; }
+
+/* buttons */
+html.ui-x .btn { background: none; border: 0; border-radius: 0; border-image: var(--t-btn) 16 fill / 15px stretch; color: var(--t-btn-ink, var(--text)); font-family: var(--t-btnfont, inherit); }
+html.ui-x .btn:hover:not(:disabled) { background: none; filter: brightness(1.14) saturate(1.1); }
+html.ui-x .btn.sm { border-image-width: 12px; }
+html.ui-x .btn.ghost { border-image: var(--t-chip) 12 fill / 11px stretch; }
+html.ui-x .btn.primary { background: none; border-image: var(--t-btnp) 16 fill / 15px stretch; color: var(--t-btnp-ink, #141006); }
+html.ui-x .btn.primary:hover:not(:disabled) { background: none; }
+html.ui-x .btn.on { border-image: var(--t-segon) 12 fill / 12px stretch; color: var(--t-segon-ink, #141006); }
+html.ui-x .setrow .btn.on { box-shadow: none; }   /* 1.12.21: Matches › The set — the pressed look is the theme's own shape; the plain themes' inset line drew a rectangle round it */
+
+/* fields, dropdowns and search bars */
+html.ui-x input:not([type]), html.ui-x input[type=text], html.ui-x input[type=url], html.ui-x input[type=number], html.ui-x input[type=password], html.ui-x input[type=search], html.ui-x select.f, html.ui-x textarea, html.ui-x .picker select {
+  background-color: transparent; border-color: transparent; border-radius: 0; border-image: var(--t-field) 14 fill / 12px stretch; color: var(--text); }
+html.ui-x input:focus, html.ui-x select.f:focus, html.ui-x textarea:focus { box-shadow: none; filter: drop-shadow(0 0 5px color-mix(in srgb, var(--accent) 55%, transparent)); }
+html.ui-x input[type=search] { background: var(--t-search) 11px center / 17px no-repeat; padding-left: 36px; }
+html.ui-x .picker select { background: var(--t-arrow) right 10px center / 18px no-repeat; }
+html.ui-x .scorebox input { border-image: none; background: var(--card-2); border: 1px solid var(--line); border-radius: 6px; }
+
+/* segmented switches, chips, pills */
+html.ui-x .seg { background: color-mix(in srgb, var(--card-2) 70%, transparent); border-color: var(--line); border-radius: 4px; }
+html.ui-x .seg button { font-family: var(--t-label); letter-spacing: .4px; border-radius: 0; }
+html.ui-x .seg button.on { background: none; color: var(--t-segon-ink, #141006); border-image: var(--t-segon) 12 fill / 12px stretch; }
+html.ui-x .chip { background: none; border: 0; border-radius: 0; border-image: var(--t-chip) 12 fill / 11px stretch; color: var(--muted); }
+html.ui-x .chip.on { border-image: var(--t-segon) 12 fill / 12px stretch; color: var(--t-segon-ink, #141006); background: none; }
+html.ui-x .pill { font-family: var(--t-label); border-radius: 3px; }
+html.ui-x .toggle .sw { border-radius: 4px; } html.ui-x .toggle .sw::after { border-radius: 2px; }
+html.ui-x .toast { background: var(--card-2); border-color: var(--line-2); border-radius: 4px; color: var(--text); font-family: var(--t-label); }
+
+/* ---------------------------------------------------------------------- dropdowns (ui-select.js) */
+.ux-sel { position: relative; display: inline-flex; width: 100%; min-width: 0; }
+.ux-sel > select { position: absolute; inset: 0; opacity: 0; pointer-events: none; }
+.ux-sel-btn { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; text-align: left; cursor: pointer; font: inherit; color: var(--text); background: var(--t-arrow) right 10px center / 18px no-repeat;
+  border: 0; border-image: var(--t-field) 14 fill / 12px stretch; padding: 9px 36px 9px 12px; min-height: 40px; }
+.picker .ux-sel-btn { padding-top: 15px; min-height: 42px; min-width: 190px; }
+html.ui-x .picker { position: relative; } html.ui-x .picker label { z-index: 2; pointer-events: none; }
+.ux-sel-btn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ux-sel-btn:focus-visible { outline: none; filter: drop-shadow(0 0 5px color-mix(in srgb, var(--accent) 60%, transparent)); }
+.ux-sel-btn[disabled] { opacity: .5; cursor: default; }
+.ux-pop { position: fixed; z-index: 1000; min-width: 180px; max-height: min(60vh, 420px); overflow: auto; padding: 14px 10px 12px; border-image: var(--t-card) 48 fill / 40px stretch;
+  filter: drop-shadow(0 14px 24px rgba(0,0,0,.45)); animation: uxpop .12s ease-out; }
+@keyframes uxpop { from { opacity: 0; transform: translateY(-4px); } }
+.ux-pop .ux-filter { width: 100%; margin: 0 0 8px; }
+.ux-pop .ux-grp { font: 400 11px var(--t-label); letter-spacing: 1.2px; text-transform: uppercase; color: var(--accent); padding: 8px 10px 4px; }
+.ux-pop .ux-opt { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; border: 0; background: none; color: var(--text); font: inherit; padding: 8px 10px; cursor: pointer; border-radius: 3px; }
+.ux-pop .ux-opt:hover, .ux-pop .ux-opt.act { background: color-mix(in srgb, var(--accent) 16%, transparent); }
+.ux-pop .ux-opt.sel { color: var(--accent); font-weight: 700; }
+.ux-pop .ux-opt.sel::after { content: '✓'; margin-left: auto; }
+.ux-pop .ux-opt[disabled] { opacity: .45; cursor: default; }
+.ux-pop .ux-none { padding: 8px 10px; color: var(--muted); }
+
+/* Jump to… in a Designer theme */
+html.ui-x .jump-box { background: none; border: 0; border-radius: 0; border-image: var(--t-card) 48 fill / 40px stretch; padding: 22px 18px 16px; }
+html.ui-x .jump-btn { border: 0; border-radius: 0; background: var(--t-search) 11px center / 16px no-repeat; border-image: var(--t-field) 14 fill / 12px stretch; padding-left: 34px; font-family: var(--t-label); }
+
+/* the + score buttons: a dark or white + chosen per theme for contrast against that player's colour */
+html.ui-x .p1 .scorebox .plus { color: var(--t-p1-ink, #fff); }
+html.ui-x .p2 .scorebox .plus { color: var(--t-p2-ink, #fff); }
