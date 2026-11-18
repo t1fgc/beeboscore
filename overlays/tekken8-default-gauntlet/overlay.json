@@ -1,7 +1,7 @@
 {
-  "title": "Default — Gauntlet",
+  "title": "Classic — Gauntlet",
   "game": "Tekken 8",
-  "family": "Default",
+  "family": "Classic",
   "format": "gauntlet",
   "base": "tekken8-default",
   "description": "One run through a whole line-up: the gauntlet ladder along the bottom, the stage on the player bars.",
@@ -10,6 +10,6 @@
     "#ff3b5c",
     "#3b8eff"
   ],
-  "version": "1",
+  "version": 2,
   "gen": 2
 }

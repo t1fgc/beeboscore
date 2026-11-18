@@ -1,7 +1,7 @@
 {
-  "title": "Default — League",
+  "title": "Classic — League",
   "game": "Tekken 8",
-  "family": "Default",
+  "family": "Classic",
   "format": "league",
   "base": "tekken8-default",
   "description": "Records and table positions on the player bars, a standings ticker along the bottom.",
@@ -10,6 +10,6 @@
     "#ff3b5c",
     "#3b8eff"
   ],
-  "version": "1",
+  "version": 2,
   "gen": 2
 }

@@ -2226,6 +2226,33 @@ setInterval(function(){if(!wsOk)look()},1500);setInterval(look,6000);
     res.end(buf);
   }
 
+  // 1.5.3: only the Classic layouts are built in. Layouts left in the overlays folder by older builds (Frostbite, Venom,
+  // Obsidian Glass and the rest of the full BeeboScore's looks, and their format versions) cluttered the Layout menu: once,
+  // every folder that is neither one of the app's own nor one you imported on the Layouts tab moves to
+  // data/retired-layouts (kept, never deleted; import it again from there if you want it back).
+  if (!config.oldLayoutsSwept && !opts.overlaysDir && path.resolve(BUNDLE_DIR, 'overlays') !== path.resolve(OVERLAYS_DIR)) {
+    const moved = [];
+    try {
+      for (const ent of fs.readdirSync(OVERLAYS_DIR, { withFileTypes: true })) {
+        if (!ent.isDirectory() || isBuiltIn(ent.name)) continue;
+        const dir = path.join(OVERLAYS_DIR, ent.name);
+        if (readJSON(path.join(dir, 'overlay.json'), {}).imported) continue;            // yours: stays
+        let to = path.join(DATA_DIR, 'retired-layouts', ent.name), i = 2;
+        while (fs.existsSync(to)) to = path.join(DATA_DIR, 'retired-layouts', `${ent.name} (${i++})`);
+        try { fs.mkdirSync(path.dirname(to), { recursive: true }); fs.renameSync(dir, to); moved.push(ent.name); }
+        catch { try { copyDir(dir, to); fs.rmSync(dir, { recursive: true, force: true }); moved.push(ent.name); } catch {} }
+      }
+      const seeded = readJSON(SEEDED_FILE, {}); let ch = false;
+      for (const n of moved) if (n in seeded) { delete seeded[n]; ch = true; }
+      if (ch) writeJSON(SEEDED_FILE, seeded);
+    } catch {}
+    if (!overlayExists(config.activeOverlay)) {          // the live layout was one of them: the app's own for the game goes live
+      const g = readJSON(STATE_FILE, {}).game, own = ({ 'Street Fighter 6': 'sf6-default', 'Avatar Legends': 'avatar-default', 'Fatal Fury: City of the Wolves': 'fatalfury-default' })[g] || 'tekken8-default';
+      config.activeOverlay = overlayExists(own) ? own : 'tekken8-default';
+    }
+    config.oldLayoutsSwept = true; writeJSON(CONFIG_FILE, config);
+    if (moved.length) { overlayCache = null; console.log(`  Moved ${moved.length} old layout${moved.length === 1 ? '' : 's'} to data/retired-layouts: ${moved.join(', ')}`); }
+  }
   if (!overlayExists(config.activeOverlay)) {
     config.activeOverlay = ['tekken8-default', 'tekken8-shattered'].find(overlayExists) || (listOverlays()[0] || {}).name || 'tekken8-default';   // 1.12.5: the Default layout first
   }
@@ -4228,7 +4255,7 @@ iframe{transition:opacity .45s ease}iframe.next{opacity:0;pointer-events:none}if
           }
         } catch {}
         writeJSON(path.join(dir, 'design.json'), d);
-        writeJSON(path.join(dir, 'overlay.json'), { title, game, family: title, description: 'Made with the Layout Designer.', colors });
+        writeJSON(path.join(dir, 'overlay.json'), { title, game, family: title, description: 'Made with the Layout Designer.', colors, imported: new Date().toISOString() });      // 1.5.3: one of yours (the Layouts tab lists it)
         let variants = [];
         try { variants = writeVariants(name, { title, game, colors, on: d.formatVersions !== false && !(d.size && (Number(d.size.w) !== 1920 || Number(d.size.h) !== 1080)) }); } catch (e) { console.error('format versions:', e.message); }
         overlaysChanged();

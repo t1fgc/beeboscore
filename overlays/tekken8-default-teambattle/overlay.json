@@ -1,7 +1,7 @@
 {
-  "title": "Default — Team Battle",
+  "title": "Classic — Team Battle",
   "game": "Tekken 8",
-  "family": "Default",
+  "family": "Classic",
   "format": "sajam",
   "base": "tekken8-default",
   "description": "Sajam Slam-style tiers: tier matchups and the points race along the bottom, tier badges on the bars, the coach tiebreaker.",
@@ -10,6 +10,6 @@
     "#ff3b5c",
     "#3b8eff"
   ],
-  "version": "1",
+  "version": 2,
   "gen": 2
 }

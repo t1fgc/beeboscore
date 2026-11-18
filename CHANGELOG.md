@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.5.3
+
+### BeeboScore 1.5.3
+- Only the Classic layouts are built in, and the Layout menu now calls them Classic (they were labelled Default).
+- Old layouts left over from earlier builds (Frostbite, Venom, Obsidian Glass and the rest) are moved out of the Layout menu to data › retired-layouts. Nothing is deleted: drop one on the Layouts tab to bring it back.
+- Layouts you imported on the Layouts tab stay where they are.
+
+### Changed
+- **Only the Classic layouts:** the built-in layouts are called **Classic** in the Layout menu (they were labelled *Default*). Layouts that earlier builds left in the overlays folder (Frostbite, Venom, Obsidian Glass and the other old looks, and their format versions) are moved once to `data/retired-layouts`, so the Layout menu only lists the Classic layouts and the ones you imported. Nothing is deleted. If the live layout was one of them, the Classic layout for the game goes live.
+
 ## 1.5.2
 
 Everything since 1.5.0 (1.5.1 was a test build).

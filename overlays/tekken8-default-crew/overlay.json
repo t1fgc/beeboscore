@@ -1,7 +1,7 @@
 {
-  "title": "Default — Crew Battle",
+  "title": "Classic — Crew Battle",
   "game": "Tekken 8",
-  "family": "Default",
+  "family": "Classic",
   "format": "crew",
   "base": "tekken8-default",
   "description": "Crews of players on a winner-stays run: the crew bar along the bottom (show / hide it any time), stocks on the player bars, knockouts fade out.",
@@ -10,6 +10,6 @@
     "#ff3b5c",
     "#3b8eff"
   ],
-  "version": "1",
+  "version": 2,
   "gen": 2
 }

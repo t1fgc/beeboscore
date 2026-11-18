@@ -130,3 +130,26 @@ test('server: loose files and the starter layout', async () => {
   const s = await server(), html = await (await fetch(`http://127.0.0.1:${s.port}/overlay/my-layout?direct`)).text();
   assert.match(html, /sb-client\.js/); assert.match(html, /data-sb="p1\.name"/);
 });
+
+test('server: old layouts left by earlier builds move out once; imported ones stay', async () => {
+  const { start } = require('../../server.js');
+  const d = fs.mkdtempSync(path.join(os.tmpdir(), 'bs-sweep-'));
+  for (const [n, meta] of [['tekken8-frostbite', { title: 'Frostbite', game: 'Tekken 8' }], ['tekken8-venom-crew', { title: 'Venom — Crew Battle' }], ['neon-bars', { title: 'Neon Bars', imported: '2026-11-17T00:00:00Z' }]]) {
+    fs.mkdirSync(path.join(d, 'overlays', n), { recursive: true });
+    fs.writeFileSync(path.join(d, 'overlays', n, 'index.html'), '<html><body data-sb="p1.name"></body></html>');
+    fs.writeFileSync(path.join(d, 'overlays', n, 'overlay.json'), JSON.stringify(meta));
+  }
+  fs.mkdirSync(path.join(d, 'data'), { recursive: true });
+  fs.writeFileSync(path.join(d, 'data', 'config.json'), JSON.stringify({ activeOverlay: 'tekken8-frostbite' }));
+  const s = await start({ dataDir: d, port: 30000 + Math.floor(Math.random() * 20000), autoPort: true, host: '127.0.0.1', noOpen: true });
+  try {
+    const list = await (await fetch(`http://127.0.0.1:${s.port}/api/overlays`)).json();
+    const names = list.map(o => o.name);
+    assert.ok(!names.includes('tekken8-frostbite') && !names.includes('tekken8-venom-crew'));
+    assert.ok(names.includes('neon-bars') && names.includes('tekken8-default'));
+    assert.ok(list.filter(o => !o.builtIn).every(o => o.imported));
+    assert.ok(fs.existsSync(path.join(d, 'data', 'retired-layouts', 'tekken8-frostbite', 'index.html')));
+    const cfg = JSON.parse(fs.readFileSync(path.join(d, 'data', 'config.json'), 'utf8'));
+    assert.equal(cfg.oldLayoutsSwept, true); assert.notEqual(cfg.activeOverlay, 'tekken8-frostbite');
+  } finally { s.close(); }
+});
