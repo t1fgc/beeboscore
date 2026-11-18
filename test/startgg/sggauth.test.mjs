@@ -14,7 +14,8 @@ test('vault: sealed, readable back, tamper-proof, bound to its key', () => {
   const b = Buffer.from(s.slice(4), 'base64'); b[b.length - 1] ^= 1;
   assert.equal(v.open('gcm:' + b.toString('base64')), null);                // changed on disk → refused
   assert.equal(createVault({ dir: tmp() }).open(s), null);                   // another PC's key → refused
-  assert.equal((fs.statSync(path.join(dir, '.beebo-key')).mode & 0o777), 0o600);
+  // Windows has no Unix file permissions (Node always reports 0o666 there); the key is protected by the user's profile folder instead.
+  if (process.platform !== 'win32') assert.equal((fs.statSync(path.join(dir, '.beebo-key')).mode & 0o777), 0o600);
 });
 test('vault: the OS protection is used when the app has it', () => {
   const secure = { available: () => true, encrypt: t => Buffer.from(t).toString('base64'), decrypt: b => Buffer.from(b, 'base64').toString() };
