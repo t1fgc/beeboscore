@@ -455,7 +455,8 @@
     if (settings.autoSwitchLayout && info.local !== false) {
       const cur = overlays.find(o => o.name === active);
       if (!cur || cur.game !== g) {
-        const pick = overlays.find(o => o.game === g);
+        // 1.5.4: the same look in the new game when it has one (Obsidian Glass stays Obsidian Glass), else its first layout
+        const pick = (cur && overlays.find(o => o.game === g && o.family === cur.family && !o.format)) || overlays.find(o => o.game === g && !o.format) || overlays.find(o => o.game === g);
         if (pick) setActive(pick.name);
         else toast(`No layout for ${g} yet — keeping the current one`);
       }

@@ -2226,7 +2226,7 @@ setInterval(function(){if(!wsOk)look()},1500);setInterval(look,6000);
     res.end(buf);
   }
 
-  // 1.5.3: only the Classic layouts are built in. Layouts left in the overlays folder by older builds (Frostbite, Venom,
+  // 1.5.3: only the app's own layouts (Classic, and Obsidian Glass from 1.5.4) are built in. Layouts left in the overlays folder by older builds (Frostbite, Venom,
   // Obsidian Glass and the rest of the full BeeboScore's looks, and their format versions) cluttered the Layout menu: once,
   // every folder that is neither one of the app's own nor one you imported on the Layouts tab moves to
   // data/retired-layouts (kept, never deleted; import it again from there if you want it back).

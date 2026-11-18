@@ -1,0 +1,15 @@
+{
+  "title": "Obsidian Glass — Death Battle",
+  "game": "Tekken 8",
+  "family": "Obsidian Glass",
+  "format": "death",
+  "base": "tekken8-obsidian",
+  "description": "Lives on the player bars, every lost life breaks on screen, survivors along the bottom, the final duel.",
+  "colors": [
+    "#100f0c",
+    "#e0a93b",
+    "#b9c0ca"
+  ],
+  "version": 1,
+  "gen": 2
+}

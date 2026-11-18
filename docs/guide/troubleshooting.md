@@ -15,7 +15,7 @@
 - **Effects pause by themselves** while the browser source is hidden in OBS, and the scoreboard rests underneath full-screen splashes. If your PC struggles, BeeboScore uses fewer particles automatically.
 
 - **Restart & update closed the app and it didn't come back:** start the newest `BeeboScore-x.y.z.exe` in the folder yourself. Then look at **update.log** in the `BeeboScore Lite Data` folder. A good update ends with the old version *closing so* the new one *can take over*, then the new version *started by Restart & update*, *started on port …* and *window shown*. If the last line is the old version's, the new exe never got as far as starting.
-- **A layout you had is gone from the Layout menu after updating to 1.5.3:** only the Classic layouts and the ones you imported on the Layouts tab are listed. Old layouts from earlier builds were moved to `data\retired-layouts` in your data folder; drop one on the **Layouts** tab to bring it back.
+- **A layout you had is gone from the Layout menu after updating to 1.5.3:** only the app's own layouts (Classic and Obsidian Glass) and the ones you imported on the Layouts tab are listed. Old layouts from earlier builds were moved to `data\retired-layouts` in your data folder; drop one on the **Layouts** tab to bring it back.
 - **Moved from 1.4.0 and start.gg says you're signed out:** that's expected. Sign in again on the Bracket tab.
 - **Moved from 1.4.0 and your players aren't there:** the copy only happens if `BeeboScore Data` sits next to the exe, in the same folder. Put `BeeboScore-x.y.z.exe` beside it and start it before any newer copy has saved data there.
 

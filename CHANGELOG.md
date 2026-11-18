@@ -1,5 +1,23 @@
 # Changelog
 
+## 1.5.4
+
+### BeeboScore 1.5.4
+- New layout for every game: Obsidian Glass, in black glass and antique gold, in the same places as Classic.
+- Its plates crack as a player falls behind and shatter on the loser; the winner's turns gold.
+- Its VS, Victory, Top 8, bracket, standings and game-format splashes are in the same glass.
+- Changing the game keeps the look you're on: Obsidian Glass stays Obsidian Glass.
+
+### New
+- **Obsidian Glass** for Tekken 8, Street Fighter 6, Avatar Legends and Fatal Fury: City of the Wolves (`<game>-obsidian`), next to Classic in the Layout menu. Built from each game's Classic by `tools/make-obsidian.js`, so every piece sits exactly where Classic's does, clear of the game's HUD: Saira italic lettering, black-glass plates with antique-gold edges (gold for 1P, silver for 2P), the dynamic plate (cracks, mending, heat, the loser's plate shattering), gold for the winner, gold embers at match point and an overshooting tempo. Its own VS, Victory, Top 8, bracket and standings screens are recoloured to match, with gold embers, and the page's look (`sb-look: shattered`) dresses the game-format splashes, FullVS and GlassVS in the Obsidian skin. Tekken 8's Obsidian Glass has all seven game-format versions, like Classic.
+
+### Changed
+- **Follow the game** keeps the look: changing the game picks the same layout family in the new game when it has one, then that game's first layout.
+
+### For developers
+- `tools/make-obsidian.js` rebuilds the Obsidian Glass layouts from the Classic ones; run it after changing a Classic layout.
+- Tests: `test/layouts/obsidian.test.mjs` (same pieces in the same places as Classic, its own look, the Tekken 8 format versions).
+
 ## 1.5.3
 
 ### BeeboScore 1.5.3

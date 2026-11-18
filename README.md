@@ -73,13 +73,19 @@ Before a set, **FullVS** puts both players up full screen; after it, the **victo
 
 ### Layouts
 
-One **Classic** layout for each game, each kept clear of its game's HUD (health bars, portraits, round counters, timer and meters). Pick one from the **Layout** menu at the top of the app, or let it follow the game you pick. OBS switches by itself.
+Two looks for each game, **Classic** and **Obsidian Glass**, each kept clear of its game's HUD (health bars, portraits, round counters, timer and meters). Pick one from the **Layout** menu at the top of the app, or let it follow the game you pick. OBS switches by itself.
 
 | Tekken 8 | Street Fighter 6 |
 | --- | --- |
 | ![Tekken 8 Classic](docs/images/layout-tekken8.jpg) | ![Street Fighter 6 Classic](docs/images/layout-sf6.jpg) |
 | **Avatar Legends** | **Fatal Fury: City of the Wolves** |
 | ![Avatar Legends Classic](docs/images/layout-avatar.jpg) | ![Fatal Fury Classic](docs/images/layout-fatalfury.jpg) |
+
+**Obsidian Glass** is black glass and antique gold in the same places as Classic: italic lettering, plates that crack as a player falls behind and shatter on the loser, and gold for the winner. Its VS, Victory, Top 8, bracket, standings and game-format splashes are in the same glass.
+
+![Obsidian Glass for Tekken 8, Street Fighter 6, Avatar Legends and Fatal Fury](docs/images/obsidian-layouts.jpg)
+
+![Obsidian Glass splashes: VS, Victory, Top 8 and Team VS](docs/images/obsidian-splashes.jpg)
 
 ### Your own layouts
 

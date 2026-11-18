@@ -1,0 +1,15 @@
+{
+  "title": "Obsidian Glass — Gauntlet",
+  "game": "Tekken 8",
+  "family": "Obsidian Glass",
+  "format": "gauntlet",
+  "base": "tekken8-obsidian",
+  "description": "One run through a whole line-up: the gauntlet ladder along the bottom, the stage on the player bars.",
+  "colors": [
+    "#100f0c",
+    "#e0a93b",
+    "#b9c0ca"
+  ],
+  "version": 1,
+  "gen": 2
+}

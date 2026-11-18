@@ -1,0 +1,15 @@
+{
+  "title": "Obsidian Glass — King of the Hill",
+  "game": "Tekken 8",
+  "family": "Obsidian Glass",
+  "format": "koth",
+  "base": "tekken8-obsidian",
+  "description": "The king wears the crown on their bar with the win streak, challengers queue along the bottom.",
+  "colors": [
+    "#100f0c",
+    "#e0a93b",
+    "#b9c0ca"
+  ],
+  "version": 1,
+  "gen": 2
+}

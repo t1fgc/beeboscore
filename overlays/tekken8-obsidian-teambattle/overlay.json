@@ -1,0 +1,15 @@
+{
+  "title": "Obsidian Glass — Team Battle",
+  "game": "Tekken 8",
+  "family": "Obsidian Glass",
+  "format": "sajam",
+  "base": "tekken8-obsidian",
+  "description": "Sajam Slam-style tiers: tier matchups and the points race along the bottom, tier badges on the bars, the coach tiebreaker.",
+  "colors": [
+    "#100f0c",
+    "#e0a93b",
+    "#b9c0ca"
+  ],
+  "version": 1,
+  "gen": 2
+}
