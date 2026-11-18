@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/images/logo-wordmark.png" width="420" alt="BeeboScore Lite: the VS logo, split black and red">
+<img src="docs/images/logo-wordmark.png" width="420" alt="BeeboScore: the white VS logo on red">
 
 **A free scoreboard app for fighting game streams. One exe, no install.**
 
@@ -28,7 +28,7 @@ Only click **Run anyway** on a copy you downloaded from this repository's [Relea
 
 ## Get started
 
-1. Download **`BeeboScore-Lite-x.y.z.exe`** from the [latest release](https://github.com/t1fgc/beeboscore/releases/latest) and put it in a folder of its own.
+1. Download **`BeeboScore-x.y.z.exe`** from the [latest release](https://github.com/t1fgc/beeboscore/releases/latest) and put it in a folder of its own.
 2. Run it. If Windows warns you, see the [SmartScreen warning](#windows-smartscreen-warning) above.
 3. A four-step setup opens: pick the game, add the overlay to OBS and, if you use it, sign in to start.gg. **Skip setup** if you'd rather do it yourself.
 4. In OBS, add a **Browser** source:
@@ -37,19 +37,19 @@ Only click **Run anyway** on a copy you downloaded from this repository's [Relea
    - Leave "Refresh browser when scene becomes active" off
 5. Type the player names, press **Update**, and the overlay changes on stream.
 
-The app keeps everything it saves in a **`BeeboScore Lite Data`** folder next to the exe. To move it to another PC, move the exe and that folder together.
+The app keeps everything it saves in a **`BeeboScore Lite Data`** folder next to the exe (the name it got in 1.5.0, when the app was called BeeboScore Lite). To move it to another PC, move the exe and that folder together.
 
 ### Coming from BeeboScore 1.4.0?
 
-Open **Settings → Check for updates** in 1.4.0 and it fetches this version for you. After **Restart & update**:
+Open **Settings → Check for updates** in 1.4.0 and it fetches the latest version for you. After **Restart & update**:
 
-- BeeboScore Lite copies your players, pictures, settings and exports from `BeeboScore Data` into its own `BeeboScore Lite Data` folder. The old folder is left as it was.
+- BeeboScore copies your players, pictures, settings and exports from `BeeboScore Data` into its own `BeeboScore Lite Data` folder. The old folder is left as it was.
 - The first-time setup opens once, so you can pick your game's layout.
-- **Sign in to start.gg again** (Bracket tab). Sign-ins are locked to the app that made them, so Lite can't read 1.4.0's.
+- **Sign in to start.gg again** (Bracket tab). Sign-ins are locked to the app that made them, so the new version can't read 1.4.0's.
 - The OBS link stays the same (`http://localhost:3300/overlay`), so nothing changes in OBS.
 - The old exe goes to the Recycle Bin.
-- The Ember and Porcelain layouts, and layouts made in the Overlay maker, are not part of Lite. Each game now has its own **Classic** layout.
-- Lite has its own Stream Deck plugin, **BeeboScore Lite**. Install it from **Settings → Stream Deck**, then remove the old *BeeboScore Prototype* plugin in Stream Deck.
+- Ember, Porcelain and layouts you made in the Overlay maker aren't built in any more (each game has its own **Classic** layout), but you can bring them back: drop their folder from `BeeboScore Data\overlays` into the **Layouts** tab.
+- There's a new Stream Deck plugin, **BeeboScore**. Install it from **Settings → Stream Deck**, then remove the old *BeeboScore Prototype* plugin in Stream Deck.
 
 ---
 
@@ -57,7 +57,7 @@ Open **Settings → Check for updates** in 1.4.0 and it fetches this version for
 
 ![The Matches tab](docs/images/panel-match.jpg)
 
-Five tabs down the side: **Matches**, **Format**, **Bracket**, **Stream** and **Settings**.
+Six tabs down the side: **Matches**, **Format**, **Bracket**, **Stream**, **Layouts** and **Settings**.
 
 ### Matches
 
@@ -80,6 +80,14 @@ One **Classic** layout for each game, each kept clear of its game's HUD (health 
 | ![Tekken 8 Classic](docs/images/layout-tekken8.jpg) | ![Street Fighter 6 Classic](docs/images/layout-sf6.jpg) |
 | **Avatar Legends** | **Fatal Fury: City of the Wolves** |
 | ![Avatar Legends Classic](docs/images/layout-avatar.jpg) | ![Fatal Fury Classic](docs/images/layout-fatalfury.jpg) |
+
+### Your own layouts
+
+![The Layouts tab with two imported layouts](docs/images/panel-layouts.jpg)
+
+Got a layout from a creator, or made one yourself? Drop its `.zip`, its folder or its page on the **Layouts** tab. It goes in the **Layout** menu with the app's own and shows in OBS the same way. Each one can be previewed with the scoreboard as it is now, put on stream, shared as a `.zip`, or removed (a copy is kept).
+
+Making one takes a web page and a few `data-sb` attributes: `<span data-sb="p1.name"></span>` shows player 1's name, and BeeboScore fills it in every time you press **Update**. **Download the starter layout** in the tab for a finished scoreboard with every part explained, and see [your own layouts](docs/guide/your-own-layouts.md) in the guide.
 
 ### Game formats
 
@@ -125,7 +133,7 @@ Copy the OBS link, or press **Go online** for a public overlay link and a passwo
 
 ### Stream Deck
 
-The plugin comes inside the app: **Settings → Stream Deck → Install**. Then press **Set up Stream Deck** and the whole deck is filled for you: the match along the top, what's on stream next, and a row that follows the app (next match and Winners / Losers side in 1v1, the format's keys when a format starts). It works on the 15-key Stream Deck and the Stream Deck XL; any other deck can use **BeeboScore Lite key (follows the app)**. Needs Stream Deck 6.4 or newer.
+The plugin comes inside the app: **Settings → Stream Deck → Install**. Then press **Set up Stream Deck** and the whole deck is filled for you: the match along the top, what's on stream next, and a row that follows the app (next match and Winners / Losers side in 1v1, the format's keys when a format starts). It works on the 15-key Stream Deck and the Stream Deck XL; any other deck can use **BeeboScore key (follows the app)**. Needs Stream Deck 6.4 or newer.
 
 ### Settings
 
@@ -172,7 +180,7 @@ You need [Node.js](https://nodejs.org) 18 or newer.
 npm install
 npm start          # run the desktop app from source
 npm run server     # or just the server: open http://localhost:3000
-npm run dist       # build dist/BeeboScore-Lite-<version>.exe
+npm run dist       # build dist/BeeboScore-<version>.exe
 npm test           # unit tests
 ```
 

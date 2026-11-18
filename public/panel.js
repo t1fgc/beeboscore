@@ -192,7 +192,7 @@
 
   document.addEventListener('keydown', e => {
     if (e.defaultPrevented) return;
-    if (e.altKey && /^[1-9]$/.test(e.key)) { e.preventDefault(); const tabs = ['match', 'format', 'bracket', 'stream', 'settings']; if (tabs[e.key - 1]) showTab(tabs[e.key - 1]); return; }
+    if (e.altKey && /^[1-9]$/.test(e.key)) { e.preventDefault(); const tabs = ['match', 'format', 'bracket', 'stream', 'layouts', 'settings']; if (tabs[e.key - 1]) showTab(tabs[e.key - 1]); return; }
     if (capturing || !draft) return;
     const typing = /INPUT|TEXTAREA|SELECT/.test(document.activeElement && document.activeElement.tagName) && document.activeElement.type !== 'checkbox';
     const action = BeeboKeys.match(e, keys(), typing);
@@ -224,7 +224,7 @@
     e.target.checked = !!settings.potatoMode;            // only changes once confirmed
     const [lead, items] = wantPotato ? POTATO_ON : POTATO_OFF;
     $('#potatoTitle').textContent = wantPotato ? '🥔 Turn on Potato mode?' : 'Turn off Potato mode?';
-    $('#potatoLead').innerHTML = `<b>BeeboScore Lite needs to restart.</b> ${lead}`;
+    $('#potatoLead').innerHTML = `<b>BeeboScore needs to restart.</b> ${lead}`;
     $('#potatoList').innerHTML = items.map(t => `<li>${t}</li>`).join('');
     $('#potatoGo').textContent = wantPotato ? 'Restart in Potato mode' : 'Restart normally';
     $('#potatoModal').hidden = false; $('#potatoGo').focus();
@@ -340,7 +340,7 @@
   function renderKeys() {
     const k = keys();
     $('#keyList').innerHTML = Object.keys(BeeboKeys.DEFAULTS).map(a => `<div class="keyrow"><span>${esc(BeeboKeys.LABELS[a])}</span>
-      <button class="keybtn${capturing === a ? ' listening' : ''}" data-act="${a}" ${info.local === false ? 'disabled title="Only on the PC running BeeboScore Lite"' : ''}>${capturing === a ? 'Press keys…' : BeeboKeys.html(k[a])}</button></div>`).join('');
+      <button class="keybtn${capturing === a ? ' listening' : ''}" data-act="${a}" ${info.local === false ? 'disabled title="Only on the PC running BeeboScore"' : ''}>${capturing === a ? 'Press keys…' : BeeboKeys.html(k[a])}</button></div>`).join('');
   }
   // stop listening if the user clicks anywhere else or changes tab
   document.addEventListener('mousedown', e => { if (capturing && !e.target.closest('.keybtn')) { capturing = null; renderKeys(); } }, true);
@@ -516,6 +516,7 @@
     $('#nowGame').textContent = o ? o.game : '';
     $('#nowSwatch').style.background = swatch(o);
     renderLayoutPick();
+    try { window.dispatchEvent(new CustomEvent('beebo:overlays')); } catch (e) {}      // 1.5.1: the Layouts tab follows
   }
   document.addEventListener('visibilitychange', () => {
     // stop the preview completely while the window is hidden or minimised
@@ -1055,7 +1056,7 @@
           if (!/\/overlay(\/|\?|$)/.test(String(st.url || ''))) continue; n++;
           if (!st.reroute_audio) { await obs.call('SetInputSettings', { inputName: i.inputName, inputSettings: { reroute_audio: true } }); fixed++; }
         }
-        txt.textContent = !n ? '❌ No browser source in OBS shows a BeeboScore Lite layout yet.' : fixed ? `✅ Fixed ${fixed} of ${n} source${n > 1 ? 's' : ''} — set the level in the OBS mixer.` : `✅ All ${n} source${n > 1 ? 's' : ''} can be heard in OBS.`;
+        txt.textContent = !n ? '❌ No browser source in OBS shows a BeeboScore layout yet.' : fixed ? `✅ Fixed ${fixed} of ${n} source${n > 1 ? 's' : ''} — set the level in the OBS mixer.` : `✅ All ${n} source${n > 1 ? 's' : ''} can be heard in OBS.`;
       } finally { try { obs.disconnect(); } catch (e) {} }
     } catch (e) { txt.textContent = '❌ Couldn’t reach OBS — open OBS and turn on Tools → WebSocket Server Settings (Settings › OBS connection has the address and password).'; }
   };
@@ -1072,7 +1073,7 @@
     idle: '', checking: 'Checking for updates…', 'up-to-date': "You're on the latest version.",
     available: 'Update found — downloading…', downloading: 'Downloading update…', ready: 'Update downloaded — restart to install.',
     error: 'Could not check for updates.', dev: 'Updates are turned off when running from source.', found: 'Update available.',
-    test: 'This copy doesn’t update itself. New versions of BeeboScore Lite come as a new exe.',
+    test: 'This copy doesn’t update itself. New versions of BeeboScore come as a new exe.',
   };
   function renderUpdate() {
     const st = upd.state || 'unsupported';
@@ -1093,7 +1094,7 @@
     $('#updCheck').disabled = st === 'checking' || st === 'downloading' || st === 'no-repo' || st === 'dev' || st === 'test';
     const dismissed = store('updDismissed') === upd.newVersion;
     $('#updBanner').hidden = !(st === 'ready' && info.local !== false && !dismissed);
-    $('#updBannerText').textContent = `BeeboScore Lite ${upd.newVersion || ''} is ready to install.`;
+    $('#updBannerText').textContent = `BeeboScore ${upd.newVersion || ''} is ready to install.`;
     $('#setBadge').hidden = st !== 'ready';
   }
   async function loadUpdate() { try { upd = await api('/api/update'); renderUpdate(); } catch {} }
@@ -1105,9 +1106,9 @@
     if ($('#updOver')) return;
     const v = upd.newVersion || '', o = document.createElement('div'); o.id = 'updOver'; o.setAttribute('role', 'alertdialog'); o.setAttribute('aria-live', 'assertive');
     o.style.cssText = 'position:fixed;inset:0;z-index:95;display:grid;place-items:center;padding:24px;background:rgba(4,5,9,.9);text-align:center';
-    o.innerHTML = `<div style="max-width:460px"><div style="font-size:22px;font-weight:800;color:var(--text)">Starting BeeboScore Lite ${esc(v)}</div>`
+    o.innerHTML = `<div style="max-width:460px"><div style="font-size:22px;font-weight:800;color:var(--text)">Starting BeeboScore ${esc(v)}</div>`
       + `<p style="margin:12px 0 0;font-size:15px;line-height:1.5;color:var(--text)">This window will close and the new version will open by itself. It can take up to 20 seconds.</p>`
-      + `<p style="margin:10px 0 0;font-size:13px;line-height:1.5;color:var(--muted)">If it does not open within a minute, start BeeboScore-Lite-${esc(v)}.exe yourself: it is in the same folder as this one.</p></div>`;
+      + `<p style="margin:10px 0 0;font-size:13px;line-height:1.5;color:var(--muted)">If it does not open within a minute, start BeeboScore-${esc(v)}.exe yourself: it is in the same folder as this one.</p></div>`;
     document.body.appendChild(o);
     await new Promise(r => setTimeout(r, 1800));
     try { await api('/api/update', { method: 'POST', body: { action: 'install' } }); } catch (e) { o.remove(); toast(e.message, true); }
@@ -1292,7 +1293,7 @@
       $('#remoteBanner').hidden = !!info.local;
       if (info.lan) $('#remoteText').textContent = "You're controlling the scoreboard from a device on the streamer's network.";
       $('#verLabel').textContent = `v${info.version} · by Beebo`;
-      if (info.testBuild && !$('#testPill')) { $('.brand b').insertAdjacentHTML('afterend', '<span id="testPill" title="Test build: separate data, never updates itself" style="margin-left:8px;font:700 10px/1 inherit;letter-spacing:1.5px;padding:4px 7px;border-radius:6px;background:var(--accent,#e9c35e);color:#111">TESTBUILD</span>'); document.title = 'BeeboScore Lite Testbuild'; }
+      if (info.testBuild && !$('#testPill')) { $('.brand b').insertAdjacentHTML('afterend', '<span id="testPill" title="Test build: separate data, never updates itself" style="margin-left:8px;font:700 10px/1 inherit;letter-spacing:1.5px;padding:4px 7px;border-radius:6px;background:var(--accent,#e9c35e);color:#111">TESTBUILD</span>'); document.title = 'BeeboScore Testbuild'; }
       $('#aboutText').textContent = `Version ${info.version} · Developed by Beebo`;
       const lan = info.local ? info.urls.slice(1) : [];
       if (lan.length) $('#lanInfo').innerHTML = `Control from a phone or tablet on the same Wi-Fi: ${lan.map(u => `<code>${esc(u)}</code>`).join(' ')}`;
@@ -1392,12 +1393,12 @@ window.BeeboReplay = {
     let d; try { d = await fetch('/api/health').then(r => r.json()); } catch (e) { box.innerHTML = '<p class="hint">Couldn’t read the app’s health.</p>'; return; }
     const row = (ok, title, text) => `<div class="hl-row ${ok === true ? 'ok' : ok === false ? 'bad' : ''}"><i></i><b>${title}</b><span>${text}</span></div>`;
     const ovs = d.overlays.filter(v => v.obs || v.kind === 'pc');
-    const ovLines = ovs.length ? ovs.map(v => { const g = v.gfx; return `${esc(v.layout || 'overlay')} (${KIND[v.kind] || v.kind}${v.obs ? ', OBS' : ''})${g ? ` — ${g.fps} fps, ${g.ms} ms a frame, ${LV[g.level] || ''}${g.contexts ? `, ${g.contexts} graphics context${g.contexts === 1 ? '' : 's'}` : ''}${g.gpu ? ` · ${esc(g.gpu)}` : ''}${g.why ? ` · ${esc(g.why)}` : ''}` : ''}`; }).join('<br>') : 'No overlay is open — add BeeboScore Lite to OBS as a Browser source.';
+    const ovLines = ovs.length ? ovs.map(v => { const g = v.gfx; return `${esc(v.layout || 'overlay')} (${KIND[v.kind] || v.kind}${v.obs ? ', OBS' : ''})${g ? ` — ${g.fps} fps, ${g.ms} ms a frame, ${LV[g.level] || ''}${g.contexts ? `, ${g.contexts} graphics context${g.contexts === 1 ? '' : 's'}` : ''}${g.gpu ? ` · ${esc(g.gpu)}` : ''}${g.why ? ` · ${esc(g.why)}` : ''}` : ''}`; }).join('<br>') : 'No overlay is open — add BeeboScore to OBS as a Browser source.';
     box.innerHTML = [
       row(ovs.length > 0, 'Overlays', ovLines),
-      row(obsOk, 'OBS', obsOk === null ? 'Not checked yet — press Refresh' : obsOk ? `Connected${obsInfo && obsInfo.fps ? ` · stream at ${obsInfo.fps} fps` : ''}${obsInfo && obsInfo.sources ? ` · ${obsInfo.sources.length} BeeboScore Lite browser source${obsInfo.sources.length === 1 ? '' : 's'}` : ''}` : 'Can’t reach OBS’s WebSocket (Settings › OBS connection)'),
+      row(obsOk, 'OBS', obsOk === null ? 'Not checked yet — press Refresh' : obsOk ? `Connected${obsInfo && obsInfo.fps ? ` · stream at ${obsInfo.fps} fps` : ''}${obsInfo && obsInfo.sources ? ` · ${obsInfo.sources.length} BeeboScore browser source${obsInfo.sources.length === 1 ? '' : 's'}` : ''}` : 'Can’t reach OBS’s WebSocket (Settings › OBS connection)'),
       ...tips(d, ovs).map(t => row(null, '⚠ ' + t[0], t[1])),
-      row(d.streamdeck ? true : null, 'Stream Deck', d.streamdeck ? 'The BeeboScore Lite plugin is connected' : 'Not connected (fine if you don’t use one)'),
+      row(d.streamdeck ? true : null, 'Stream Deck', d.streamdeck ? 'The BeeboScore plugin is connected' : 'Not connected (fine if you don’t use one)'),
       ...showRows(d.show),
       row(d.lastBackup && Date.now() - d.lastBackup < 3 * 864e5 ? true : null, 'Backups', `Last one ${ago(d.lastBackup)} · ${d.backups} kept`),
       d.restored && d.restored.length ? row(false, 'Recovered', d.restored.map(r => `${esc(r.file)} was damaged — the last good copy was used (${ago(r.at)})`).join('<br>')) : '',
@@ -1427,7 +1428,7 @@ window.BeeboReplay = {
   function tips(d, ovs) {
     const out = [], src = obsInfo && obsInfo.sources;
     const n = src ? src.length : ovs.filter(v => v.obs && v.kind === 'pc').length;
-    if (n > 1) out.push(['Several overlays in OBS', `${n} BeeboScore Lite browser sources are open in OBS${src ? ` (${src.map(s => esc(s.name)).join(', ')})` : ''}. Each one is a whole browser of its own, running all the time. One source showing <code>/overlay</code> is usually enough — add <code>?screen=…</code> sources only for a screen you need somewhere else.`]);
+    if (n > 1) out.push(['Several overlays in OBS', `${n} BeeboScore browser sources are open in OBS${src ? ` (${src.map(s => esc(s.name)).join(', ')})` : ''}. Each one is a whole browser of its own, running all the time. One source showing <code>/overlay</code> is usually enough — add <code>?screen=…</code> sources only for a screen you need somewhere else.`]);
     if (src) for (const s of src) {
       if (s.fpsCustom && obsInfo.fps && s.fps > obsInfo.fps) out.push([`“${esc(s.name)}” draws too many frames`, `It's set to ${s.fps} fps but your stream is ${obsInfo.fps} fps: untick “Use custom frame rate” in its properties (or set it to ${obsInfo.fps}).`]);
       if (s.restart) out.push([`“${esc(s.name)}” restarts`, 'It has “Refresh browser when scene becomes active” on, so it replays its intro every time you switch to that scene. Turn it off in its properties.']);

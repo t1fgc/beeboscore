@@ -1,6 +1,6 @@
 # Running a local, start to finish
 
-[← BeeboScore Lite guide](../GUIDE.md)
+[← BeeboScore guide](../GUIDE.md)
 
 A walkthrough of a weekly — from opening BeeboScore to posting the results — using the start.gg event, the live bracket page for players and the end-of-night standings. Every step links to the page with the details.
 

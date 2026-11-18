@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /*
- * BeeboScore Lite by Beebo — realtime scoreboard controller + OBS overlays for fighting game streams (the essentials:
+ * BeeboScore by Beebo — realtime scoreboard controller + OBS overlays for fighting game streams (the essentials:
  *   Matches, Format, start.gg, OBS and going online, with the Classic layout for each game).
  *
  *   Control panel:  http://localhost:3000/       (the desktop app uses 3200)
@@ -29,6 +29,8 @@ const startgg = require('./lib/startgg');
 const sggauth = require('./lib/sggauth');
 const bracketModel = require('./lib/bracket');
 const sdHelper = require('./lib/streamdeck');
+const layoutImport = require('./lib/layout-import');      // 1.5.1: layouts people make, dropped into the Layouts tab
+const zip = require('./lib/zip');
 const FMT = require('./lib/format');
 const VT = require('./lib/vtourney');
 const { createShare } = require('./lib/share');
@@ -527,7 +529,7 @@ function start(opts = {}) {
     walk(c); return n;
   }
   let config = { activeOverlay: 'tekken8-default', startgg: {}, ...readJSON(CONFIG_FILE, {}) };
-  config.bracketSource = 'startgg';      // BeeboScore Lite: the bracket always comes from start.gg (no viewer tournaments)
+  config.bracketSource = 'startgg';      // BeeboScore: the bracket always comes from start.gg (no viewer tournaments)
   if (renameOldLayouts(config)) writeJSON(CONFIG_FILE, config);
   config.startgg = config.startgg || {};
   // ------------------------------------------------------------ custom VS Splash pictures (every layout)
@@ -765,7 +767,7 @@ function start(opts = {}) {
     fsp.mkdir(OUTPUT_DIR, { recursive: true }).then(() => fsp.writeFile(path.join(OUTPUT_DIR, 'overlay.png'), png)).catch(() => {});
     hub.broadcast('potato', { ver: potatoFrame.ver });
   }
-  const potatoPage = () => `<!DOCTYPE html><html><head><meta charset="utf-8"><title>BeeboScore Lite overlay (potato)</title>
+  const potatoPage = () => `<!DOCTYPE html><html><head><meta charset="utf-8"><title>BeeboScore overlay (potato)</title>
 <style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent}img{display:block;width:100%;height:100%}</style></head>
 <body><img id="i" alt="" src="/overlay.png?v=${potatoFrame.ver}"><script>
 var v=${potatoFrame.ver},i=document.getElementById('i'),ws=null,wsOk=false;
@@ -816,7 +818,7 @@ setInterval(function(){if(!wsOk)look()},1500);setInterval(look,6000);
   const sdSetupView = () => ({ n: sdSetup.n, at: sdSetup.at, done: sdSetup.done >= sdSetup.at && sdSetup.n > 0, sent: sdSetup.sent, devices: sdDevices,
     connected: Date.now() - (remoteSeen.streamdeck || 0) < 6000 });
   function sdSetupStart() {
-    if (Date.now() - (remoteSeen.streamdeck || 0) > 6000) throw new Error('The BeeboScore Lite Stream Deck plugin isn’t running. Open the Stream Deck app (install the plugin first if you haven’t), then try again.');
+    if (Date.now() - (remoteSeen.streamdeck || 0) > 6000) throw new Error('The BeeboScore Stream Deck plugin isn’t running. Open the Stream Deck app (install the plugin first if you haven’t), then try again.');
     sdSetup.n++; sdSetup.at = Date.now(); sdSetup.done = 0; sdSetup.sent = [];
     return { ok: true, ...sdSetupView() };
   }
@@ -1478,7 +1480,7 @@ setInterval(function(){if(!wsOk)look()},1500);setInterval(look,6000);
   let shooting = null;
   const designShots = new Map();         // Designer › Export as picture: what the still page draws (kept for a minute)
   async function saveStandingsImages(format = 'both') {
-    if (!opts.capture) throw new Error('Saving pictures needs the BeeboScore Lite desktop app.');
+    if (!opts.capture) throw new Error('Saving pictures needs the BeeboScore desktop app.');
     const m = bracket.model; if (!m || !(m.standings || []).length) throw new Error('There are no standings yet — the tournament has to have results first.');
     const tg = shareTarget(); if (!tg) throw new Error('Load a tournament first.');
     if (share.key() !== tg.key) share.begin(tg.key, tg.name);
@@ -2149,6 +2151,8 @@ setInterval(function(){if(!wsOk)look()},1500);setInterval(look,6000);
           // layout families: one look (Shattered, Oni…) with a version per game format; the family shows once in the Match tab
           family: String(meta.family || meta.title || d.name).slice(0, 40), format: FORMAT_KEYS.includes(meta.format) ? meta.format : '', base: meta.base ? safeName(meta.base) : '',
           bundled: fs.existsSync(path.join(BUNDLE_DIR, 'overlays', d.name, 'index.html')) && path.resolve(BUNDLE_DIR, 'overlays') !== path.resolve(OVERLAYS_DIR),
+          builtIn: fs.existsSync(path.join(BUNDLE_DIR, 'overlays', d.name, 'index.html')),      // 1.5.1: one of the app's own (the Layouts tab lists the rest as yours)
+          author: String(meta.author || '').slice(0, 60), imported: !!meta.imported,
           modified: fs.statSync(path.join(dir, 'index.html')).mtimeMs,
           // a still of the player bars for the Layouts tab card (a few KB): the app's own looks ship one, any layout can carry its own thumb.webp / thumb.png
           thumb: !isEdited(d.name) && fs.existsSync(path.join(PUBLIC_DIR, 'thumbs', d.name + '.webp')) ? `/static/thumbs/${d.name}.webp?v=${APP_VERSION}`
@@ -2159,6 +2163,68 @@ setInterval(function(){if(!wsOk)look()},1500);setInterval(look,6000);
     return listOverlays();
   }
   function overlaysChanged() { overlayCache = null; broadcast('overlays', listOverlays()); }
+
+  // ------------------------------------------------------------ 1.5.1: layouts people make (the Layouts tab)
+  // A layout is a folder with an index.html; BeeboScore's overlay client goes into the page by itself, so a creator only
+  // writes HTML with data-sb bindings (public/starter-layout shows how). One of the app's own layouts is never
+  // replaced or removed; a layout you remove or replace goes to data/removed-layouts, never straight in the bin.
+  const REMOVED_DIR = path.join(DATA_DIR, 'removed-layouts');
+  const STARTER_DIR = path.join(PUBLIC_DIR, 'starter-layout');
+  const isBuiltIn = name => !!safeName(name) && fs.existsSync(path.join(BUNDLE_DIR, 'overlays', safeName(name), 'index.html'));
+  const layoutError = (msg, status, extra) => Object.assign(new Error(msg), { status }, extra || {});
+  function retireLayout(name) {
+    const src = overlayDir(name); if (!fs.existsSync(src)) return '';
+    const d = new Date(), z = n => String(n).padStart(2, '0'), when = `${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())} ${z(d.getHours())}${z(d.getMinutes())}${z(d.getSeconds())}`;
+    fs.mkdirSync(REMOVED_DIR, { recursive: true });
+    let dst = path.join(REMOVED_DIR, `${safeName(name)} ${when}`), i = 2; while (fs.existsSync(dst)) dst = path.join(REMOVED_DIR, `${safeName(name)} ${when} (${i++})`);
+    try { fs.renameSync(src, dst); } catch { copyDir(src, dst); fs.rmSync(src, { recursive: true, force: true }); }
+    return dst;
+  }
+  function fallbackLayout(not) {          // what goes live when the live layout is removed: the app's own layout for the game being played
+    const all = listOverlays().filter(o => o.name !== not && o.builtIn && !o.format);
+    return ((all.find(o => o.game === state.game) || all[0]) || {}).name || '';
+  }
+  function importLayout({ files, title, game, replace, fileName }) {
+    const prep = layoutImport.prepareLayout(files);
+    const t = String(title || prep.meta.title || layoutImport.titleFrom(prep.top) || layoutImport.titleFrom(fileName) || layoutImport.titleFrom(prep.entry) || 'My layout').trim().slice(0, 60);
+    const name = layoutImport.slugify(t) || 'my-layout';
+    if (isBuiltIn(name)) throw layoutError(`“${t}” is the name of one of the app’s own layouts. Give yours another name.`, 409, { code: 'builtin' });
+    const dir = overlayDir(name), had = fs.existsSync(dir);
+    if (had && !replace) throw layoutError(`You already have a layout called “${t}”.`, 409, { code: 'exists', layout: name });
+    const old = had ? retireLayout(name) : '';
+    const meta = { ...prep.meta };
+    for (const k of ['order', 'gen', 'version', 'base', 'format', 'family', 'imported']) delete meta[k];        // it's one look of its own, never part of one of the app's families
+    meta.title = t;
+    meta.game = GAMES.includes(game) ? game : GAMES.includes(meta.game) ? meta.game : 'Any game';      // picked in the tab, else what the creator says it's for
+    if (meta.description != null) meta.description = String(meta.description).slice(0, 240);
+    if (meta.author != null) meta.author = String(meta.author).slice(0, 60);
+    if (!Array.isArray(meta.colors)) delete meta.colors;
+    meta.imported = new Date().toISOString();
+    try {
+      fs.mkdirSync(dir, { recursive: true });
+      for (const f of prep.files) {
+        if (f.path.toLowerCase() === 'overlay.json') continue;
+        const dest = resolveInside(dir, f.path); if (!dest) continue;
+        fs.mkdirSync(path.dirname(dest), { recursive: true }); fs.writeFileSync(dest, f.data);
+      }
+      writeJSON(path.join(dir, 'overlay.json'), meta);
+    } catch (e) {                          // half a layout is no use: put back what was there
+      try { fs.rmSync(dir, { recursive: true, force: true }); if (old) fs.renameSync(old, dir); } catch {}
+      throw layoutError('Couldn’t save the layout: ' + e.message, 500);
+    }
+    overlaysChanged();
+    broadcast('reload', { overlay: name });
+    return { ok: true, name, title: t, game: meta.game, files: prep.files.length, reads: prep.reads, skipped: prep.skipped.slice(0, 12), skippedCount: prep.skipped.length, replaced: had };
+  }
+  function folderZip(dir, prefix = '') {
+    return zip.writeZip(walkFiles(dir).filter(f => !/(^|\/)(\.DS_Store|Thumbs\.db)$/i.test(f)).map(f => ({ path: prefix + f, data: fs.readFileSync(path.join(dir, f)) })));
+  }
+  function sendZip(res, buf, fileName) {
+    const ascii = fileName.replace(/[^\w\- .()]+/g, '').trim() || 'layout.zip';
+    res.writeHead(200, { 'Content-Type': 'application/zip', 'Content-Length': buf.length, 'Cache-Control': 'no-store',
+      'Content-Disposition': `attachment; filename="${ascii}"; filename*=UTF-8''${encodeURIComponent(fileName)}` });
+    res.end(buf);
+  }
 
   if (!overlayExists(config.activeOverlay)) {
     config.activeOverlay = ['tekken8-default', 'tekken8-shattered'].find(overlayExists) || (listOverlays()[0] || {}).name || 'tekken8-default';   // 1.12.5: the Default layout first
@@ -2244,7 +2310,7 @@ setInterval(function(){if(!wsOk)look()},1500);setInterval(look,6000);
   // hidden one and swaps when it reports it's drawn — OBS never sees a blank or half-built frame.
   function hostPage(name, follow) {
     const src = '/overlay' + (name ? '/' + encodeURIComponent(name) : '');
-    return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>BeeboScore Lite overlay</title>
+    return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>BeeboScore overlay</title>
 <style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent}
 iframe{position:absolute;left:0;top:0;width:100%;height:100%;border:0;background:transparent;color-scheme:normal}
 iframe{transition:opacity .45s ease}iframe.next{opacity:0;pointer-events:none}iframe.old{pointer-events:none}</style></head><body>
@@ -2913,7 +2979,7 @@ iframe{transition:opacity .45s ease}iframe.next{opacity:0;pointer-events:none}if
       }
       // 1.12.6: a commentator's camera page — the link is the key (no sign-in); a wrong one shows nothing about the app
       if (p.startsWith('/cam/') && method === 'GET') {
-        if (!fs.existsSync(path.join(PUBLIC_DIR, 'cam.html'))) return send(res, 404, 'Not found', 'text/plain');   // BeeboScore Lite: no commentary screen, so no camera page
+        if (!fs.existsSync(path.join(PUBLIC_DIR, 'cam.html'))) return send(res, 404, 'Not found', 'text/plain');   // BeeboScore: no commentary screen, so no camera page
         const l = camLink.check(p.slice(5), clientIp(req));
         if (!l) return send(res, 404, 'This camera link doesn’t work (any more). Ask the host for a new one.', 'text/plain; charset=utf-8', { 'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer' });
         if (l.wait) return send(res, 429, 'Too many wrong links. Try again in a minute.', 'text/plain; charset=utf-8', { 'Retry-After': '60' });
@@ -3282,7 +3348,7 @@ iframe{transition:opacity .45s ease}iframe.next{opacity:0;pointer-events:none}if
         if (!opts.openPath) return fail(res, 400, 'Download the plugin and double-click it to install.');
         const s = await sdStatus();
         if (s.supported && !s.appFound && !s.connected) return fail(res, 409, "The Stream Deck app isn't installed on this PC. Install it from elgato.com/downloads first, then click Install again.");
-        if (s.appTooOld) return fail(res, 409, `Update the Stream Deck app first: you have ${s.appVersion}, the BeeboScore Lite plugin needs ${s.minApp} or newer. Get it from elgato.com/downloads, then click ${s.installed ? 'Update' : 'Install'} again.`);
+        if (s.appTooOld) return fail(res, 409, `Update the Stream Deck app first: you have ${s.appVersion}, the BeeboScore plugin needs ${s.minApp} or newer. Get it from elgato.com/downloads, then click ${s.installed ? 'Update' : 'Install'} again.`);
         config.sdOffered = s.bundledVersion; saveConfig();
         sdOpen(); return ok(res, { ok: true, action: !s.installed ? 'install' : s.outdated ? 'update' : 'reinstall', ...s });
       }
@@ -3538,7 +3604,7 @@ iframe{transition:opacity .45s ease}iframe.next{opacity:0;pointer-events:none}if
       if (p === '/api/startgg/report' && method === 'POST') {
         const b = await readJSONBody(req).catch(() => ({}));
         const r = reportable();
-        if (!r) return fail(res, 400, config.bracketSource === 'viewer' ? 'This is a viewer tournament — its results stay in BeeboScore.' : !state.setId ? 'Load this match from the start.gg bracket ("Next match" or the Matches list) so BeeboScore Lite knows which set it is.' : !winnerOf(state) ? 'Nobody has won this set yet.' : 'Both players need to come from start.gg to report this set.');
+        if (!r) return fail(res, 400, config.bracketSource === 'viewer' ? 'This is a viewer tournament — its results stay in BeeboScore.' : !state.setId ? 'Load this match from the start.gg bracket ("Next match" or the Matches list) so BeeboScore knows which set it is.' : !winnerOf(state) ? 'Nobody has won this set yet.' : 'Both players need to come from start.gg to report this set.');
         if (b.setId && String(b.setId) !== r.setId) return fail(res, 409, 'The match on the scoreboard changed. Try again.');
         enqueueReport(r, 'button'); return ok(res, reportsOut());
       }
@@ -3663,7 +3729,7 @@ iframe{transition:opacity .45s ease}iframe.next{opacity:0;pointer-events:none}if
             if (r.ok && /^https:\/\/(is|v)\.gd\/[\w-]{3,20}$/.test(txt)) { publicShort.set(u.href, txt); return ok(res, { url: txt }); }
           } catch {}
         }
-        return fail(res, 502, 'The link shortener didn’t answer. Use the BeeboScore Lite short link, or your own tunnel address (Go online › Permanent address).');
+        return fail(res, 502, 'The link shortener didn’t answer. Use the BeeboScore short link, or your own tunnel address (Go online › Permanent address).');
       }
       if (p === '/api/tunnel/start' && method === 'POST') {
         if (localOnly()) return;
@@ -3731,30 +3797,51 @@ iframe{transition:opacity .45s ease}iframe.next{opacity:0;pointer-events:none}if
         setActive(name);
         return ok(res, { activeOverlay: config.activeOverlay });
       }
-      if (p === '/api/overlays/upload' && method === 'POST') {
+      if (p === '/api/overlays/upload' && method === 'POST') {       // (older clients) the same as the Layouts tab's import
         if (localOnly()) return;
         const body = await readJSONBody(req);
-        const name = safeName(body.name);
-        if (!name) return fail(res, 400, 'Give the layout a name.');
-        const files = Array.isArray(body.files) ? body.files : [];
-        if (!files.length) return fail(res, 400, 'No files uploaded.');
-        const root = overlayDir(name);
-        fs.mkdirSync(root, { recursive: true });
-        const htmlFiles = files.filter(f => /\.html?$/i.test(f.path));
-        const hasIndex = files.some(f => /^index\.html?$/i.test(String(f.path))) || fs.existsSync(path.join(root, 'index.html'));
-        for (const f of files) {
-          let rel = String(f.path || '').replace(/\\/g, '/').replace(/^\/+/, '');
-          if (htmlFiles.length && f === htmlFiles[0] && (!hasIndex || (htmlFiles.length === 1 && !rel.includes('/')))) rel = 'index.html';
-          const dest = resolveInside(root, rel);
-          if (!dest) continue;
-          fs.mkdirSync(path.dirname(dest), { recursive: true });
-          fs.writeFileSync(dest, Buffer.from(f.data || '', 'base64'));
-        }
-        if (!fs.existsSync(path.join(root, 'index.html'))) return fail(res, 400, 'Upload must include an .html file.');
-        if (body.game && !fs.existsSync(path.join(root, 'overlay.json'))) writeJSON(path.join(root, 'overlay.json'), { title: name.replace(/-/g, ' '), game: String(body.game) });
+        const files = (Array.isArray(body.files) ? body.files : []).map(f => ({ path: f && f.path, data: Buffer.from(String(f && f.data || ''), 'base64') }));
+        try { return ok(res, importLayout({ files, title: body.name, game: body.game, replace: true })); }
+        catch (e) { return send(res, e.status || 500, { error: e.message, code: e.code || '' }); }
+      }
+      // 1.5.1: the Layouts tab — bring in a layout (a folder, loose files or a .zip), share one, remove one, the starter layout
+      if (p === '/api/layouts/import' && method === 'POST') {
+        if (localOnly()) return;
+        const body = await readJSONBody(req);
+        try {
+          let files;
+          if (body.zip) files = zip.readZip(Buffer.from(String(body.zip), 'base64'));
+          else files = (Array.isArray(body.files) ? body.files : []).map(f => ({ path: f && f.path, data: Buffer.from(String(f && f.data || ''), 'base64') }));
+          if (!files.length) return fail(res, 400, 'There’s nothing in there.');
+          const r = importLayout({ files, title: body.title, game: body.game, replace: !!body.replace, fileName: body.fileName });
+          if (body.goLive) setActive(r.name);
+          return ok(res, r);
+        } catch (e) { return send(res, e.status || 500, { error: e.message, code: e.code || '', layout: e.layout || '' }); }
+      }
+      if (p === '/api/layouts/remove' && method === 'POST') {
+        if (localOnly()) return;
+        const name = safeName((await readJSONBody(req)).name);
+        if (isBuiltIn(name)) return fail(res, 400, 'The app’s own layouts can’t be removed.');
+        if (!name || !fs.existsSync(overlayDir(name))) return fail(res, 404, 'Layout not found.');
+        if (config.activeOverlay === name) { const f = fallbackLayout(name); if (f) setActive(f); }
+        const to = retireLayout(name);
         overlaysChanged();
-        broadcast('reload', { overlay: name });
-        return ok(res, { ok: true, name });
+        return ok(res, { ok: true, kept: to ? path.relative(APP_DIR, to).split(path.sep).join('/') : '', active: config.activeOverlay });
+      }
+      if (p === '/api/layouts/export' && method === 'GET') {
+        if (localOnly()) return;
+        const name = safeName(url.searchParams.get('name'));
+        if (!overlayExists(name)) return fail(res, 404, 'Layout not found.');
+        const title = String(readJSON(path.join(overlayDir(name), 'overlay.json'), {}).title || name).replace(/[\\/:*?"<>|]+/g, '').trim() || name;
+        return sendZip(res, folderZip(overlayDir(name), title + '/'), `${title}.zip`);
+      }
+      if (p === '/api/layouts/starter.zip' && method === 'GET') return sendZip(res, folderZip(STARTER_DIR, 'My layout/'), 'BeeboScore starter layout.zip');
+      if (p === '/api/layouts/open' && method === 'POST') {
+        if (localOnly()) return;
+        const b = await readJSONBody(req), name = safeName(b.name);
+        const dir = b.removed ? REMOVED_DIR : name && fs.existsSync(overlayDir(name)) ? overlayDir(name) : OVERLAYS_DIR;
+        fs.mkdirSync(dir, { recursive: true }); openInOS(dir);
+        return ok(res, { ok: true });
       }
       if (p === '/api/overlays/new' && method === 'POST') {
         if (localOnly()) return;
@@ -3923,7 +4010,7 @@ iframe{transition:opacity .45s ease}iframe.next{opacity:0;pointer-events:none}if
       }
       if (p === '/api/designs/export' && method === 'POST') {
         if (localOnly()) return;
-        if (!opts.capture) return fail(res, 400, 'Saving pictures needs the BeeboScore Lite desktop app.');
+        if (!opts.capture) return fail(res, 400, 'Saving pictures needs the BeeboScore desktop app.');
         const b = await readJSONBody(req).catch(() => null);
         const d = b && b.design;
         if (!d || typeof d !== 'object' || !d.scenes) return fail(res, 400, 'Nothing to export.');
@@ -3946,7 +4033,7 @@ iframe{transition:opacity .45s ease}iframe.next{opacity:0;pointer-events:none}if
       // 1.12.16: stations — more scoreboards from this one app (the desktop app runs each with its own data and port)
       if (p === '/api/stations' && method === 'GET') { if (localOnly()) return; if (!opts.stations) return ok(res, { available: false, station: STATION, list: [] }); return ok(res, { available: true, station: STATION, list: opts.stations.list() }); }
       if (p === '/api/stations' && method === 'POST') {
-        if (localOnly()) return; if (!opts.stations) return fail(res, 400, 'Stations need the BeeboScore Lite desktop app (and are run from Station 1).');
+        if (localOnly()) return; if (!opts.stations) return fail(res, 400, 'Stations need the BeeboScore desktop app (and are run from Station 1).');
         const b = await readJSONBody(req).catch(() => ({})) || {};
         try {
           if (b.add) await opts.stations.add(String(b.name || '').slice(0, 40));
@@ -4020,7 +4107,7 @@ iframe{transition:opacity .45s ease}iframe.next{opacity:0;pointer-events:none}if
       if (p === '/bake' || p === '/bake-encode') return serveFile(req, res, path.join(PUBLIC_DIR, p.slice(1) + '.html'));
       if (p === '/api/bake' && method === 'POST') {
         if (localOnly()) return;
-        if (!opts.bake) return fail(res, 400, 'Baking a video needs the BeeboScore Lite desktop app.');
+        if (!opts.bake) return fail(res, 400, 'Baking a video needs the BeeboScore desktop app.');
         if (bakeBusy) return fail(res, 409, 'A video is already being made — give it a moment.');
         const b = await readJSONBody(req).catch(() => null), d = b && b.design, scene = String((b && b.scene) || ''), dir = b && b.dir === 'out' ? 'out' : 'in';
         if (!d || typeof d !== 'object' || !d.scenes || !d.scenes[scene] || scene === 'board') return fail(res, 400, 'Pick one of the layout’s screens (not the scoreboard) to bake.');
@@ -4344,7 +4431,7 @@ if (require.main === module) {
   const arg = n => { const i = process.argv.indexOf(n); return i > -1 ? process.argv[i + 1] : undefined; };
   start({ port: arg('--port'), host: arg('--host') }).then(info => {
     const cloud = !!(process.env.ADMIN_PASSWORD || process.env.CLOUD_MODE === '1');
-    console.log(`\n  BEEBOSCORE LITE v${APP_VERSION} by Beebo is running\n`);
+    console.log(`\n  BEEBOSCORE v${APP_VERSION} by Beebo is running\n`);
     console.log(`  Control panel:   ${info.urls[0]}/`);
     console.log(`  OBS overlay:     ${info.urls[0]}/overlay   (Browser Source, 1920 x 1080)`);
     if (info.urls[1] && !cloud) console.log(`  Phone / tablet on your Wi-Fi:  ${info.urls[1]}/`);

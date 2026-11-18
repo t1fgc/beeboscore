@@ -1,9 +1,9 @@
 'use strict';
 /*
- * BeeboScore Lite by Beebo — desktop app.
+ * BeeboScore by Beebo — desktop app.
  * Runs the scoreboard server inside the app and shows the control panel in its own window.
- * The portable exe (BeeboScore-Lite-<version>.exe, the release) keeps its data in "BeeboScore Lite Data" next to the exe;
- * an installed copy keeps it in Documents/BeeboScore Lite.
+ * The portable exe (BeeboScore-<version>.exe, the release) keeps its data in "BeeboScore Lite Data" next to the exe (the name 1.5.0 gave it);
+ * an installed copy keeps it in Documents/BeeboScore.
  */
 const { app, BrowserWindow, Menu, shell, dialog, clipboard, nativeTheme, screen, safeStorage, nativeImage } = require('electron');
 const path = require('path');
@@ -13,12 +13,15 @@ const { createUpdater } = require('./updater');
 const { createPortableUpdaterFor } = require('./portable-updater');
 const { createUpdateLog } = require('./update-log');
 
-// 1.5.0: the release is the portable exe (BeeboScore-Lite-<version>.exe): it runs without installing, keeps its data
+// 1.5.0: the release is the portable exe (BeeboScore-<version>.exe since 1.5.2; 1.5.0 called it BeeboScore-Lite-<version>.exe): it runs without installing, keeps its data
 // next to the exe, uses port 3300 (the port BeeboScore 1.4.0 and earlier used, so OBS links keep working) and checks for
-// its own updates (Settings › Updates & about). The Testbuild (BeeboScore Lite Testbuild <n>.exe) is portable too, but has
+// its own updates (Settings › Updates & about). The Testbuild (BeeboScore Testbuild <n>.exe) is portable too, but has
 // its own name and never updates itself.
 const PORTABLE_DIR = process.env.PORTABLE_EXECUTABLE_DIR || '';
 const TEST_BUILD = /beta|test/i.test(app.getName());
+// 1.5.2: the app is called BeeboScore again, but keeps 1.5.0's place for Electron's own files (window state, and the key
+// that seals start.gg sign-ins), so nobody has to sign in again. 1.4.0's folder (%APPDATA%\BeeboScore) is never used.
+app.setPath('userData', path.join(app.getPath('appData'), TEST_BUILD ? 'BeeboScore Lite Testbuild' : 'BeeboScore Lite'));
 const RELEASE_PORTABLE = !!PORTABLE_DIR && !TEST_BUILD;
 const PORT = PORTABLE_DIR || TEST_BUILD ? 3300 : 3200;
 const AFTER_UPDATE = process.argv.includes('--after-update');      // started by "Restart & update" (this build's, or 1.4.0's)
@@ -28,7 +31,7 @@ nativeTheme.themeSource = 'dark';
 app.commandLine.appendSwitch('disable-features', 'CalculateNativeWinOcclusion');
 
 const DATA_DIR = PORTABLE_DIR ? path.join(PORTABLE_DIR, 'BeeboScore Lite Data')
-  : path.join(app.getPath('documents'), TEST_BUILD ? 'BeeboScore Lite Beta' : 'BeeboScore Lite');      // its own folder: the Lite build never shares data with the full BeeboScore
+  : path.join(app.getPath('documents'), TEST_BUILD ? 'BeeboScore Lite Beta' : 'BeeboScore Lite');      // folder names kept from 1.5.0 (BeeboScore Lite), so nothing has to move
 // Potato mode (Settings › Behaviour): must be known before the app starts so the GPU can be switched off.
 const POTATO = (() => { try { return !!JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'data', 'config.json'), 'utf8')).settings.potatoMode; } catch { return false; } })();
 if (POTATO) {
@@ -37,7 +40,7 @@ if (POTATO) {
   app.commandLine.appendSwitch('disable-gpu-compositing');
   app.commandLine.appendSwitch('renderer-process-limit', '3');
 }
-const APP_TITLE = (TEST_BUILD ? 'BeeboScore Lite Testbuild' : 'BeeboScore Lite') + (POTATO ? ' (Potato mode)' : '');
+const APP_TITLE = (TEST_BUILD ? 'BeeboScore Testbuild' : 'BeeboScore') + (POTATO ? ' (Potato mode)' : '');
 // Windows: the .ico, so the title bar and taskbar use the small-size badge at 16 / 24 px instead of a shrunken full logo
 const ICON = process.platform === 'win32' ? path.join(__dirname, 'icon.ico') : path.join(__dirname, '..', 'public', 'icon.png');
 let win = null, srv = null, updater = null, mini = null, picker = null;
@@ -85,7 +88,7 @@ const UPD = createUpdateLog(DATA_DIR, app.getVersion());
 const portFree = port => new Promise(res => { const s = require('net').createServer(); s.once('error', () => res(false)); s.once('listening', () => s.close(() => res(true))); s.listen(port); });
 
 if (!app.requestSingleInstanceLock()) {
-  UPD.log('another copy of BeeboScore Lite is already running, so this one closed');
+  UPD.log('another copy of BeeboScore is already running, so this one closed');
   app.quit();
 } else {
   app.on('second-instance', () => { if (win) { if (win.isMinimized()) win.restore(); win.show(); win.focus(); } });
@@ -114,7 +117,7 @@ function importFrom140() {
   } catch (e) { UPD.log(`could not bring over the data from BeeboScore 1.4.0: ${e.message}`); }
 }
 
-// 1.5.0: the release exe replaces older ones in its folder the same way: an older BeeboScore-Lite-<version>.exe, and
+// 1.5.0: the release exe replaces older ones in its folder the same way: an older BeeboScore-<version>.exe or BeeboScore-Lite-<version>.exe, and
 // BeeboScore-<version>.exe from 1.4.0 and earlier (and the copy of this release that 1.4.0's Check for updates saved under
 // that name), go to the Recycle Bin once this one is running. Their data is kept (see importFrom140).
 function retireOldReleases() {
@@ -122,7 +125,7 @@ function retireOldReleases() {
   const ver = v => String(v).split('.').map(n => Number(n) || 0), cmp = (a, b) => { const x = ver(a), y = ver(b); for (let i = 0; i < 3; i++) { const d = (x[i] || 0) - (y[i] || 0); if (d) return d; } return 0; };
   if (!RELEASE_PORTABLE || !me) return;
   let files = []; try { files = fs.readdirSync(PORTABLE_DIR); } catch { return; }
-  const old = files.filter(f => f !== me && RX.test(f) && cmp(f.match(RX)[1], app.getVersion()) <= 0 && !(cmp(f.match(RX)[1], app.getVersion()) === 0 && /^BeeboScore-Lite-/i.test(f)));
+  const old = files.filter(f => f !== me && RX.test(f) && cmp(f.match(RX)[1], app.getVersion()) <= 0);      // older ones, and a second copy of this version under the other name
   if (!old.length) return;
   Promise.allSettled(old.map(f => shell.trashItem(path.join(PORTABLE_DIR, f)).then(() => f))).then(rs => {
     const gone = rs.filter(r => r.status === 'fulfilled').map(r => r.value);
@@ -137,7 +140,7 @@ function retireOldReleases() {
 // same folder go to the Recycle Bin (never deleted outright — they can be restored from there). The data folder next to
 // them ("BeeboScore Beta Data") is shared, so nothing is lost. A copy that's still running can't be moved and is left.
 function retireOldTestbuilds() {
-  const me = path.basename(process.env.PORTABLE_EXECUTABLE_FILE || ''), RX = /^BeeboScore Lite Testbuild (\d+(?:\.\d+){0,3})(?: \(\d+\))?\.exe$/i;
+  const me = path.basename(process.env.PORTABLE_EXECUTABLE_FILE || ''), RX = /^BeeboScore (?:Lite )?Testbuild (\d+(?:\.\d+){0,3})(?: \(\d+\))?\.exe$/i;
   const ver = v => String(v).split('.').map(n => Number(n) || 0), cmp = (a, b) => { const x = ver(a), y = ver(b); for (let i = 0; i < Math.max(x.length, y.length); i++) { const d = (x[i] || 0) - (y[i] || 0); if (d) return d; } return 0; };
   if (!PORTABLE_DIR || !TEST_BUILD || !me) return;
   let files = []; try { files = fs.readdirSync(PORTABLE_DIR); } catch { return; }
@@ -214,7 +217,7 @@ async function boot() {
   if (!PORTABLE_DIR && !TEST_BUILD) { migrateOldData(); clearAutocompleteOnFreshInstall(); }
   importFrom140();
   UPD.afterUpdate();                                  // "started by Restart & update" when the old copy left a note
-  // The release exe checks for its own updates (only BeeboScore Lite's files on the releases page). The Testbuild and an
+  // The release exe checks for its own updates (only BeeboScore's own exe on the releases page). The Testbuild and an
   // installed copy don't update themselves.
   updater = RELEASE_PORTABLE ? createPortableUpdaterFor(app, { dir: PORTABLE_DIR, log: m => UPD.log(m), handOver: v => UPD.handOver(v) })
     : createUpdater(app, { disabled: true, handOver: v => UPD.handOver(v) });
@@ -229,7 +232,7 @@ async function boot() {
       ...(POTATO ? { onPotatoDirty: () => potatoRenderer.schedule() } : {}) });
     if (POTATO) potatoRenderer.schedule();
   } catch (err) {
-    dialog.showErrorBox('BeeboScore Lite could not start', String((err && err.message) || err));
+    dialog.showErrorBox('BeeboScore could not start', String((err && err.message) || err));
     app.quit();
     return;
   }
@@ -300,7 +303,7 @@ function createWindow() {
       const unsaved = await designerWin.webContents.executeJavaScript('typeof window.__sdUnsaved === "function" && window.__sdUnsaved()').catch(() => false);
       if (unsaved) {
         const r = await dialog.showMessageBox(designerWin, { type: 'question', buttons: ['Keep editing', 'Close anyway'], defaultId: 0, cancelId: 0, noLink: true,
-          title: 'BeeboScore Lite', message: 'The Layout Designer has changes you haven\'t saved.', detail: 'Close anyway keeps them as a draft — the Designer offers to continue it next time.' });
+          title: 'BeeboScore', message: 'The Layout Designer has changes you haven\'t saved.', detail: 'Close anyway keeps them as a draft — the Designer offers to continue it next time.' });
         if (r.response === 0) { designerWin.show(); designerWin.focus(); return; }
       }
       closeOk = true; hideAll(); if (win) win.close(); return;
@@ -334,7 +337,7 @@ let previewWin = null;
 function openPreview() {
   if (previewWin) { previewWin.show(); previewWin.focus(); return; }
   previewWin = new BrowserWindow({ show: false, width: 960, height: 580, minWidth: 420, minHeight: 280, autoHideMenuBar: true, backgroundColor: '#0b0d12', icon: ICON,
-    title: 'BeeboScore Lite — Live preview', webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true, autoplayPolicy: 'no-user-gesture-required' } });
+    title: 'BeeboScore — Live preview', webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true, autoplayPolicy: 'no-user-gesture-required' } });
   showWhenPainted(previewWin);
   previewWin.loadURL(`http://localhost:${srv.port}/preview`);
   previewWin.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
@@ -376,7 +379,7 @@ function openDesigner(url) {
   designerWin = new BrowserWindow({
     show: false, ...(other ? { x: wa.x + 20, y: wa.y + 20 } : {}),
     width: other ? Math.min(1600, wa.width - 40) : Math.min(1440, Math.max(1100, wa.width - win.getBounds().width)), height: other ? Math.min(1000, wa.height - 40) : Math.min(wa.height, Math.max(760, win.getBounds().height)),
-    minWidth: 1100, minHeight: 680, autoHideMenuBar: true, backgroundColor: '#0c0e15', icon: ICON, title: 'BeeboScore Lite — Layout Designer',
+    minWidth: 1100, minHeight: 680, autoHideMenuBar: true, backgroundColor: '#0c0e15', icon: ICON, title: 'BeeboScore — Layout Designer',
     webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true, autoplayPolicy: 'no-user-gesture-required' },
   });
   designerWin.setMenu(null);
@@ -407,7 +410,7 @@ function openMini() {
   if (mini) { mini.show(); mini.focus(); return; }
   mini = new BrowserWindow({
     show: false, width: 460, height: 330, minWidth: 360, minHeight: 300, alwaysOnTop: true, autoHideMenuBar: true, maximizable: false,
-    backgroundColor: '#0a0b10', title: 'BeeboScore Lite Mini', icon: ICON,
+    backgroundColor: '#0a0b10', title: 'BeeboScore Mini', icon: ICON,
     webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true, spellcheck: false },
   });
   mini.setMenu(null);
@@ -557,7 +560,7 @@ function openPicker(side) {
   picker = new BrowserWindow({
     width: 460, height: 560, x: Math.round(x + (width - 460) / 2), y: Math.round(y + (height - 560) / 2),
     alwaysOnTop: true, autoHideMenuBar: true, maximizable: false, minimizable: true, skipTaskbar: false, show: false,
-    backgroundColor: '#0a0b10', title: 'Set player — BeeboScore Lite', icon: ICON,
+    backgroundColor: '#0a0b10', title: 'Set player — BeeboScore', icon: ICON,
     webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true, spellcheck: false },
   });
   picker.setMenu(null);
@@ -594,7 +597,7 @@ function buildMenu() {
       submenu: [
         { label: 'Get a start.gg API Token', click: () => shell.openExternal('https://start.gg/admin/profile/developer') },
         { type: 'separator' },
-        { label: `BeeboScore Lite ${app.getVersion()} — developed by Beebo`, enabled: false },
+        { label: `BeeboScore ${app.getVersion()} — developed by Beebo`, enabled: false },
         { label: `Running on port ${srv.port}`, enabled: false },
       ],
     },

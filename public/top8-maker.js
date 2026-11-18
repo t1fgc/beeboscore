@@ -153,14 +153,14 @@
     const back = document.createElement('div'); back.className = 't8m-back';
     back.innerHTML = `<div class="t8m" role="dialog" aria-label="Top 8 results picture">
       <h3>🏆 Top 8 results picture</h3>
-      <p class="hint">Drop a character picture on each player — <b>best size ${PANEL.w} × ${PANEL.h} px</b> (5 : 6), a PNG with a see-through background. It stands on the name, above it. Drawn in your layout’s colours; save it to BeeboScore Lite’s folder or anywhere you like.</p>
+      <p class="hint">Drop a character picture on each player — <b>best size ${PANEL.w} × ${PANEL.h} px</b> (5 : 6), a PNG with a see-through background. It stands on the name, above it. Drawn in your layout’s colours; save it to BeeboScore’s folder or anywhere you like.</p>
       <div class="t8m-opts"><label>Shape <select class="f" data-o="shape">${Object.entries(SHAPES).map(([k, v]) => `<option value="${k}">${v[2]}</option>`).join('')}</select></label>
         <span data-o="custom" hidden><input class="f" type="number" min="600" max="4096" step="10" data-o="w" value="1600"> × <input class="f" type="number" min="600" max="4096" step="10" data-o="h" value="900"> px</span>
         <label>Colours <select class="f" data-o="theme"><option value="obsidian">Obsidian Glass</option><option value="porcelain">Porcelain</option><option value="default">Default</option></select></label>
         <label>Title <input class="f" type="text" data-o="event" maxlength="60" value="${esc(S.event)}"></label></div>
       <div class="t8m-body"><div class="t8m-side">${S.players.map((p, i) => `<div class="t8m-slot" data-i="${i}"><b>${ord(p.place)}</b><span class="t8m-th" data-pick title="Click or drop a picture">${p.pic ? '' : '＋'}</span><span><b style="color:var(--text)">${esc(p.name)}</b><small>${p.pic ? 'Their saved character image — drop another to change it' : 'Drop a picture here'}</small></span></div>`).join('')}</div>
         <div class="t8m-prev"><canvas></canvas></div></div>
-      <div class="t8m-acts"><button class="btn ghost" data-a="folder">📂 Open the folder</button><span style="flex:1"></span><button class="btn ghost" data-a="close">Close</button><button class="btn" data-a="saveas">⬇ Save as…</button><button class="btn primary" data-a="save">💾 Save to BeeboScore Lite’s folder</button></div></div>`;
+      <div class="t8m-acts"><button class="btn ghost" data-a="folder">📂 Open the folder</button><span style="flex:1"></span><button class="btn ghost" data-a="close">Close</button><button class="btn" data-a="saveas">⬇ Save as…</button><button class="btn primary" data-a="save">💾 Save to BeeboScore’s folder</button></div></div>`;
     document.body.appendChild(back);
     const cv = back.querySelector('canvas'), $ = s => back.querySelector(s);
     $('[data-o=theme]').value = S.theme;

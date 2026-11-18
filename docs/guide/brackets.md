@@ -1,6 +1,6 @@
 # start.gg brackets
 
-[← BeeboScore Lite guide](../GUIDE.md)
+[← BeeboScore guide](../GUIDE.md)
 
 ## start.gg
 

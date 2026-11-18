@@ -58,7 +58,7 @@ textarea.bask-in{min-height:120px;resize:vertical;font-family:var(--mono,Consola
       const back = document.activeElement, uid = 'bask' + Math.random().toString(36).slice(2, 8);
       const wrap = el('div', 'bask-wrap'), dlg = el('div', 'bask');
       dlg.setAttribute('role', 'dialog'); dlg.setAttribute('aria-modal', 'true'); if (spec.kind) dlg.dataset.kind = spec.kind;
-      const h = el('h3', 'bask-t', spec.title || 'BeeboScore Lite'); h.id = uid + 't'; dlg.setAttribute('aria-labelledby', h.id); dlg.appendChild(h);
+      const h = el('h3', 'bask-t', spec.title || 'BeeboScore'); h.id = uid + 't'; dlg.setAttribute('aria-labelledby', h.id); dlg.appendChild(h);
       if (spec.text) {
         const p = el('p', 'bask-x'); p.id = uid + 'x';
         String(spec.text).split('\n').forEach((line, i) => { if (i) p.appendChild(el('br')); p.appendChild(document.createTextNode(line)); });

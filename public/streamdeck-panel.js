@@ -34,14 +34,14 @@
     dot('#sdDeckDot', !d.connected ? '' : fits.length ? 'ok' : decks.length ? 'warn' : '');
     $('#sdDeckTxt').textContent = !d.connected ? 'Open the Stream Deck app (with the plugin installed) to see your deck here.'
       : !decks.length ? 'No Stream Deck plugged in.'
-      : decks.map(x => `${x.name}${x.cols ? ` (${x.cols * x.rows} keys)` : ''}`).join(', ') + (fits.length ? (su.done ? ' — set up ✓' : '') : ' — no ready-made layout for this one: drag “BeeboScore Lite key” onto any key and it picks the right job for its place.');
+      : decks.map(x => `${x.name}${x.cols ? ` (${x.cols * x.rows} keys)` : ''}`).join(', ') + (fits.length ? (su.done ? ' — set up ✓' : '') : ' — no ready-made layout for this one: drag “BeeboScore key” onto any key and it picks the right job for its place.');
     $('#sdSetup').disabled = !d.connected;
     paintMap();
     // banner: something the person has to do in the Stream Deck app
     const snooze = store('sdBannerLater') || '';
     const need = d.canInstall && d.appTooOld && (d.outdated || !d.installed);
     $('#sdBanner').hidden = !(need && snooze !== d.bundledVersion && (P.info() || {}).local !== false);
-    if (need) $('#sdBannerText').textContent = `Stream Deck ${vShort(d.appVersion)} is too old for the BeeboScore Lite plugin ${vShort(d.bundledVersion)}. Update the Stream Deck app (${d.minApp} or newer)${d.autoUpdate !== false ? ' and BeeboScore Lite will update the plugin for you.' : ', then click Update in Settings › Stream Deck.'}`;
+    if (need) $('#sdBannerText').textContent = `Stream Deck ${vShort(d.appVersion)} is too old for the BeeboScore plugin ${vShort(d.bundledVersion)}. Update the Stream Deck app (${d.minApp} or newer)${d.autoUpdate !== false ? ' and BeeboScore will update the plugin for you.' : ', then click Update in Settings › Stream Deck.'}`;
     // finished updating?
     if (sdWatch && was && d.upToDate && (!was.upToDate || was.installedVersion !== d.installedVersion)) {
       toast(`Stream Deck plugin ${was.installed ? 'updated to' : 'installed:'} ${vShort(d.installedVersion)} ✓`); sdWatch = 0;
@@ -64,15 +64,15 @@
     const b = $('#sdSetup'); b.disabled = true;
     try {
       await api('/api/streamdeck/setup', { method: 'POST', body: {} });
-      toast('Sent to your Stream Deck — if Stream Deck asks to add the BeeboScore Lite profile, click Add');
+      toast('Sent to your Stream Deck — if Stream Deck asks to add the BeeboScore profile, click Add');
       for (let i = 0; i < 6; i++) { await new Promise(r => setTimeout(r, 700)); await loadSD(); if (sd && sd.setup && sd.setup.done) break; }
-      if (sd && sd.setup && sd.setup.done && !(sd.setup.sent || []).length) toast('Your Stream Deck has no ready-made layout — drag “BeeboScore Lite key” onto its keys instead', true);
+      if (sd && sd.setup && sd.setup.done && !(sd.setup.sent || []).length) toast('Your Stream Deck has no ready-made layout — drag “BeeboScore key” onto its keys instead', true);
     } catch (e) { toast(e.message, true); }
     b.disabled = false;
   };
   // the key map: what each key of an XL does right now (mirrors streamdeck/src/slots.js)
   const MATCH = '#ffb020', STREAM = '#29c6ff', BRACKET = '#4f7dff', FORMAT = '#ff6a1a';
-  // (BeeboScore Lite: no viewer events, Twitch or show keys — row 4 is the set as it's told)
+  // (BeeboScore: no viewer events, Twitch or show keys — row 4 is the set as it's told)
   const ROWS = [
     [['P1 name', MATCH], ['P1 +1', MATCH], ['Swap', MATCH], ['P2 +1', MATCH], ['P2 name', MATCH], ['Undo', MATCH], ['Reset · hold: next set', MATCH], ['Refresh OBS', STREAM]],
     [['FullVS', MATCH], ['GlassVS', MATCH], ['Victory', MATCH], ['Bracket', BRACKET], ['Top 8', BRACKET], ['Standings', BRACKET], ['VS style', MATCH], ['Hide all', STREAM]],

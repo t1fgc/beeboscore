@@ -1,20 +1,20 @@
 # Stream Deck
 
-[← BeeboScore Lite guide](../GUIDE.md)
+[← BeeboScore guide](../GUIDE.md)
 
 ## The plugin
 
-The Stream Deck plugin is **bundled inside BeeboScore Lite**. You don't download it separately.
+The Stream Deck plugin is **bundled inside BeeboScore**. You don't download it separately.
 
 - **Settings › Stream Deck** shows your Stream Deck app version and the plugin's status: **Install**, **Update** or **Up to date**.
-- It's its own plugin, **BeeboScore Lite** (`com.t1fgc.beeboscore.lite`), so it can sit beside the full BeeboScore's plugin without either replacing the other.
-- The plugin finds BeeboScore Lite on this PC by itself (port 3300 for the exe, 3200 when it runs from source or is installed). A different address can be set in each key's settings.
+- It's its own plugin, **BeeboScore** (`com.t1fgc.beeboscore.lite`), so it can sit beside the full BeeboScore's plugin without either replacing the other.
+- The plugin finds BeeboScore on this PC by itself (port 3300 for the exe, 3200 when it runs from source or is installed). A different address can be set in each key's settings.
 - Coming from BeeboScore 1.4.0: install this plugin, press **Set up Stream Deck**, then remove the old *BeeboScore Prototype* plugin in Stream Deck.
 - If your Stream Deck app is older than the plugin needs (**6.4**), the app tells you to update Stream Deck first.
 
 ## Set up Stream Deck
 
-**Settings › Stream Deck › Set up Stream Deck** puts every key on your deck for you. The first time, Stream Deck asks to add the *BeeboScore Lite* profile: click **Add**. After that the deck looks after itself:
+**Settings › Stream Deck › Set up Stream Deck** puts every key on your deck for you. The first time, Stream Deck asks to add the *BeeboScore* profile: click **Add**. After that the deck looks after itself:
 
 - **Stream Deck XL (32 keys)** — one row per job:
   - **Row 1, the match:** both player names, both scores (tap +1, hold −1), Swap, **Undo**, **Reset** (tap: 0–0; hold: the next set) and Refresh OBS.
@@ -22,7 +22,7 @@ The Stream Deck plugin is **bundled inside BeeboScore Lite**. You don't download
   - **Row 3 follows the app.** In 1v1: next match, report to start.gg, Winners / Losers side, [L] for each player, next set and effects quality. When a format starts it becomes that format's keys.
   - **Row 4, the set:** moment banners, replay the moment, the head-to-head line, the set timer, the stats strip, the bracket reset splash and both stats cards.
 - **Stream Deck (15 keys):** row 1 the match (scores, Swap, Undo, Reset), row 2 VS, Victory, Bracket, Hide all and Refresh OBS, row 3 the format's keys (or next match, Top 8, standings, report and W/L side in 1v1).
-- **Any other deck:** drag **BeeboScore Lite key (follows the app)** onto the keys you want. Each one picks its job from where it sits.
+- **Any other deck:** drag **BeeboScore key (follows the app)** onto the keys you want. Each one picks its job from where it sits.
 - **Everything, in pages** (Settings › Stream Deck): nothing moves when a format starts; the **▸** key turns the page.
 
 ## The keys

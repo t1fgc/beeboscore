@@ -2,7 +2,7 @@
 /*
  * BeeboScore — Stream Deck plugin (Node.js runtime, Stream Deck 6.4+).
  * Talks to the Stream Deck app over its plugin WebSocket and to BeeboScore over HTTP on this PC
- * (BeeboScore Lite: http://127.0.0.1:3200, or 3300 for the portable Testbuild — found automatically).
+ * (BeeboScore: http://127.0.0.1:3200, or 3300 for the portable Testbuild — found automatically).
  */
 const WebSocket = require('ws');
 const ART = require('./art'), { art, dataUrl, grouped, FORMAT_NAMES } = ART;
@@ -17,7 +17,7 @@ const PREFIX = 'com.t1fgc.beeboscore.lite.';
 // Stream Deck passes its own version and this plugin's version in -info; BeeboScore uses them to offer updates
 const INFO = (() => { try { return JSON.parse(arg('info') || '{}'); } catch { return {}; } })();
 const VERSIONS = { plugin: (INFO.plugin && INFO.plugin.version) || (typeof __PLUGIN_VERSION__ !== 'undefined' ? __PLUGIN_VERSION__ : ''), app: (INFO.application && INFO.application.version) || '' };
-const CANDIDATES = ['http://127.0.0.1:3200', 'http://127.0.0.1:3300', 'http://127.0.0.1:3201', 'http://127.0.0.1:3202', 'http://127.0.0.1:3301'];   // BeeboScore Lite's own ports (the full BeeboScore uses 3000 and 3100)
+const CANDIDATES = ['http://127.0.0.1:3200', 'http://127.0.0.1:3300', 'http://127.0.0.1:3201', 'http://127.0.0.1:3202', 'http://127.0.0.1:3301'];   // BeeboScore's own ports (the full BeeboScore uses 3000 and 3100)
 
 let ws = null, globals = { address: '' }, base = '', status = null, online = false;
 const devices = new Map();     // Stream Deck device id -> { id, name, type, size: { columns, rows } }   (1.12: Set up Stream Deck)
@@ -36,7 +36,7 @@ async function http(path, body, address = base) {
       body: body ? JSON.stringify(body) : undefined,
     });
     const d = await r.json().catch(() => ({}));
-    if (r.status === 401) throw new Error('BeeboScore Lite asked for a password — use the address of this PC.');
+    if (r.status === 401) throw new Error('BeeboScore asked for a password — use the address of this PC.');
     if (!r.ok) throw new Error(d.error || `HTTP ${r.status}`);
     return d;
   } finally { clearTimeout(t); }

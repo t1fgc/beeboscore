@@ -1,6 +1,6 @@
 'use strict';
 /*
- * BeeboScore Lite (developed by Beebo) — the "Set up Stream Deck" layouts.
+ * BeeboScore (developed by Beebo) — the "Set up Stream Deck" layouts.
  *
  * The bundled profiles fill every key with one action, "BeeboScore key" (…slot). The plugin decides what each of those keys
  * does from where it sits and what is running in the app, so starting a format rearranges the deck at once — no profile
@@ -12,7 +12,7 @@
  *    row 3  what's running 1v1: start.gg (next match, report, W/L side), losers marks, next set, effects · a format: its keys
  *                          (Team Death Battle: both switch-in keys and Lock In; King of the Hill: the leaderboard)
  *    row 4  the set        moments, replay the moment, head-to-head, set timer, stats strip, bracket reset, the stats cards
- *  (BeeboScore Lite: no viewer events, Twitch or show keys.)
+ *  (BeeboScore: no viewer events, Twitch or show keys.)
  *  Stream Deck / MK.2 (5 × 3): row 1 the match, row 2 the splashes (the VS key plays the VS style chosen in the app — hold it
  *  to switch FullVS ⇄ GlassVS), row 3 changes with the format.
  *  Any other size: keys are filled in reading order, the match first.
@@ -20,7 +20,7 @@
 const K = (k, settings = {}) => ({ k, settings });
 const UNDO = K('undo', { any: true }), RESET = K('reset', { holdClear: true });
 
-// ---- rows that never move (BeeboScore Lite: the match, the splashes, start.gg and the formats — no viewer events, no show)
+// ---- rows that never move (BeeboScore: the match, the splashes, start.gg and the formats — no viewer events, no show)
 const XL_MATCH = [K('player', { side: 1 }), K('score', { side: 1 }), K('swap'), K('score', { side: 2 }), K('player', { side: 2 }), UNDO, RESET, K('obsrefresh')];
 const XL_SHOW = [K('vs', { style: 'full' }), K('playervs'), K('victory'), K('bracket'), K('top8'), K('standings'), K('vsstyle'), K('hideall')];   // FullVS and GlassVS side by side
 const XL_STORY = [K('moments'), K('momentreplay'), K('h2h'), K('settimer'), K('statsstrip'), K('greset'), K('stats', { side: 1 }), K('stats', { side: 2 })];   // row 4: the set as it's told
@@ -93,8 +93,8 @@ function slotFor(cols, rows, column, row, status, page = 0) {
 /** the profile the plugin bundles for a deck, by its size (Stream Deck's DeviceType: 0 Stream Deck, 2 XL) */
 function profileFor(device) {
   const s = (device && device.size) || {}, t = device && device.type;
-  if (t === 2 || (s.columns >= 8 && s.rows >= 4)) return { name: 'profiles/BeeboScore Lite XL', cols: 8, rows: 4, label: 'Stream Deck XL' };
-  if (t === 0 || (s.columns === 5 && s.rows === 3)) return { name: 'profiles/BeeboScore Lite', cols: 5, rows: 3, label: 'Stream Deck' };
+  if (t === 2 || (s.columns >= 8 && s.rows >= 4)) return { name: 'profiles/BeeboScore XL', cols: 8, rows: 4, label: 'Stream Deck XL' };
+  if (t === 0 || (s.columns === 5 && s.rows === 3)) return { name: 'profiles/BeeboScore', cols: 5, rows: 3, label: 'Stream Deck' };
   return null;
 }
 const DEVICE_NAMES = { 0: 'Stream Deck', 1: 'Stream Deck Mini', 2: 'Stream Deck XL', 3: 'Stream Deck Mobile', 4: 'Corsair G-Keys', 5: 'Stream Deck Pedal', 6: 'Corsair Voyager', 7: 'Stream Deck +', 8: 'SCUF controller', 9: 'Stream Deck Neo' };

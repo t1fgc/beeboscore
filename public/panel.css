@@ -1287,3 +1287,41 @@ kbd { font: 600 11px/1 ui-monospace, monospace; padding: 2px 5px; border: 1px so
 .picker.game select { min-width: 150px; max-width: 150px; }
 @media (min-width: 1680px) { .picker.game select { max-width: 220px; } }
 @media (max-width: 1519px) { .picker.game { display: none; } }
+
+/* ---------- 1.5.1: the Layouts tab (layouts-panel.js) ---------- */
+.up-ico svg { display: block; }
+.drop.busy { opacity: .65; cursor: progress; }
+.drop.busy button { pointer-events: none; }
+.lay-opts { display: flex; flex-wrap: wrap; gap: 12px 28px; align-items: center; margin: 16px 0 4px; }
+.lay-game { display: flex; align-items: center; gap: 10px; }
+.lay-game .l { margin: 0; white-space: nowrap; }
+.lay-game select { min-width: 220px; }
+.lay-opts .toggle.opt { flex: 1; min-width: 260px; margin: 0; }
+.lay-grid { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+.lay-thumb { position: relative; aspect-ratio: 16 / 9; overflow: hidden; background: linear-gradient(160deg, #2f3d5c, #5b3f4e 50%, #24283a); }
+.lay-thumb iframe { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; border: 0; transform-origin: 0 0; pointer-events: none; background: transparent; }
+.lay-thumb > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.lay-thumb .g, .lay-thumb .live { position: absolute; z-index: 1; font-size: 10px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; padding: 2px 7px; border-radius: 5px; }
+.lay-thumb .g { left: 8px; bottom: 8px; background: rgba(0,0,0,.62); color: #fff; }
+.lay-thumb .live { right: 8px; top: 8px; background: var(--accent); color: #141006; }
+.lay-card .lbody b { font-size: 15px; }
+.lay-sub { color: var(--muted); font-size: 12px; margin-top: -3px; }
+.lay-empty { grid-column: 1 / -1; }
+.lay-code { margin: 0 0 14px; padding: 12px 14px; background: var(--bg-2); border: 1px solid var(--line); border-radius: 10px; font: 13px/1.65 var(--mono); color: #cfd6e6; overflow-x: auto; white-space: pre; }
+.lay-code i { color: var(--muted); font-style: normal; }
+.lay-make-btns { flex-wrap: wrap; gap: 10px 14px; }
+.lay-make-btns .hint { margin: 0; flex: 1; min-width: 240px; }
+.lay-ref { margin-top: 16px; border-top: 1px solid var(--line); padding-top: 12px; }
+.lay-ref summary { cursor: pointer; font-weight: 600; color: var(--text); }
+.lay-ref table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; }
+.lay-ref th, .lay-ref td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.lay-ref th { color: var(--muted); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+.lay-ref p { font-size: 13px; line-height: 1.65; margin: 8px 0; }
+.lay-pv-wrap { position: fixed; inset: 0; z-index: 2147482000; display: grid; place-items: center; padding: 24px; background: rgba(4,5,9,.72); }
+.lay-pv { width: min(1120px, 100%); background: var(--card); border: 1px solid var(--line-2); border-radius: 14px; padding: 14px 16px 12px; box-shadow: 0 24px 60px rgba(0,0,0,.5); }
+.lay-pv-top { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.lay-pv-top b { flex: 1; font-size: 15px; }
+.lay-pv .hint { margin-top: 8px; }
+.lay-code code { background: none; border: 0; padding: 0; border-radius: 0; color: inherit; font: inherit; }
+.lacts a.btn { color: var(--text); }
+.lay-game select.f { width: auto; }

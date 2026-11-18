@@ -80,15 +80,15 @@ function zipDir(dir, prefix) {
 //    (src/slots.js) — the XL is the one it's built for; the 15-key Stream Deck gets a smaller version. Stream Deck reads the
 //    older .streamDeckProfile format (a zip of one .sdProfile folder) for profiles a plugin bundles.
 const PROFILES = [
-  { file: 'profiles/BeeboScore Lite XL', model: '20GAT9901', cols: 8, rows: 4, name: 'BeeboScore Lite XL' },
-  { file: 'profiles/BeeboScore Lite', model: '20GBA9901', cols: 5, rows: 3, name: 'BeeboScore Lite' },
+  { file: 'profiles/BeeboScore XL', model: '20GAT9901', cols: 8, rows: 4, name: 'BeeboScore XL' },
+  { file: 'profiles/BeeboScore', model: '20GBA9901', cols: 5, rows: 3, name: 'BeeboScore' },
 ];
 const uuidOf = s => { const h = require('crypto').createHash('sha1').update('beeboscore-profile:' + s).digest('hex').toUpperCase(); return `${h.slice(0, 8)}-${h.slice(8, 12)}-4${h.slice(13, 16)}-A${h.slice(17, 20)}-${h.slice(20, 32)}`; };
 const blankState = () => ({ FFamily: '', FSize: '', FStyle: '', FUnderline: '', Image: '', Title: '', TitleAlignment: '', TitleColor: '', TitleShow: '' });
 for (const pr of PROFILES) {
   const Actions = {};
   for (let r = 0; r < pr.rows; r++) for (let c = 0; c < pr.cols; c++)
-    Actions[`${c},${r}`] = { Name: 'BeeboScore Lite key (follows the app)', Settings: {}, State: 0, States: [blankState(), blankState()], UUID: 'com.t1fgc.beeboscore.lite.slot' };
+    Actions[`${c},${r}`] = { Name: 'BeeboScore key (follows the app)', Settings: {}, State: 0, States: [blankState(), blankState()], UUID: 'com.t1fgc.beeboscore.lite.slot' };
   const id = uuidOf(pr.name), tmp = path.join(ROOT, '.profile-tmp');
   fs.rmSync(tmp, { recursive: true, force: true }); fs.mkdirSync(tmp, { recursive: true });
   fs.writeFileSync(path.join(tmp, 'manifest.json'), JSON.stringify({ Actions, DeviceModel: pr.model, DeviceUUID: '', Name: pr.name, Version: '1.0' }));

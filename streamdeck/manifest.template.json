@@ -1,12 +1,12 @@
 {
   "$schema": "https://schemas.elgato.com/streamdeck/plugins/manifest.json",
-  "Name": "BeeboScore Lite",
+  "Name": "BeeboScore",
   "Version": "1.31.0.0",
   "Author": "Beebo",
-  "Description": "Control BeeboScore Lite — scores, splashes, start.gg and game formats — from your Stream Deck.",
+  "Description": "Control BeeboScore — scores, splashes, start.gg and game formats — from your Stream Deck.",
   "UUID": "com.t1fgc.beeboscore.lite",
   "Icon": "imgs/plugin",
-  "Category": "BeeboScore Lite",
+  "Category": "BeeboScore",
   "CategoryIcon": "imgs/category",
   "CodePath": "bin/plugin.js",
   "PropertyInspectorPath": "ui/inspector.html",
@@ -551,14 +551,14 @@
   ],
   "Profiles": [
     {
-      "Name": "profiles/BeeboScore Lite XL",
+      "Name": "profiles/BeeboScore XL",
       "DeviceType": 2,
       "Readonly": false,
       "DontAutoSwitchWhenInstalled": false,
       "AutoInstall": false
     },
     {
-      "Name": "profiles/BeeboScore Lite",
+      "Name": "profiles/BeeboScore",
       "DeviceType": 0,
       "Readonly": false,
       "DontAutoSwitchWhenInstalled": false,

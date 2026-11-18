@@ -32,7 +32,7 @@
     sb.disabled = !n; $('#shPng').disabled = $('#shJpg').disabled = !n || !S.capture;
     $('#shStandHint').textContent = !n ? 'Appears once players start getting knocked out — complete at the end of the tournament.'
       : !fin ? `${n} placement${n === 1 ? '' : 's'} so far — the full Top 8 is ready when the tournament ends.` : 'Final — ready to post.';
-    if (!S.capture && n) $('#shStandHint').textContent += ' Saving pictures needs the BeeboScore Lite desktop app.';
+    if (!S.capture && n) $('#shStandHint').textContent += ' Saving pictures needs the BeeboScore desktop app.';
     $('#shAuto').checked = S.autoStandings !== false;
     $('#shPostRow').hidden = !S.postText;
     const oth = $('#shOther'); oth.hidden = !S.other;

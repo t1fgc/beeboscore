@@ -41,7 +41,7 @@
   $('#kothImport').onclick = () => $('#kothFile').click();
   $('#kothFile').onchange = async e => {
     const f = e.target.files[0]; e.target.value = ''; if (!f) return;
-    let data; try { data = JSON.parse(await f.text()); } catch { return toast('That file isn’t a backup BeeboScore Lite can read.', true); }
+    let data; try { data = JSON.parse(await f.text()); } catch { return toast('That file isn’t a backup BeeboScore can read.', true); }
     const how = await BeeboAsk.choice({ title: 'Restore King of the Hill records', text: 'Merge adds the backup to the records you have now. Replace swaps them for the backup, and what’s here now is lost (download a backup first if you want to keep it).', list: true,
       options: [{ label: 'Merge', hint: 'Wins and losses add up', value: 'merge', primary: true }, { label: 'Replace', hint: 'The records here are lost', value: 'replace', danger: true }] });
     if (!how) return; const merge = how === 'merge';

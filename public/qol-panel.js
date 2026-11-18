@@ -68,10 +68,10 @@
       const chk = await fetch('/api/backup/restore?check=1', { method: 'POST', body: buf, headers: { 'Content-Type': 'application/octet-stream' } }).then(r => r.json());
       if (chk.error) throw new Error(chk.error);
       const s = chk.summary;
-      if (!(await BeeboAsk.confirm({ title: `Restore the backup from ${new Date(s.at).toLocaleString()}?`, text: `${s.players} players · ${s.teams} saved teams · ${s.layouts} of your layouts · ${s.assets} pictures\n\nYour current setup is backed up first, and BeeboScore Lite restarts afterwards. Passwords and sign-ins stay as they are now.`, ok: 'Restore and restart', danger: true }))) return;
+      if (!(await BeeboAsk.confirm({ title: `Restore the backup from ${new Date(s.at).toLocaleString()}?`, text: `${s.players} players · ${s.teams} saved teams · ${s.layouts} of your layouts · ${s.assets} pictures\n\nYour current setup is backed up first, and BeeboScore restarts afterwards. Passwords and sign-ins stay as they are now.`, ok: 'Restore and restart', danger: true }))) return;
       const r = await fetch('/api/backup/restore', { method: 'POST', body: buf, headers: { 'Content-Type': 'application/octet-stream' } }).then(x => x.json());
       if (r.error) throw new Error(r.error);
-      toast(r.restarting ? 'Backup restored — restarting…' : 'Backup restored — restart BeeboScore Lite to finish');
+      toast(r.restarting ? 'Backup restored — restarting…' : 'Backup restored — restart BeeboScore to finish');
       if (!r.restarting) setTimeout(() => location.reload(), 1500);
     } catch (er) { toast(er.message || 'That backup couldn’t be restored.', true); }
   };
@@ -148,8 +148,8 @@
   // ------------------------------------------------------------ first-time setup
   const W = { step: 0, layout: '', obs: false, src: '' };
   const STEPS = [
-    () => `<h2 id="wizTitle">Welcome to BeeboScore Lite</h2><p>Four quick steps to get your scoreboard on stream. You can change everything later.</p>
-      <p>BeeboScore Lite runs the scoreboard, VS and victory screens, start.gg brackets and game formats. You control it here (or from your phone or Stream Deck), and OBS shows it.</p>`,
+    () => `<h2 id="wizTitle">Welcome to BeeboScore</h2><p>Four quick steps to get your scoreboard on stream. You can change everything later.</p>
+      <p>BeeboScore runs the scoreboard, VS and victory screens, start.gg brackets and game formats. You control it here (or from your phone or Stream Deck), and OBS shows it.</p>`,
     () => { const ov = (P.overlays && P.overlays() || []).filter(o => !o.format && !o.base);   // every look (Lite: Classic for each game, and any you add)
       return `<h2 id="wizTitle">Pick a look</h2><p>The layout your viewers see: Classic, for the game you're playing.</p>
         <div class="wiz-opts wiz-looks">${ov.map(o => `<button data-ov="${esc(o.name)}" class="${o.name === (W.layout || o.active && o.name) ? 'on' : ''}"><b>${esc(o.title || o.name)}</b><small>${esc(o.game || '')}</small></button>`).join('') || '<p>Layouts are loading…</p>'}</div>`; },
@@ -160,7 +160,7 @@
       <div class="wiz-opts"><button data-src="startgg" class="${W.src === 'startgg' ? 'on' : ''}"><b>🏆 start.gg event</b><small>Sign in and pick your tournament in the Bracket tab.</small></button>
       <button data-src="none" class="${W.src === 'none' ? 'on' : ''}"><b>Not now</b><small>Just the scoreboard.</small></button></div>`,
     () => `<h2 id="wizTitle">You're set 🎉</h2><p>Type the players' names in the <b>Matches</b> tab and press + to score. A few things worth knowing:</p>
-      <ul style="color:var(--muted);margin:0 0 10px;padding-left:20px;line-height:1.6"><li><b>Format</b> menu on the Players card — crew battles, Death Battle, King of the Hill…</li><li><b>Stream</b> tab — control from your phone, or go online.</li><li><b>Settings › Backups</b> — BeeboScore Lite keeps a daily backup by itself.</li></ul>`,
+      <ul style="color:var(--muted);margin:0 0 10px;padding-left:20px;line-height:1.6"><li><b>Format</b> menu on the Players card — crew battles, Death Battle, King of the Hill…</li><li><b>Stream</b> tab — control from your phone, or go online.</li><li><b>Settings › Backups</b> — BeeboScore keeps a daily backup by itself.</li></ul>`,
   ];
   function wizDraw() {
     $('#wizSteps').innerHTML = STEPS.map((_, i) => `<i class="${i <= W.step ? 'on' : ''}"></i>`).join('');

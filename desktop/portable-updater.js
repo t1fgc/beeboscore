@@ -1,6 +1,6 @@
 'use strict';
 /*
- * BeeboScore Lite (developed by Beebo) — updates for the portable exe (Settings › Check for updates).
+ * BeeboScore (developed by Beebo) — updates for the portable exe (Settings › Check for updates).
  * The checking and downloading is in lib/portable-update.js; this file is the desktop side: it gives that code
  * Electron's network stack (so the PC's proxy settings are respected) and does the "Restart & update" hand-over.
  * Nothing is checked or downloaded unless the person asks.

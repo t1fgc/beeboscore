@@ -1,6 +1,6 @@
 # Settings, backups & self-test
 
-[← BeeboScore Lite guide](../GUIDE.md)
+[← BeeboScore guide](../GUIDE.md)
 
 ## Settings
 
@@ -21,7 +21,7 @@
 - **OBS connection**: the address and password of OBS's WebSocket server (OBS › Tools › WebSocket Server Settings), for **Check OBS** (sound) and for adding the overlay to OBS at the right size
 - **Stream Deck:** app and plugin status, install / update, automatic plugin updates.
 - **Keyboard shortcuts:** click any shortcut and press a new key or combination (`Esc` cancels, `Backspace` clears). Optional shortcuts can be set for **Reset scores**, **Victory splash**, **Bracket splash**, **Top 8 splash**, **Refresh bracket**, **Bracket side** and **Stream sound on / off**. The mini controller follows the same shortcuts. (The **Keyboard shortcuts** link on the Players card jumps here.)
-- **Updates & about:** the version, the release notes and **Check for updates**: it fetches a newer BeeboScore Lite exe into the same folder, and **Restart & update** switches over to it (see [Updates](install-and-obs.md#updates)). A Testbuild or an installer build doesn't update itself.
+- **Updates & about:** the version, the release notes and **Check for updates**: it fetches a newer BeeboScore exe into the same folder, and **Restart & update** switches over to it (see [Updates](install-and-obs.md#updates)). A Testbuild or an installer build doesn't update itself.
 
 - **Search settings** at the top finds any setting by a word (sound, victory, backup…). `Esc` clears it.
 - **Settings** shows one section at a time: Look & feel, Performance, Scoreboard, Sound, Stream Deck, Shortcuts, Backups, Updates & about, Health, Your theme, Accessibility, 4K output and Tabs — or **Show all**.
@@ -49,7 +49,7 @@ Every save of the app's own files (settings, the scoreboard, players, teams, for
 
 **Settings › Updates & about › Run the self-test** checks what only your PC can answer: saving files, the encrypted sign-ins (Windows protection or the app's own AES-256 key), saving the standings picture (it shows you a test picture), potato mode, whether OBS is showing the overlay, going online, start.gg and Twitch. **Copy the results** to paste them when asking for help. Nothing is changed. It also checks folders with accents (`Ñandú`, `東京`), warns when the data folder is inside OneDrive, and checks that phones on your Wi-Fi can reach this PC (Windows Firewall).
 
-From a command line: `"BeeboScore Lite.exe" --self-test=result.json` runs the same checks without opening a window and exits with 0 when everything passed (used by the Windows check on GitHub, `.github/workflows/windows-check.yml`).
+From a command line: `"BeeboScore.exe" --self-test=result.json` runs the same checks without opening a window and exits with 0 when everything passed (used by the Windows check on GitHub, `.github/workflows/windows-check.yml`).
 
 ### Sound
 

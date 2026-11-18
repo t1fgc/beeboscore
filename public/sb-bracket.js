@@ -706,7 +706,7 @@ html.sb-potato #sb-bracket .br-embers,html.sb-potato #sb-bracket .br-spark{displ
     else if (mode === 'standings') info = renderStandings();
     else if (model && model.grid) info = renderGrid();
     else if (model) info = renderBracket();
-    else { root.querySelector('.br-stage').innerHTML = `<div class="sh"><div class="sh-bg"></div><div class="br-msg">${modelTried ? 'Load a start.gg bracket in BeeboScore Lite' : ''}</div></div>`; info = { boxes: new Map(), hot: [] }; }
+    else { root.querySelector('.br-stage').innerHTML = `<div class="sh"><div class="sh-bg"></div><div class="br-msg">${modelTried ? 'Load a start.gg bracket in BeeboScore' : ''}</div></div>`; info = { boxes: new Map(), hot: [] }; }
     root.classList.toggle('t8m', mode === 'top8' || mode === 'standings');
     lastKey = keyNow();
     rememberSigs();
