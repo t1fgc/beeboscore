@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Something in BeeboScore Lite isn't working
+about: Something in BeeboScore isn't working
 labels: bug
 ---
 
@@ -15,7 +15,7 @@ labels: bug
 2.
 
 **Your set-up**
-- BeeboScore Lite version (Settings › Updates & about):
+- BeeboScore version (Settings › Updates & about):
 - Windows version:
 - OBS version:
 - Game and layout in use:

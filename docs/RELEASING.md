@@ -1,16 +1,16 @@
 # Publishing a release on GitHub
 
-**Settings → Check for updates** in BeeboScore Lite reads this repository's releases, so three things have to be right for people to be offered an update:
+**Settings → Check for updates** in BeeboScore reads this repository's releases, so three things have to be right for people to be offered an update:
 
 1. The repository is **public**.
 2. The release is **published**: not a draft, and not marked as a pre-release.
-3. The exe attached to it is named exactly **`BeeboScore-Lite-<version>.exe`**, for example `BeeboScore-Lite-1.5.1.exe`. The version is read from this file name, not from the tag.
+3. The exe attached to it is named exactly **`BeeboScore-<version>.exe`** (with a copy named `BeeboScore-Lite-<version>.exe`; the workflow adds it), for example `BeeboScore-1.5.1.exe`. The version is read from this file name, not from the tag.
 
 Other files in a release are ignored, so release notes, checksums or other downloads can sit beside the exe.
 
-### Copies of BeeboScore 1.4.0 and earlier
+### Older copies (1.4.0 and BeeboScore Lite 1.5.0)
 
-Those copies only look for **`BeeboScore-<version>.exe`**. The 1.5.0 release carries the same exe under that name too (`BeeboScore-1.5.0.exe`), so they move to Lite. Later releases don't need it: an old copy updates to 1.5.0 first, and from then on Lite updates itself. The workflow adds that second file for 1.5.0 only (`OLD_NAME_FOR` in `.github/workflows/release.yml`).
+Those copies look for **`BeeboScore-<version>.exe`**, the release exe's own name since 1.5.2, so they find every new release by themselves. Copies of 1.5.0 (then called BeeboScore Lite) only look for **`BeeboScore-Lite-<version>.exe`**, so the workflow attaches the same exe under that name too. Keep both files in every release.
 
 ## Each release
 
@@ -20,14 +20,14 @@ Those copies only look for **`BeeboScore-<version>.exe`**. The 1.5.0 release car
 
    ```bash
    git add -A
-   git commit -m "BeeboScore Lite 1.5.1"
+   git commit -m "BeeboScore 1.5.1"
    git tag v1.5.1
    git push origin main --tags
    ```
 
-4. Pushing the tag starts the **Build release draft** workflow (the **Actions** tab). It runs the tests, builds the exe and makes a **draft** release with `BeeboScore-Lite-1.5.1.exe` attached and the release notes filled in. It stops if the tag doesn't match the version in `package.json`.
+4. Pushing the tag starts the **Build release draft** workflow (the **Actions** tab). It runs the tests, builds the exe and makes a **draft** release with `BeeboScore-1.5.1.exe` attached and the release notes filled in. It stops if the tag doesn't match the version in `package.json`.
 
-   You can also build it yourself with `npm run dist` and attach `dist/BeeboScore-Lite-1.5.1.exe` to a release you make on the Releases page.
+   You can also build it yourself with `npm run dist` and attach `dist/BeeboScore-1.5.1.exe` to a release you make on the Releases page.
 5. If you sign your builds: download the exe from the draft, sign it, and upload the signed file in its place under the same name.
 6. Open **Releases**, open the draft, and press **Publish release**. From that moment, Check for updates in older copies finds it.
 
@@ -39,7 +39,7 @@ After **Restart & update** the window closes, the starting screen shows, and the
 
 ### Trying Restart & update without publishing anything
 
-Put a newer exe in the same folder as the one you are running (for example `BeeboScore-Lite-1.5.1.exe` next to `BeeboScore-Lite-1.5.0.exe`), open the older one, and press **Check for updates**. It offers **Restart & update** into the newer exe straight away.
+Put a newer exe in the same folder as the one you are running (for example `BeeboScore-1.5.1.exe` next to `BeeboScore-1.5.0.exe`), open the older one, and press **Check for updates**. It offers **Restart & update** into the newer exe straight away.
 
 If the new version does not come up, look at `BeeboScore Lite Data\update.log`. A good update ends with the old version *closing so* the new one *can take over*, then the new version *started by Restart & update*, *started on port 3300* and *window shown*. If the last line is the old version's, the new exe never got as far as starting.
 

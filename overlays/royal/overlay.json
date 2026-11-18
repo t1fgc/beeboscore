@@ -1,0 +1,13 @@
+{
+  "title": "Royal",
+  "game": "Any game",
+  "description": "A royal court: velvet banners with gold trim and a crown for the winner, banners that unfurl for the VS Splash and a coronation for the Victory Splash.",
+  "colors": [
+    "#3a1466",
+    "#f5c84c",
+    "#fff3c4"
+  ],
+  "version": 1,
+  "family": "Royal",
+  "order": 4
+}

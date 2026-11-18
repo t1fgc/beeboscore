@@ -1,4 +1,4 @@
-# BeeboScore Lite (developed by Beebo): builds the portable exe when a version tag (v1.5.0) is pushed, and attaches it to a
+# BeeboScore (developed by Beebo): builds the portable exe when a version tag (v1.5.0) is pushed, and attaches it to a
 # DRAFT release. Nothing is public until you press "Publish release" — see docs/RELEASING.md.
 name: Build release draft
 
@@ -9,12 +9,6 @@ on:
 
 permissions:
   contents: write
-
-env:
-  # Copies of BeeboScore 1.4.0 and earlier only look for "BeeboScore-<version>.exe". For the move to Lite, the 1.5.0 release
-  # also carries the exe under that name, so their Check for updates finds it. Later releases don't need it: those copies
-  # always pick the highest such file they can see, which stays 1.5.0.
-  OLD_NAME_FOR: '1.5.0'
 
 jobs:
   build:
@@ -44,8 +38,8 @@ jobs:
       - name: Keep the exe with this run
         uses: actions/upload-artifact@v6
         with:
-          name: BeeboScore-Lite-${{ steps.v.outputs.version }}
-          path: dist/BeeboScore-Lite-${{ steps.v.outputs.version }}.exe
+          name: BeeboScore-${{ steps.v.outputs.version }}
+          path: dist/BeeboScore-${{ steps.v.outputs.version }}.exe
           if-no-files-found: error
 
       - name: The tag has to match package.json
@@ -63,8 +57,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           VERSION="${{ steps.v.outputs.version }}"
-          FILES=("dist/BeeboScore-Lite-$VERSION.exe")
-          if [ "$VERSION" = "$OLD_NAME_FOR" ]; then cp "dist/BeeboScore-Lite-$VERSION.exe" "dist/BeeboScore-$VERSION.exe"; FILES+=("dist/BeeboScore-$VERSION.exe"); fi
+          # BeeboScore-<version>.exe is the app. Copies of 1.5.0 and 1.5.1 (then called BeeboScore Lite) only look for
+          # BeeboScore-Lite-<version>.exe, so every release carries the same exe under that name too.
+          cp "dist/BeeboScore-$VERSION.exe" "dist/BeeboScore-Lite-$VERSION.exe"
+          FILES=("dist/BeeboScore-$VERSION.exe" "dist/BeeboScore-Lite-$VERSION.exe")
           NOTES="docs/release-notes/$VERSION.md"
           if [ -f "$NOTES" ]; then FLAGS=(--notes-file "$NOTES"); else FLAGS=(--generate-notes); fi
-          gh release create "$GITHUB_REF_NAME" "${FILES[@]}" --draft --title "BeeboScore Lite $VERSION" "${FLAGS[@]}"
+          gh release create "$GITHUB_REF_NAME" "${FILES[@]}" --draft --title "BeeboScore $VERSION" "${FLAGS[@]}"

@@ -1,6 +1,6 @@
 # Running matches
 
-[← BeeboScore Lite guide](../GUIDE.md)
+[← BeeboScore guide](../GUIDE.md)
 
 ## Running a match
 

@@ -1,5 +1,36 @@
 # Changelog
 
+## 1.5.2
+
+Everything since 1.5.0 (1.5.1 was a test build).
+
+### BeeboScore 1.5.2
+- BeeboScore Lite is called BeeboScore again. Same app, same data folder, same sign-ins.
+- The red VS logo is back: the app icon, the starting screen, the panel, the Stream Deck plugin and the docs.
+- New Layouts tab: drop in a layout someone made (a .zip, a folder or its page) and it goes in the Layout menu and on stream like the app's own.
+- Each of your layouts can be previewed with the scoreboard as it is now, put on stream, shared as a .zip or removed (a copy is kept).
+- Make your own: download the starter layout, a finished scoreboard with every part explained. Every binding and field is listed in the tab.
+- Ember, Porcelain and your Overlay maker layouts from 1.4.0 can come back: drop their folder from BeeboScore Data › overlays on the Layouts tab.
+- Coming from 1.4.0? Your players, pictures, settings and exports came across (the old folder is left as it was). Sign in to start.gg again on the Bracket tab, and install the BeeboScore Stream Deck plugin from Settings › Stream Deck.
+
+### Changed
+- **The name:** BeeboScore Lite is BeeboScore again: the window, the panel, the starting screen, the Stream Deck plugin (and its *BeeboScore* profiles) and the docs. The exe is `BeeboScore-<version>.exe`; every release also carries it as `BeeboScore-Lite-<version>.exe`, so copies of 1.5.0 still find it, and copies of 1.4.0 now update straight to the latest. The data folder keeps its name (`BeeboScore Lite Data`), and the app keeps 1.5.0's place for Windows' own files, so start.gg sign-ins carry on working.
+- **The logo:** the white VS on red from BeeboScore 1.4.0 replaces the Split VS badge everywhere: the exe and window icon, the starting screen, the panel's corner, the browser tab, the phone home-screen icon, the Stream Deck plugin and category icons, the wordmark and every screenshot in the docs.
+
+### New
+- **Layouts tab** (between Stream and Settings, Alt+5). **Import a layout** takes a `.zip`, a folder or loose files, dropped anywhere on the tab or picked with the buttons. **It's for** puts the layout under a game in the Layout menu (or leaves it to the layout's `overlay.json`), and **Put it on stream straight away** makes it live as soon as it's in.
+- **Your layouts:** a card with a live picture for each imported layout, with **Put on stream**, **Preview** (full size, over a game-like background, see-through or green), **Share** (a `.zip` with the layout in its own folder), **Folder** and **Remove**.
+- **Make your own:** **Download the starter layout**, a short example, and every binding, field, class and event in one place. `public/starter-layout` is the starter.
+- Importing tidies up for you: a single top folder in a zip comes off, the only page becomes `index.html`, and anything that isn't part of a web page (programs, shortcuts) is left out and listed. A layout that never reads the scoreboard is pointed out.
+- A name you already use asks **Replace it** or **Keep both**. The app's own layouts can never be replaced or removed.
+- Removing or replacing a layout keeps a copy in `data/removed-layouts`. If the removed layout was live, the app's own layout for the game goes on stream.
+
+### For developers
+- `lib/zip.js` reads and writes `.zip` files (stored and deflated) with limits on files and size; `lib/layout-import.js` gets a dropped layout ready.
+- New routes: `POST /api/layouts/import` (`zip` or `files`, `title`, `game`, `replace`, `goLive`), `POST /api/layouts/remove`, `GET /api/layouts/export?name=`, `GET /api/layouts/starter.zip`, `POST /api/layouts/open`. `POST /api/overlays/upload` now goes through the same import, so it can't write over one of the app's layouts either.
+- `/api/overlays` gives each layout `builtIn`, `author` and `imported`.
+- Tests: `test/layouts/layouts.test.mjs`.
+
 ## 1.5.0
 
 BeeboScore is now **BeeboScore Lite**: the essentials of BeeboScore in a lighter app. Everything since 1.4.0, the last release on GitHub (1.4.1 was a test build).

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>My layout</title>
+<!--
+  BeeboScore starter layout
+  ==============================
+  A layout is a web page the size of your stream (1920 × 1080). Change anything you like, zip the folder,
+  and import it in BeeboScore's Layouts tab (or drop the folder itself there).
+
+  How it gets the scoreboard: BeeboScore adds its overlay client to this page by itself. You never
+  include a script for it. You mark up elements with data-sb attributes and the client fills them in
+  every time you press Update:
+
+    data-sb="p1.name"                 the text of a field
+    data-sb="{p1.team} | {p1.name}"   a template with several fields
+    data-sb-src="img/{p1.characterSlug}.png"   a picture (hidden when the file is missing)
+    data-sb-bg="p1.flagUrl"           a background picture
+    data-sb-show="p1.team"            shown only when the field has something in it ("!p1.loser" turns it round)
+    data-sb-hide="p1.loser"           hidden when the field is true
+    data-sb-class="lead:p1.leading"   adds the class "lead" while the field is true
+    data-sb-pips="p1"                 one <i class="pip"> per game needed to win; won games get the class "on"
+    data-sb-fit="40,22"               shrinks the text (40px down to 22px) until it fits its box
+
+  Fields: p1 / p2 . name, team, pronouns, country, flagUrl, character, characterSlug, score, loser,
+  displayName (the name with [L]), fullName (team | name), leading, winner, matchPoint;
+  round, event, game, bestOf, bestOfText ("Best of 3"), bestOfShort ("BO3"), firstTo, isGrandFinals;
+  c1 / c2 . name, handle; commentators.
+
+  Classes on <html> you can style: sb-ready, sb-p1-winner, sb-p2-winner, sb-p1-matchpoint,
+  sb-p2-matchpoint, sb-final-game, sb-p1-loser, sb-p2-loser, sb-gf.
+  Elements whose value just changed get the class sb-changed for a moment.
+
+  Scripting: window.addEventListener('scoreboard', e => console.log(e.detail)) gives you the whole state
+  on every update; 'scoreboard:scored' (e.detail.side is 1 or 2) and 'scoreboard:set-over'
+  (e.detail.winner) fire at those moments.
+
+  Pictures, fonts and other files: put them in this folder and use relative paths (img/logo.png).
+-->
+<style>
+  /* your colours: change these four and the whole layout follows */
+  :root {
+    --bar: #101820;
+    --text: #ffffff;
+    --p1: #2f7df6;
+    --p2: #e8453c;
+  }
+  /* your own font: put the file in this folder, then
+     @font-face { font-family: Mine; src: url(fonts/mine.woff2); }  and use font-family: Mine below */
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: transparent; }
+  body { font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif; color: var(--text); }
+
+  .board { position: absolute; top: 24px; left: 50%; transform: translateX(-50%); display: flex; align-items: stretch; height: 64px; }
+  .side { display: flex; align-items: center; gap: 12px; width: 520px; padding: 0 18px; background: var(--bar); }
+  .side.p1 { justify-content: flex-end; border-left: 6px solid var(--p1); border-radius: 10px 0 0 10px; }
+  .side.p2 { flex-direction: row-reverse; justify-content: flex-end; border-right: 6px solid var(--p2); border-radius: 0 10px 10px 0; }
+  .flag { width: 36px; height: 24px; background: center / cover no-repeat; border-radius: 3px; flex: none; }
+  .name { font-size: 30px; font-weight: 700; white-space: nowrap; overflow: hidden; max-width: 360px; }
+  .team { font-size: 20px; font-weight: 600; opacity: .65; white-space: nowrap; }
+  .loser { font-size: 18px; font-weight: 800; opacity: .8; }
+  .score { display: grid; place-items: center; width: 72px; font-size: 40px; font-weight: 800; background: var(--p1); }
+  .score.s2 { background: var(--p2); }
+  .score.sb-changed { animation: pop .4s ease-out; }
+  @keyframes pop { 40% { transform: scale(1.18); } }
+
+  .info { position: absolute; top: 96px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; align-items: center;
+          padding: 6px 18px; background: var(--bar); border-radius: 0 0 10px 10px; font-size: 20px; font-weight: 600; white-space: nowrap; }
+  .info .sep { width: 2px; height: 18px; background: currentColor; opacity: .35; }
+
+  .pips { display: flex; gap: 5px; }
+  .pip { width: 10px; height: 10px; border-radius: 50%; background: rgba(255, 255, 255, .22); }
+  .p1 .pip.on { background: var(--p1); }
+  .p2 .pip.on { background: var(--p2); }
+
+  /* match point: the score glows */
+  html.sb-p1-matchpoint .score.s1 { box-shadow: 0 0 22px 4px var(--p1); }
+  html.sb-p2-matchpoint .score.s2 { box-shadow: 0 0 22px 4px var(--p2); }
+</style>
+</head>
+<body>
+  <div class="board">
+    <div class="side p1">
+      <span class="pips" data-sb-pips="p1"></span>
+      <span class="loser" data-sb-show="p1.loser">[L]</span>
+      <span class="team" data-sb="p1.team" data-sb-show="p1.team"></span>
+      <span class="name" data-sb="p1.name" data-sb-fit="30,18"></span>
+      <span class="flag" data-sb-bg="p1.flagUrl" data-sb-show="p1.flagUrl"></span>
+    </div>
+    <div class="score s1" data-sb="p1.score"></div>
+    <div class="score s2" data-sb="p2.score"></div>
+    <div class="side p2">
+      <span class="pips" data-sb-pips="p2"></span>
+      <span class="loser" data-sb-show="p2.loser">[L]</span>
+      <span class="team" data-sb="p2.team" data-sb-show="p2.team"></span>
+      <span class="name" data-sb="p2.name" data-sb-fit="30,18"></span>
+      <span class="flag" data-sb-bg="p2.flagUrl" data-sb-show="p2.flagUrl"></span>
+    </div>
+  </div>
+  <div class="info">
+    <span data-sb="round"></span><span class="sep"></span><span data-sb="bestOfShort"></span><span class="sep"></span><span data-sb="event"></span>
+  </div>
+</body>
+</html>

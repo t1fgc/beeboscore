@@ -4292,8 +4292,8 @@ var require_slots = __commonJS({
     }
     function profileFor2(device) {
       const s = device && device.size || {}, t = device && device.type;
-      if (t === 2 || s.columns >= 8 && s.rows >= 4) return { name: "profiles/BeeboScore Lite XL", cols: 8, rows: 4, label: "Stream Deck XL" };
-      if (t === 0 || s.columns === 5 && s.rows === 3) return { name: "profiles/BeeboScore Lite", cols: 5, rows: 3, label: "Stream Deck" };
+      if (t === 2 || s.columns >= 8 && s.rows >= 4) return { name: "profiles/BeeboScore XL", cols: 8, rows: 4, label: "Stream Deck XL" };
+      if (t === 0 || s.columns === 5 && s.rows === 3) return { name: "profiles/BeeboScore", cols: 5, rows: 3, label: "Stream Deck" };
       return null;
     }
     var DEVICE_NAMES2 = { 0: "Stream Deck", 1: "Stream Deck Mini", 2: "Stream Deck XL", 3: "Stream Deck Mobile", 4: "Corsair G-Keys", 5: "Stream Deck Pedal", 6: "Corsair Voyager", 7: "Stream Deck +", 8: "SCUF controller", 9: "Stream Deck Neo" };
@@ -4348,7 +4348,7 @@ async function http(path, body, address = base) {
       body: body ? JSON.stringify(body) : void 0
     });
     const d = await r.json().catch(() => ({}));
-    if (r.status === 401) throw new Error("BeeboScore Lite asked for a password \u2014 use the address of this PC.");
+    if (r.status === 401) throw new Error("BeeboScore asked for a password \u2014 use the address of this PC.");
     if (!r.ok) throw new Error(d.error || `HTTP ${r.status}`);
     return d;
   } finally {

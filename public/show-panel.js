@@ -1,4 +1,4 @@
-/* BeeboScore Lite (developed by Beebo) — the caster tools in Matches › Player history (stats card, notes).
+/* BeeboScore (developed by Beebo) — the caster tools in Matches › Player history (stats card, notes).
  * (The full BeeboScore also has VOD chapters & highlights, Sponsors, the Second operator's remote and Stations here.) */
 (() => {
   'use strict';

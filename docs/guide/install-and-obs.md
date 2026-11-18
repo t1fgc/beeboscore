@@ -1,25 +1,27 @@
 # Install & OBS
 
-[← BeeboScore Lite guide](../GUIDE.md)
+[← BeeboScore guide](../GUIDE.md)
 
 ## Install
 
-**Windows:** download **`BeeboScore-Lite-<version>.exe`** from the [latest release](https://github.com/t1fgc/beeboscore/releases/latest), put it in a folder of its own and run it. Nothing is installed. It keeps everything it saves in a **BeeboScore Lite Data** folder next to the exe and runs on port **3300**. To move it to another PC, move the exe and that folder together.
+**Windows:** download **`BeeboScore-<version>.exe`** from the [latest release](https://github.com/t1fgc/beeboscore/releases/latest), put it in a folder of its own and run it. Nothing is installed. It keeps everything it saves in a **BeeboScore Lite Data** folder next to the exe (the name it got in 1.5.0, when the app was called BeeboScore Lite) and runs on port **3300**. To move it to another PC, move the exe and that folder together.
 
 Windows may show **"Windows protected your PC"** the first time: click **More info**, then **Run anyway**.
 
-**Starting up:** a portable exe unpacks itself when it opens. BeeboScore Lite keeps the unpacked copy in `%TEMP%` for each version, so only the first start of a new version takes longer.
+**Starting up:** a portable exe unpacks itself when it opens. BeeboScore keeps the unpacked copy in `%TEMP%` for each version, so only the first start of a new version takes longer.
 
 ### Coming from BeeboScore 1.4.0
 
-Press **Settings → Check for updates** in 1.4.0, then **Restart & update**. On its first start BeeboScore Lite:
+Press **Settings → Check for updates** in 1.4.0, then **Restart & update**. That brings in the latest version. On its first start it:
 
 - waits for 1.4.0 to close and let go of port 3300;
 - copies your players, player pictures, VS pictures, settings, the match, viewers and exports from **BeeboScore Data** into **BeeboScore Lite Data**. Backups, retired layouts and Stream Deck profile backups are not copied. The old folder is not changed, and the copy happens only once;
 - opens the first-time setup, so you can pick your game's Classic layout;
 - moves the old exe to the Recycle Bin.
 
-Then **sign in to start.gg again** on the Bracket tab (sign-ins are locked to the app that saved them), and install the **BeeboScore Lite** Stream Deck plugin from **Settings › Stream Deck**. The old *BeeboScore Prototype* plugin can be removed in Stream Deck. The OBS link is the same as before.
+Then **sign in to start.gg again** on the Bracket tab (sign-ins are locked to the app that saved them), and install the **BeeboScore** Stream Deck plugin from **Settings › Stream Deck**. The old *BeeboScore Prototype* plugin can be removed in Stream Deck. The OBS link is the same as before.
+
+Ember, Porcelain and layouts you made in 1.4.0's Overlay maker aren't built in any more. To bring one back, open the **Layouts** tab and drop its folder from `BeeboScore Data\overlays` on it (see [your own layouts](your-own-layouts.md)).
 
 **First launch:** a four-step setup opens — pick a look, add it to OBS (it tells you when OBS is showing it), pick start.gg if you use it. **Skip setup** if you know your way around; *Settings › Updates & about* runs it again.
 
@@ -43,7 +45,7 @@ That URL always shows the layout picked in the **Layout** dropdown at the top of
 
 ### Updates
 
-**Settings › Updates & about › Check for updates.** The app only looks when you press it. If there is a newer **BeeboScore Lite**, it saves the new exe next to the one you're running (or uses one that's already in the folder), and **Restart & update** switches over to it: the window closes, the starting screen shows, and the new version opens by itself in 10 to 20 seconds. Both versions use the same **BeeboScore Lite Data** folder, and the old exe goes to the Recycle Bin. The first time a new version starts, a **What's new** card lists what changed.
+**Settings › Updates & about › Check for updates.** The app only looks when you press it. If there is a newer **BeeboScore**, it saves the new exe next to the one you're running (or uses one that's already in the folder), and **Restart & update** switches over to it: the window closes, the starting screen shows, and the new version opens by itself in 10 to 20 seconds. Both versions use the same **BeeboScore Lite Data** folder, and the old exe goes to the Recycle Bin. The first time a new version starts, a **What's new** card lists what changed.
 
 ### Frame rate
 

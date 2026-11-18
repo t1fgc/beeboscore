@@ -1,6 +1,6 @@
 # Game formats
 
-[← BeeboScore Lite guide](../GUIDE.md)
+[← BeeboScore guide](../GUIDE.md)
 
 ![The Format tab with a Team Death Battle set up](../images/panel-format.jpg)
 

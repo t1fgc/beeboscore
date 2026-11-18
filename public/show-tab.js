@@ -1,4 +1,4 @@
-/* BeeboScore Lite (developed by Beebo) — Settings › Your own theme, Accessibility and Output size (4K).
+/* BeeboScore (developed by Beebo) — Settings › Your own theme, Accessibility and Output size (4K).
  * (The full BeeboScore also makes its Show, Players, Twitch and Layouts cards here; the Lite build has none of those.)
  */
 (() => {

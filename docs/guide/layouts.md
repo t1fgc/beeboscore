@@ -1,8 +1,10 @@
 # Layouts
 
-[← BeeboScore Lite guide](../GUIDE.md)
+[← BeeboScore guide](../GUIDE.md)
 
-BeeboScore Lite comes with the **Classic** layout for each of its four games. Pick one from the **Layout** menu at the top of the app; with **Settings › Scoreboard › Follow the game** on (the default), changing the game switches to that game's layout by itself.
+BeeboScore comes with the **Classic** layout for each of its four games. Pick one from the **Layout** menu at the top of the app; with **Settings › Scoreboard › Follow the game** on (the default), changing the game switches to that game's layout by itself.
+
+Layouts you import (or make) on the **Layouts** tab sit in the same menu, under the game they're for. See [your own layouts](your-own-layouts.md).
 
 | Game | Layout | Where the scoreboard sits |
 |---|---|---|

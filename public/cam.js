@@ -43,7 +43,7 @@
     } catch {}
   }
   const direct = () => [...peers.values()].filter(pc => pc.connectionState === 'connected').length;
-  const liveText = () => `<b>Live</b> — ${direct() ? `on ${direct()} ${direct() === 1 ? 'screen' : 'screens'} (direct)` : R.on ? 'sending through BeeboScore Lite (relay)' : 'waiting for the commentary screen to come on'}.`;
+  const liveText = () => `<b>Live</b> — ${direct() ? `on ${direct()} ${direct() === 1 ? 'screen' : 'screens'} (direct)` : R.on ? 'sending through BeeboScore (relay)' : 'waiting for the commentary screen to come on'}.`;
 
   // ---------------------------------------------------------------- the relay (1.12.9)
   const base = '/cam/' + encodeURIComponent(token);
@@ -70,7 +70,7 @@
       R.chain = R.chain.then(() => fetch(base + '/chunk', { method: 'POST', body: ev.data, headers: { 'x-sess': sess, 'x-mime': mime.split(';')[0] + (mime.includes('codecs') ? ';' + mime.split(';')[1] : ''), 'x-first': first ? '1' : '0' }, cache: 'no-store' })
         .then(r => { if (r.status === 404) { stop(); err('This camera link was taken back by the host.'); return null; } return r.ok ? r.json() : null; })
         .then(j => { R.fails = 0; if (j && j.restart && sess === R.sess) setTimeout(relayStart, 0); })
-        .catch(() => { if (++R.fails > 20 && live) { say('Can’t reach BeeboScore Lite — trying again…'); } })
+        .catch(() => { if (++R.fails > 20 && live) { say('Can’t reach BeeboScore — trying again…'); } })
         .finally(() => { R.backlog--; }));
     };
     rec.start(200);
@@ -82,7 +82,7 @@
     if (!live || R.on) return;
     try { const r = await fetch(base + '/hello', { cache: 'no-store' }); if (!r.ok) throw new Error(r.status === 404 ? 'gone' : 'http ' + r.status); const d = await r.json();
       $('who').textContent = d.name || `Commentator ${d.slot}`; $('tag').textContent = 'LIVE'; $('tag').className = 'tag on'; relayStart();
-    } catch (e) { if (e.message === 'gone') { stop(); err('This camera link was taken back by the host.'); } else { say('Can’t reach BeeboScore Lite — trying again…'); setTimeout(() => viaHttp(why), 3000); } }
+    } catch (e) { if (e.message === 'gone') { stop(); err('This camera link was taken back by the host.'); } else { say('Can’t reach BeeboScore — trying again…'); setTimeout(() => viaHttp(why), 3000); } }
   }
   function connect() {
     hello = false; clearTimeout(helloT);

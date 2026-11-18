@@ -1,6 +1,6 @@
 # Going online
 
-[← BeeboScore Lite guide](../GUIDE.md)
+[← BeeboScore guide](../GUIDE.md)
 
 ![The Stream tab](../images/panel-stream.jpg)
 

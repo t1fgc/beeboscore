@@ -1,0 +1,13 @@
+{
+  "title": "Voltage",
+  "game": "Any game",
+  "description": "Live current: circuit plates with a lightning-bolt edge, arcs and sparks, bolts that meet for the VS Splash and a power-surge Victory Splash.",
+  "colors": [
+    "#0a1030",
+    "#ffe600",
+    "#5b84ff"
+  ],
+  "version": 1,
+  "family": "Voltage",
+  "order": 9
+}
