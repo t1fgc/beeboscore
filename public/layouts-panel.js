@@ -20,21 +20,22 @@
   $('#layGoLive').onchange = e => P.store('layGoLive', e.target.checked ? '1' : '0');
 
   // ------------------------------------------------------------ your layouts
-  const mine = () => (P.overlays() || []).filter(o => !o.builtIn);
+  const mine = () => (P.overlays() || []).filter(o => !o.builtIn && !o.base);      // (1.5.6: not the format versions made from one of yours)
   const when = t => { const d = new Date(t); return isNaN(d) ? '' : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }); };
   let shown = false, lastHtml = '';
   function render() {
     fillGames();
     const list = mine(), act = P.active(), box = $('#layMine'), isLocal = local();
     let html;
-    if (!list.length) html = `<div class="empty lay-empty"><b>No layouts of your own yet</b>${isLocal ? 'Drop one above, or start from the starter layout below.' : 'Layouts are imported on the PC running the app.'}</div>`;
+    if (!list.length) html = `<div class="empty lay-empty"><b>No layouts of your own yet</b>${isLocal ? 'Drop one above, or make one below.' : 'Layouts are imported on the PC running the app.'}</div>`;
     else html = list.map(o => {
-      const live = o.name === act, sub = o.author ? `by ${esc(o.author)}` : o.imported ? `Imported ${esc(when(o.modified))}` : '';
+      const live = o.name === act, sub = o.author ? `by ${esc(o.author)}` : o.maker ? `Made ${esc(when(o.modified))}` : o.imported ? `Imported ${esc(when(o.modified))}` : '';
       return `<div class="lcard lay-card${live ? ' active' : ''}" data-name="${esc(o.name)}">
         <div class="lay-thumb" data-name="${esc(o.name)}">${o.thumb ? `<img src="${esc(o.thumb)}" alt="">` : ''}<span class="g">${esc(o.game)}</span>${live ? '<span class="live">LIVE</span>' : ''}</div>
         <div class="lbody"><b>${esc(o.title)}</b>${sub ? `<small class="lay-sub">${sub}</small>` : ''}${o.description ? `<p>${esc(o.description)}</p>` : '<p></p>'}
           <div class="lacts">
             ${live ? '<button class="btn sm" disabled>On stream</button>' : '<button class="btn sm primary" data-act="live">Put on stream</button>'}
+            ${isLocal && o.designer ? '<button class="btn sm" data-act="edit" title="Open it in the layout maker">Edit</button>' : ''}
             <button class="btn sm ghost" data-act="preview">Preview</button>
             ${isLocal ? `<a class="btn sm ghost" data-act="share" href="/api/layouts/export?name=${encodeURIComponent(o.name)}" download title="Save it as a .zip to send to someone">Share</a>
             <button class="btn sm ghost" data-act="folder" title="Open its folder to change the files">Folder</button>
@@ -66,6 +67,7 @@
     e.preventDefault();
     if (act === 'live') { try { await api('/api/overlays/active', { method: 'POST', body: { name } }); toast(`Now live in OBS: ${o.title}`); } catch (err) { toast(err.message, true); } return; }
     if (act === 'preview') return preview(o);
+    if (act === 'edit') return openMaker(`edit=${encodeURIComponent(name)}`);
     if (act === 'folder') { try { await api('/api/layouts/open', { method: 'POST', body: { name } }); } catch (err) { toast(err.message, true); } return; }
     if (act === 'remove') {
       const live = name === P.active();
@@ -73,6 +75,25 @@
       try { await api('/api/layouts/remove', { method: 'POST', body: { name } }); toast(`Removed “${o.title}”`); } catch (err) { toast(err.message, true); }
     }
   });
+  // ------------------------------------------------------------ 1.5.6: make your own in the layout maker (drag and drop)
+  // the desktop app opens it in its own window beside the app (desktop/main.js); in a browser it's a new tab
+  function openMaker(q) { window.open(`/designer?${q}`, '_blank'); }
+  function fillMakeGames() {
+    const sel = $('#layMakeGame'); if (!sel) return;
+    const games = [...new Set((P.overlays() || []).filter(o => o.builtIn && !o.base).map(o => o.game))];
+    const html = games.map(g => `<option value="${esc(g)}">${esc(g)}</option>`).join('');
+    if (sel.dataset.h !== html) { const v = sel.value || P.store('layMakeGame') || ((P.info() || {}).game) || ''; sel.innerHTML = html; sel.dataset.h = html; sel.value = games.includes(v) ? v : games[0] || ''; }
+  }
+  $('#layMakeGame') && ($('#layMakeGame').onchange = e => P.store('layMakeGame', e.target.value));
+  $('#layMakeStarts') && $('#layMakeStarts').addEventListener('click', e => {
+    const b = e.target.closest('[data-make]'); if (!b) return;
+    const game = $('#layMakeGame').value, fam = b.dataset.make === 'Empty' ? 'Classic' : b.dataset.make;
+    const o = (P.overlays() || []).find(x => x.builtIn && !x.base && x.game === game && x.family === fam);
+    if (!o) return toast('That look isn’t there for this game.', true);
+    openMaker(`from=${encodeURIComponent(o.name)}${b.dataset.make === 'Empty' ? '&empty=1' : ''}`);
+  });
+  window.addEventListener('beebo:overlays', fillMakeGames);
+  window.addEventListener('beebo:tab', e => { if (e.detail && e.detail.name === 'layouts') fillMakeGames(); });
   $('#layOpenFolder').onclick = () => api('/api/layouts/open', { method: 'POST', body: {} }).catch(err => toast(err.message, true));
 
   // ------------------------------------------------------------ preview: the layout at full size, shrunk to fit, with the scoreboard as it is now

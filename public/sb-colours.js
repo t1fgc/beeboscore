@@ -140,7 +140,8 @@
     const walk = (o, path) => {
       if (typeof o === 'string') return fix(o, path);
       if (Array.isArray(o)) return o.map((v, i) => walk(v, path.concat(String(i))));
-      if (o && typeof o === 'object') { const out = {}; for (const [k, v] of Object.entries(o)) out[k] = walk(v, path.concat(k)); return out; }
+      // 1.5.6: a piece you gave its own colours in the layout maker keeps them (ownColours: true)
+      if (o && typeof o === 'object') { if (o.ownColours === true) return o; const out = {}; for (const [k, v] of Object.entries(o)) out[k] = walk(v, path.concat(k)); return out; }
       return o;
     };
     return walk(design, []);
@@ -153,7 +154,16 @@
     return out;
   }
 
-  const api = { ROLES, LABELS, BASE, KNOWN, make, recolourDesign, clean, hex2rgb, rgb2hex, shift };
+  // the ready-made sets (the Layouts tab's Colours card and the layout maker)
+  const PRESETS = [
+    ['Crimson', { plates: '#2a0d12', backdrop: '#0c0406', edges: '#6b1a24', text: '#fff1f1', subtext: '#c99aa0', accent: '#ff4d5e', p1: '#ff2d47', p2: '#ffd1d6', effects: '#ff6a3d' }],
+    ['Ocean', { plates: '#0c2333', backdrop: '#03101a', edges: '#1f5a7a', text: '#eaf8ff', subtext: '#8fb6c9', accent: '#3fd0ff', p1: '#36e0c8', p2: '#3f8cff', effects: '#5fe3ff' }],
+    ['Emerald', { plates: '#0e2419', backdrop: '#030d08', edges: '#1f6b45', text: '#effff5', subtext: '#8fbfa4', accent: '#38e58a', p1: '#2fd17a', p2: '#e6f56a', effects: '#7dffb1' }],
+    ['Violet', { plates: '#1d1233', backdrop: '#08040f', edges: '#4d2f86', text: '#f5efff', subtext: '#a899c9', accent: '#b682ff', p1: '#ff5ccf', p2: '#7c6bff', effects: '#c77dff' }],
+    ['Sakura', { plates: '#fff0f4', backdrop: '#ffe3ea', edges: '#e7a7b8', text: '#3a1a24', subtext: '#9b6b79', accent: '#ff6f9a', p1: '#ff4f86', p2: '#7a8cff', effects: '#ffb3c8' }],
+    ['Mono', { plates: '#1a1a1a', backdrop: '#050505', edges: '#4a4a4a', text: '#ffffff', subtext: '#9a9a9a', accent: '#e6e6e6', p1: '#ffffff', p2: '#bdbdbd', effects: '#ffffff' }],
+  ];
+  const api = { ROLES, LABELS, BASE, KNOWN, PRESETS, make, recolourDesign, clean, hex2rgb, rgb2hex, shift };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else {
     root.SBColoursLib = api;

@@ -297,15 +297,11 @@ function createWindow() {
   win.on('close', async e => {
     if (closeOk) return;
     saveBounds();
-    // unsaved work in the Layout Designer: ask first (its draft is kept either way)
-    if (designerWin && !designerWin.isDestroyed()) {
+    // 1.5.7: unsaved work in the layout maker: ask first (Save / Don't save / Keep editing). Not while an update closes the app.
+    if (designerWin && !designerWin.isDestroyed() && !designerWin.__ok && !app.isQuitting) {
       e.preventDefault();
-      const unsaved = await designerWin.webContents.executeJavaScript('typeof window.__sdUnsaved === "function" && window.__sdUnsaved()').catch(() => false);
-      if (unsaved) {
-        const r = await dialog.showMessageBox(designerWin, { type: 'question', buttons: ['Keep editing', 'Close anyway'], defaultId: 0, cancelId: 0, noLink: true,
-          title: 'BeeboScore', message: 'The Layout Designer has changes you haven\'t saved.', detail: 'Close anyway keeps them as a draft — the Designer offers to continue it next time.' });
-        if (r.response === 0) { designerWin.show(); designerWin.focus(); return; }
-      }
+      if (!(await makerLeave())) return;                       // Keep editing (or the save didn't go through): the maker is in front
+      if (designerWin && !designerWin.isDestroyed()) designerWin.__ok = true;
       closeOk = true; hideAll(); if (win) win.close(); return;
     }
     closeOk = true; hideAll();
@@ -323,7 +319,8 @@ function createWindow() {
   });
   win.webContents.on('will-navigate', (e, url) => { if (!isApp(url)) { e.preventDefault(); shell.openExternal(url); } });
   win.on('move', followDesigner); win.on('resize', followDesigner);
-  win.on('closed', () => { win = null; if (mini) mini.close(); if (previewWin) previewWin.close(); if (designerWin) designerWin.close(); if (picker) { app.isQuitting = true; picker.destroy(); } });
+  // 1.5.7: the maker goes with it (you've been asked by now). close() could be turned down and leave the app running unseen.
+  win.on('closed', () => { win = null; if (mini) mini.close(); if (previewWin) previewWin.close(); if (designerWin && !designerWin.isDestroyed()) designerWin.destroy(); if (picker) { app.isQuitting = true; picker.destroy(); } });
 }
 
 // Closing: every window disappears in the same moment, instead of one by one leaving blank holes behind
@@ -361,8 +358,36 @@ function placeDesigner() {
   designerWin.setBounds({ x: Math.round(x), y: win.isMaximized() ? db.y : mb.y, width: db.width, height: h });
 }
 function followDesigner() { if (designerWin && designerDocked) placeDesigner(); }
+// 1.5.7: the layout maker's unsaved changes. A page's own "Leave site?" never shows in this app (it only stopped the window
+// closing, without a word), so the app asks: Save / Don't save / Keep editing. Resolves true when it's fine to go on
+// (nothing unsaved, saved, or Don't save); false to keep the maker open. One question at a time.
+let makerAsking = null;
+function makerLeave() {
+  const w = designerWin;
+  if (!w || w.isDestroyed() || w.__ok) return Promise.resolve(true);
+  if (makerAsking) return makerAsking;
+  const js = s => w.webContents.executeJavaScript(s).catch(() => null);
+  makerAsking = (async () => {
+    if (!(await js('typeof window.__mkUnsaved === "function" && window.__mkUnsaved()'))) return true;
+    const title = (await js('typeof window.__mkTitle === "function" && window.__mkTitle()')) || 'your layout';
+    if (w.isDestroyed()) return true;
+    w.show(); w.focus();
+    const r = await dialog.showMessageBox(w, { type: 'question', buttons: ['Save', 'Don’t save', 'Keep editing'], defaultId: 0, cancelId: 2, noLink: true,
+      title: 'BeeboScore', message: `Save your changes to “${title}”?`, detail: 'The layout maker has changes you haven’t saved yet.' });
+    if (r.response === 1) return true;
+    if (r.response !== 0 || w.isDestroyed()) return false;
+    return !!(await js('typeof window.__mkSave === "function" ? window.__mkSave() : false'));   // waits for any question the save asks (a name that's taken)
+  })().finally(() => { makerAsking = null; });
+  return makerAsking;
+}
+const makerPath = u => String(u || '').replace(/^https?:\/\/[^/]+/, '');
 function openDesigner(url) {
-  if (designerWin) { designerWin.loadURL(url); designerWin.show(); designerWin.focus(); return; }
+  if (designerWin) {
+    designerWin.show(); designerWin.focus();
+    // 1.5.7: another layout (Edit, or Make your own): ask about unsaved changes first (it used to swap without a word). The same one: just in front.
+    if (makerPath(designerWin.webContents.getURL()) !== makerPath(url)) makerLeave().then(ok => { if (ok && designerWin && !designerWin.isDestroyed()) designerWin.loadURL(url); });
+    return;
+  }
   // A maximised app leaves no room beside it: use a second screen when there is one (the Designer opens there, undocked),
   // else un-maximise the app and give it the space the Designer doesn't need, so the two sit side by side
   let other = null;
@@ -379,7 +404,7 @@ function openDesigner(url) {
   designerWin = new BrowserWindow({
     show: false, ...(other ? { x: wa.x + 20, y: wa.y + 20 } : {}),
     width: other ? Math.min(1600, wa.width - 40) : Math.min(1440, Math.max(1100, wa.width - win.getBounds().width)), height: other ? Math.min(1000, wa.height - 40) : Math.min(wa.height, Math.max(760, win.getBounds().height)),
-    minWidth: 1100, minHeight: 680, autoHideMenuBar: true, backgroundColor: '#0c0e15', icon: ICON, title: 'BeeboScore — Layout Designer',
+    minWidth: 1100, minHeight: 680, autoHideMenuBar: true, backgroundColor: '#0c0e15', icon: ICON, title: 'BeeboScore — Layout maker',
     webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true, autoplayPolicy: 'no-user-gesture-required' },
   });
   designerWin.setMenu(null);
@@ -402,7 +427,15 @@ function openDesigner(url) {
   };
   designerWin.on('moved', snapCheck);
   designerWin.on('resized', () => { if (designerDocked) placeDesigner(); });
-  designerWin.on('closed', () => { designerWin = null; if (mini && !mini.isDestroyed()) mini.setAlwaysOnTop(true); });
+  // 1.5.7: closing the maker: the app asks about unsaved changes (makerLeave); the page's own question is set aside, as it can't show here
+  const dw = designerWin;
+  dw.webContents.on('will-prevent-unload', e => e.preventDefault());
+  dw.on('close', e => {
+    if (dw.__ok || app.isQuitting) return;
+    e.preventDefault();
+    makerLeave().then(ok => { if (ok && !dw.isDestroyed()) { dw.__ok = true; dw.close(); } });
+  });
+  designerWin.on('closed', () => { if (designerWin === dw) designerWin = null; if (mini && !mini.isDestroyed()) mini.setAlwaysOnTop(true); });
 }
 
 // Small always-on-top score controller — handy while playing or commentating.
@@ -608,4 +641,12 @@ function buildMenu() {
 
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
 app.on('activate', () => { if (!win && srv) createWindow(); });
-app.on('before-quit', () => { app.isQuitting = true; saveBounds(); if (srv) srv.close(); STATIONS.closeAll(); });
+app.on('before-quit', e => {
+  // 1.5.7: File › Exit with unsaved work in the layout maker: ask first. An update closing the app has set isQuitting already: no question then.
+  if (!app.isQuitting && designerWin && !designerWin.isDestroyed() && !designerWin.__ok) {
+    e.preventDefault();
+    makerLeave().then(ok => { if (!ok) return; if (designerWin && !designerWin.isDestroyed()) designerWin.__ok = true; app.quit(); });
+    return;
+  }
+  app.isQuitting = true; saveBounds(); if (srv) srv.close(); STATIONS.closeAll();
+});

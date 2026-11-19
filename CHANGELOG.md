@@ -1,5 +1,65 @@
 # Changelog
 
+## 1.5.7
+
+### BeeboScore 1.5.7
+- The layout maker closes when you click X. If you've made changes, it asks whether to save them first.
+- Closing BeeboScore with the layout maker open no longer leaves the app running out of sight, where it couldn't be opened again until you ended it in Task Manager.
+- Opening another layout from the Layouts tab asks before it replaces changes you haven't saved.
+
+### Fixed
+- **The layout maker wouldn't close.** Clicking X did nothing, without a message: always for a layout started from **Make your own**, and for one of yours once you'd changed something. Now it closes at once when there's nothing to save, and otherwise asks **Save**, **Don't save** or **Keep editing**.
+- **BeeboScore kept running after you closed it** while the layout maker was open. The windows went, but the app (and its overlay in OBS) didn't, and starting BeeboScore again did nothing. Closing the app, or **File › Exit**, now asks about unsaved changes in the layout maker first, then closes everything. An update closing the app doesn't stop to ask.
+- **Edit**, or a **Make your own** button, while the layout maker had unsaved changes replaced them without a word. It asks first now. The layout that's already open just comes to the front.
+- The arrow keys on a slider in the side panel (Opacity, Size, Corners…) moved the piece instead of the slider.
+- **Escape** didn't close the layout maker's questions. It's **Cancel** now, and while a question is up, keys don't reach the pieces behind it.
+- **Ctrl+S** before you'd picked where to start caused a script error.
+- If saving over another layout after **Replace it** failed, the next **Save** went over that layout without asking.
+- A layout could be saved under the name of one of the app's own layouts and take its place. You're asked to save it as a new layout instead.
+
+### Changed
+- When the name you gave is taken, the question shows that name ("You already have a layout called …").
+- The start screen of the layout maker has a **Close the layout maker** button (and **Escape** does the same).
+- In a narrow layout maker window, **Behind** stays beside its buttons.
+
+### For developers
+- `desktop/main.js`: `makerLeave()` asks about the maker's unsaved changes (closing the maker, the app, **File › Exit**, or opening another layout in it). The page's own `beforeunload` is ignored in the app (`will-prevent-unload`), and the maker goes with the main window (`destroy()`, so nothing can keep the app alive). Not asked while `app.isQuitting` (an update).
+- `public/maker.js`: `window.__mkUnsaved()`, `__mkTitle()` and `__mkSave()` for the app; `save()` resolves `true` once saved (after any question it asks); `ask()` returns a Promise. A new layout you haven't touched counts as saved. `beforeunload` only in a web browser.
+- `POST /api/designs` turns away the name of one of the app's own layouts (409, `builtin: true`) unless the layout there was made in the maker (a copy run from source keeps yours beside the app's own).
+- Removed `public/designer.css` and `public/designer-thumbs/`, left over from the old Layout Designer.
+- Tests: `test/layouts/maker.test.mjs` covers the name check.
+
+## 1.5.6
+
+### BeeboScore 1.5.6
+- Make your own layout by dragging pieces onto the screen: the new layout maker, on the Layouts tab under **Make your own**.
+- Start from Classic, Obsidian Glass or an empty screen. Add player bars, the round, the commentators, text, boxes and pictures, then move and resize them with snapping.
+- Change colours and lettering from a side panel that only shows what that piece has. The whole layout's colours work like the Colours card, with the same ready-made sets.
+- The VS, Victory and Top 8 screens come with it. Save it and it's in the Layout menu, with a version for each game format.
+
+### New
+- **Layout maker** (`/designer`; in the desktop app, its own window beside the app). Opened from **Layouts › Make your own** (**Start from Classic**, **Start from Obsidian Glass** or **Start empty**, for the game you pick) or from the new **Edit** button on a layout you made.
+  - **Pieces:** Player 1, Player 2, Round and event, Commentators, Text, Box and Picture, dragged from the left or clicked. A clicked player bar, round or commentators piece goes where the look has it when that spot is free. Picture files can be dropped straight onto the screen.
+  - **Moving and sizing:** drag to move, white handles to resize (**Shift** keeps the shape), snapping to the screen's middle and edges and to the other pieces with guide lines (**Alt** turns it off), arrow keys to nudge, **Delete**, **Ctrl+D** to copy, **Ctrl+Z** / **Ctrl+Y**, **Ctrl+S** to save.
+  - **Pieces stay together:** the parts of a piece (a player's bar, colour line and set pips; a card and everything on it) move and resize as one. Double-click to change one part.
+  - **Side panel:** place and size, colours (a gradient keeps its shades), font, size, capitals, slanted and line-up, text with buttons for the live parts (1P name, Round, Event…), the picture and how it fits, the player a bar shows, which parts of a bar show, pip shape, corners, opacity, **Mirror to the other side**, **Bring to front**, **Send to back**, **Duplicate** and **Delete**.
+  - **Whole-layout colours:** the nine parts and six ready-made sets from the Colours card, kept with the layout. A piece given its own colours keeps them.
+  - **Screens:** Scoreboard, VS, Victory, Top 8, Bracket and Standings, on tabs. Obsidian Glass plays its own full-screen VS, so it has no VS tab.
+  - **Behind the layout:** a checkerboard, a dark backdrop, or a screenshot of your game, to keep clear of its health bars. The screenshot isn't saved with the layout.
+  - **On this screen:** every piece by name; the eye hides one on stream and keeps it in the layout.
+- **Layouts › Make your own** now opens the layout maker. Writing a layout in HTML (`data-sb` bindings, the starter layout, every field) is still there, under **Build one by hand instead**.
+
+### Changed
+- **Your layouts** lists only the layouts themselves, not the version made from each for every game format. A layout you made says *Made* and the date.
+- **Remove** on a layout you made also takes the versions made from it for the game formats.
+
+### For developers
+- `public/designer.html`, `public/maker.js`, `public/maker.css`: the maker, drawing with `SBDesign.mount(…, { edit: true })`.
+- `GET /api/designs/get?name=` opens a layout in the maker: its design and its colours (for the app's own layouts, the colours you gave that look).
+- `POST /api/designs` takes `palette: { look, colours }` and keeps it in the layout's `overlay.json` with `maker: true`. The colours are applied as the layout is served, the same way as the app's own layouts (and its format versions take the colours of the layout they're made from).
+- `sb-colours.js`: `recolourDesign` leaves alone anything marked `ownColours: true`; the ready-made sets are `PRESETS`.
+- Tests: `test/layouts/maker.test.mjs`.
+
 ## 1.5.5
 
 ### BeeboScore 1.5.5

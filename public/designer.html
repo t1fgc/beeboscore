@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Layout maker | BeeboScore</title>
+<link rel="icon" href="/favicon.ico">
+<link rel="stylesheet" href="/static/maker.css">
+</head>
+<body>
+<!-- BeeboScore (developed by Beebo): the layout maker (1.5.6). public/maker.js does the work; the layouts it draws are the
+     same ones OBS shows (sb-design.js), in the colours you give them (sb-colours.js). -->
+<header class="mk-top">
+  <div class="mk-brand"><img src="/static/brand/logo.svg" alt=""><b>Layout maker</b></div>
+  <label>Name <input class="f" id="mkName" maxlength="60" autocomplete="off" spellcheck="false"></label>
+  <label>Game <select class="f" id="mkGame"></select></label>
+  <span class="seg" aria-label="Undo and redo"><button id="mkUndo" title="Undo (Ctrl+Z)">Undo</button><button id="mkRedo" title="Redo (Ctrl+Y)">Redo</button></span>
+  <span class="spacer"></span>
+  <span class="mk-state" id="mkState" aria-live="polite"></span>
+  <button class="btn" id="mkLive" hidden>Put on stream</button>
+  <button class="btn primary" id="mkSave" title="Save (Ctrl+S)">Save</button>
+</header>
+<main class="mk">
+  <aside class="mk-left">
+    <h3>Add a piece</h3>
+    <p class="hint">Drag one onto the screen, or click it.</p>
+    <div class="mk-pieces" id="mkPieces"></div>
+    <h3>On this screen</h3>
+    <ol class="mk-layers" id="mkLayers"></ol>
+  </aside>
+  <section class="mk-centre">
+    <div class="mk-bar">
+      <span class="seg" id="mkScreens" aria-label="Which screen"></span>
+      <span class="mk-behind">
+        <span class="l">Behind</span>
+        <span class="seg" id="mkBehind" aria-label="What's behind the layout"><button data-bg="checker">Checker</button><button data-bg="dark">Dark</button><button data-bg="picture">Game picture</button></span>
+        <button class="btn sm ghost" id="mkBgPick" title="A screenshot of your game, to line the layout up with its health bars">Choose a game picture…</button>
+      </span>
+      <input type="file" id="mkBgIn" accept="image/*" hidden>
+    </div>
+    <div class="mk-wrap" id="mkWrap">
+      <div class="mk-frame" id="mkFrame">
+        <div class="mk-stage" id="mkStage">
+          <div class="mk-bg checker" id="mkBg"></div>
+          <div class="mk-host" id="mkHost"></div>
+          <div class="mk-ui" id="mkUi"></div>
+        </div>
+      </div>
+    </div>
+    <p class="mk-tips">Drag to move it. Drag a white handle to resize (<kbd>Shift</kbd> keeps the shape). Double-click a piece to change just one part of it. <kbd>Alt</kbd> while dragging turns snapping off. Arrow keys nudge; <kbd>Delete</kbd> removes.</p>
+  </section>
+  <aside class="mk-right mk-props" id="mkProps"></aside>
+</main>
+<input type="file" id="mkPicIn" accept="image/*" hidden>
+<div class="mk-toast" id="mkToast" role="status"></div>
+<script src="/sb-colours.js"></script>
+<script src="/sb-design.js"></script>
+<script src="/static/maker.js"></script>
+</body>
+</html>

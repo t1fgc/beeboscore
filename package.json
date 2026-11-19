@@ -1,7 +1,7 @@
 {
   "name": "beeboscore-lite",
   "productName": "BeeboScore",
-  "version": "1.5.5",
+  "version": "1.5.7",
   "description": "BeeboScore: the scoreboard, game formats, start.gg and OBS overlays for fighting game streams — the essentials only.",
   "author": {
     "name": "Beebo"
@@ -85,7 +85,7 @@
     },
     "portable": {
       "artifactName": "BeeboScore-${version}.${ext}",
-      "unpackDirName": "BeeboScore-1.5.5",
+      "unpackDirName": "BeeboScore-1.5.7",
       "useZip": true,
       "splashImage": "desktop/splash.bmp"
     },

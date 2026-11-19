@@ -39,18 +39,6 @@ Only click **Run anyway** on a copy you downloaded from this repository's [Relea
 
 The app keeps everything it saves in a **`BeeboScore Lite Data`** folder next to the exe (the name it got in 1.5.0, when the app was called BeeboScore Lite). To move it to another PC, move the exe and that folder together.
 
-### Coming from BeeboScore 1.4.0?
-
-Open **Settings → Check for updates** in 1.4.0 and it fetches the latest version for you. After **Restart & update**:
-
-- BeeboScore copies your players, pictures, settings and exports from `BeeboScore Data` into its own `BeeboScore Lite Data` folder. The old folder is left as it was.
-- The first-time setup opens once, so you can pick your game's layout.
-- **Sign in to start.gg again** (Bracket tab). Sign-ins are locked to the app that made them, so the new version can't read 1.4.0's.
-- The OBS link stays the same (`http://localhost:3300/overlay`), so nothing changes in OBS.
-- The old exe goes to the Recycle Bin.
-- Ember, Porcelain and layouts you made in the Overlay maker aren't built in any more (each game has its own **Classic** layout), but you can bring them back: drop their folder from `BeeboScore Data\overlays` into the **Layouts** tab.
-- There's a new Stream Deck plugin, **BeeboScore**. Install it from **Settings → Stream Deck**, then remove the old *BeeboScore Prototype* plugin in Stream Deck.
-
 ---
 
 ## What's in it
@@ -95,11 +83,11 @@ Give Classic or Obsidian Glass up to nine colours of your own on the **Layouts**
 
 ### Your own layouts
 
-![The Layouts tab: the Colours card, importing a layout and two imported layouts](docs/images/panel-layouts.jpg)
+![The layout maker: pieces to drag on the left, the layout in the middle, the piece's colours and lettering on the right](docs/images/layout-maker.jpg)
 
-Got a layout from a creator, or made one yourself? Drop its `.zip`, its folder or its page on the **Layouts** tab. It goes in the **Layout** menu with the app's own and shows in OBS the same way. Each one can be previewed with the scoreboard as it is now, put on stream, shared as a `.zip`, or removed (a copy is kept).
+Make your own layout by dragging pieces onto the screen in the **layout maker** (Layouts tab › **Make your own**). Start from Classic, Obsidian Glass or an empty screen, then add player bars, the round, the commentators, text, boxes and pictures. Move them with snapping, resize them, and change their colours and lettering from a simple side panel. The VS, Victory and Top 8 screens come with it, and the whole layout's colours work the same way as the Colours card. **Save** puts it in the **Layout** menu, with a version for each game format.
 
-Making one takes a web page and a few `data-sb` attributes: `<span data-sb="p1.name"></span>` shows player 1's name, and BeeboScore fills it in every time you press **Update**. **Download the starter layout** in the tab for a finished scoreboard with every part explained, and see [your own layouts](docs/guide/your-own-layouts.md) in the guide.
+Got a layout from a creator? Drop its `.zip`, its folder or its page on the **Layouts** tab. It goes in the **Layout** menu with the app's own and shows in OBS the same way. Each one can be previewed with the scoreboard as it is, shared as a `.zip` or removed. Creators who write HTML can still build one by hand with `data-sb` attributes and the starter layout. See [your own layouts](docs/guide/your-own-layouts.md) in the guide.
 
 ### Game formats
 
