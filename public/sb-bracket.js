@@ -317,7 +317,7 @@ html.sb-potato #sb-bracket .br-embers,html.sb-potato #sb-bracket .br-spark{displ
 #sb-bracket .gd-tbl tr.cut td.r{color:#2fd17a}#sb-bracket .gd-tbl.small td{font-size:21px}#sb-bracket .gd-tbl.small td.n{font-size:18px}
 #sb-bracket .gd.turn{animation:gd-turn .5s cubic-bezier(.2,.8,.3,1)}@keyframes gd-turn{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:none}}
 `;
-  const style = document.createElement('style'); style.textContent = css + gridCss; document.head.appendChild(style);
+  const style = document.createElement('style'); style.textContent = (window.SBColours && window.SBColours.on ? window.SBColours.map(css + gridCss) : css + gridCss);          // 1.5.5: your colours document.head.appendChild(style);
   const root = document.createElement('div'); root.id = 'sb-bracket';
   const mount = () => document.body.appendChild(root);
   document.body ? mount() : document.addEventListener('DOMContentLoaded', mount, { once: true });

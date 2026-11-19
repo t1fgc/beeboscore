@@ -87,9 +87,15 @@ Two looks for each game, **Classic** and **Obsidian Glass**, each kept clear of 
 
 ![Obsidian Glass splashes: VS, Victory, Top 8 and Team VS](docs/images/obsidian-splashes.jpg)
 
+#### Your own colours
+
+![Classic and Obsidian Glass in your own colours](docs/images/layout-colours.jpg)
+
+Give Classic or Obsidian Glass up to nine colours of your own on the **Layouts** tab: the bars, splash background, edges, lettering, small lettering, accent, Player 1, Player 2 and effects. The scoreboard, every splash and the effects follow, while the shapes and moves stay the same. Start from a ready-made set (Crimson, Ocean, Emerald, Violet, Sakura or Mono) or pick each one, and go back to the layout's own colours whenever you like. See [your own colours](docs/guide/layouts.md#your-own-colours) in the guide.
+
 ### Your own layouts
 
-![The Layouts tab with two imported layouts](docs/images/panel-layouts.jpg)
+![The Layouts tab: the Colours card, importing a layout and two imported layouts](docs/images/panel-layouts.jpg)
 
 Got a layout from a creator, or made one yourself? Drop its `.zip`, its folder or its page on the **Layouts** tab. It goes in the **Layout** menu with the app's own and shows in OBS the same way. Each one can be previewed with the scoreboard as it is now, put on stream, shared as a `.zip`, or removed (a copy is kept).
 

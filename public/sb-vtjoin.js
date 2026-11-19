@@ -62,7 +62,7 @@
     if (root) return;
     // dressed in the live layout's look (Ember, Oni, Frostbite…): public/sb-skin.js
     const K = window.SBSkin; skin = K ? K.id(document) : '';
-    const st = document.createElement('style'); st.textContent = css + (K ? K.faces(skin) + K.css(skin, '#sb-vtjoin.sk-' + skin, 'join') : ''); document.head.appendChild(st);
+    const st = document.createElement('style'); { const c0 = css + (K ? K.faces(skin) + K.css(skin, '#sb-vtjoin.sk-' + skin, 'join') : ''); st.textContent = (window.SBColours && window.SBColours.on ? window.SBColours.map(c0) : c0); } document.head.appendChild(st);
     root = document.createElement('div'); root.id = 'sb-vtjoin'; root.setAttribute('aria-hidden', 'true');
     root.style.cssText = K ? K.vars(skin) : '';
     root.innerHTML = '<div class="vj-bg"></div><div class="vj-grid"></div><div class="vj-left"></div><div class="vj-right"></div>';

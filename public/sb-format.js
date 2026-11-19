@@ -41,7 +41,9 @@
   TONES.plain = [['#ff5a1f', '#e9c35e'], ['rgba(255,90,31,', 'rgba(233,195,94,'], ['rgba(255,140,60,', 'rgba(233,195,94,'], ['rgba(255,140,80,', 'rgba(233,195,94,'], ['#ffb36b', '#f3d98c'], ['#ffd0a0', '#fff3cc'],
     ['#a3180a', '#8a6a12'], ['#ff6a2a', '#e9c35e'], ['#ff3b14', '#e9c35e'], ['#17181d', '#1c2030'], ['#0b0c0f', '#151822'], ['#050507', '#10121a'], ['#8d919d', '#8b93a7']];
   const TONE = OBS ? TONES.obs : PORC ? TONES.porc : PLAIN ? TONES.plain : null;
-  const tone = v => { if (!TONE || typeof v !== 'string') return v; let o = v; for (const [a, b] of TONE) o = o.split(a).join(b).split(a.toUpperCase()).join(b); return o; };
+  // 1.5.5: …then your colours for the app's own layouts (public/sb-colours.js), so the format bar and splashes follow them
+  const UCOL = v => (window.SBColours && window.SBColours.on && typeof v === 'string') ? window.SBColours.map(v) : v;
+  const tone = v => { if (!TONE || typeof v !== 'string') return UCOL(v); let o = v; for (const [a, b] of TONE) o = o.split(a).join(b).split(a.toUpperCase()).join(b); return UCOL(o); };
   const ONI = THEME === 'oni' || PORC || !!(ELF && ELF.light);      // light paper (Oni, Sakura, Pastel, Porcelain): dark lettering, darker team colours
   // team colours as text: on Oni's light paper a light team colour (sky blue) can't be read, so text gets a darker shade
   const darkFor = c => { const m = /^#?([0-9a-f]{6})$/i.exec(String(c || '')); if (!m) return c; const n = parseInt(m[1], 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255;
@@ -65,6 +67,7 @@
     : { acc: '#ff5a1f', hot: '#ffb36b', gold: '#f6c453', goldHi: '#fff4cf', blood: '#c3132d', spark: '#ffb36b', spark2: '#ff5a1f', ink: '#ffffff', two: '#7fd0ff' }),
     ...(PORC ? { acc: '#b8901f', hot: '#e9cf7a', gold: '#c8a032', goldHi: '#fff4cc', blood: '#c3132d', spark: '#e4c766', spark2: '#b8901f', ink: '#0b0b0d', two: '#2a2a2e' } : {}),
     ...(OBS ? { acc: '#e0a93b', hot: '#f8e2a6', gold: '#ffe2a1', goldHi: '#fff6de', blood: '#c3132d', spark: '#f0c766', spark2: '#e0a93b', ink: '#ffffff', two: '#a8814a' } : {}), ...((ELF && ELF.T) || {}) };   // two (1.12.8): bronze — a second side that white lettering still reads on
+  for (const k of Object.keys(T)) T[k] = UCOL(tone(T[k]));          // 1.5.5: the colours the script draws with follow yours too
   const BLOOD = T.blood;
   // the app's own icons (public/beebo-icons.js, loaded with every layout), in colour
   // 1.12.9: a long name can wrap onto two lines where it reads naturally — between words, before a capital (RamenRush·TheUnbeatable) or a number
@@ -563,7 +566,7 @@
   if (PLATE) {
     const nameFill = PLATE.name ? `background:${PLATE.name};-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;` : `color:${PLATE.ink};`;
     const ps = document.createElement('style'); ps.id = 'sbf-plate';
-    ps.textContent = `
+    ps.textContent = UCOL(`
 :root{--pl-bg:${PLATE.bg};--pl-ring:${PLATE.ring};--pl-hi:${PLATE.hi};--pl-clip:${PLATE.clip};--pl-r:${PLATE.r};--pl-ink:${PLATE.ink}}
 #sbf-bar .td-card,#sbf-bar .it:not(.td),#sbf-sp .sp-f,#sbf-sp .sp-card{background:linear-gradient(180deg,var(--tcw,transparent),transparent 60%),var(--pl-bg);box-shadow:inset 0 0 0 1.5px var(--pl-ring),inset 0 1px 0 var(--pl-hi),0 6px 16px rgba(0,0,0,.35);border-radius:var(--pl-r);clip-path:var(--pl-clip)}
 #sbf-bar .td-card{padding-left:10px;padding-right:10px;justify-content:center}
@@ -581,7 +584,7 @@
 #sbf-bar .td-card .sbf-nm:not(.two){white-space:nowrap}
 .sbf-nm.two2,.tag.two2{white-space:normal!important;overflow-wrap:anywhere;line-height:1!important;text-overflow:clip!important;text-wrap:balance;max-height:2.2em}
 #sbf-bar .td-card .sbf-nm.two{white-space:normal;overflow-wrap:anywhere;word-break:normal;line-height:1.04;text-overflow:clip;text-wrap:balance}
-`;
+`);          // 1.5.5: your colours
     document.head.appendChild(ps);
   }
   // 1.12.9: the team boxes' names and the header's team names shrink to fit — never cut off with "…"

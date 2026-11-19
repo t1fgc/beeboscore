@@ -21,6 +21,8 @@
   const C = PORC
     ? { a: '#c9a13b', b: '#141210', faceL: 'linear-gradient(160deg,#ffffff,#f6f0e2 55%,#e6d8b4)', faceR: 'linear-gradient(200deg,#fbf8f1,#efe6d2 55%,#dccaa0)', plate: 'linear-gradient(180deg,#1b1916,#0c0b0a)', plateEdge: '#c9a13b', name: 'linear-gradient(180deg,#fff6d8,#e9c35e 55%,#a8801c)', small: '#e9c35e', vs: 'linear-gradient(180deg,#2a2522,#0b0909 55%,#3a2806)', vsGlow: 'rgba(201,161,59,.55)', weld: ['#c9a13b', '#fff6d8', '#c9a13b'], ghost: 'rgba(20,18,16,.08)', round: 'rgba(20,18,16,.92)', roundInk: '#f6e7b8', chip: 'linear-gradient(135deg,#ffffff,#f3ecdc 45%,#c9a13b)' }
     : { a: '#e0a93b', b: '#f6dc96', faceL: 'linear-gradient(160deg,#2b2112,#100c06 55%,#060504)', faceR: 'linear-gradient(200deg,#22190a,#0d0b07 55%,#040408)', plate: 'linear-gradient(180deg,rgba(42,38,30,.94),rgba(11,10,8,.97))', plateEdge: '#e0a93b', name: 'linear-gradient(180deg,#fff,#f3ede0 45%,#b9ad92)', small: '#f0c766', vs: 'linear-gradient(180deg,#fff,#f2ebdb 40%,#d4c7a6 55%,#e0a93b 80%,#f6dc96)', vsGlow: 'rgba(224,169,59,.6)', weld: ['#e0a93b', '#ffffff', '#f6dc96'], ghost: 'rgba(255,255,255,.05)', round: 'rgba(8,8,12,.92)', roundInk: '#f8f3e6', chip: 'linear-gradient(135deg,rgba(255,255,255,.85),rgba(240,199,102,.55) 45%,rgba(40,30,10,.7))' };
+  // 1.5.5: your colours for the app's own layouts (public/sb-colours.js)
+  if (window.SBColours && window.SBColours.on) for (const k of Object.keys(C)) C[k] = Array.isArray(C[k]) ? C[k].map(v => window.SBColours.map(v)) : window.SBColours.map(C[k]);
   const css = `
 #sbv{position:absolute;left:0;top:0;width:${W}px;height:${H}px;z-index:9500;pointer-events:none;display:none;overflow:hidden;contain:strict}
 #sbv.on{display:block}

@@ -148,7 +148,7 @@ html.sb-potato #sbFull,html.sb-potato #sbFull .in,html.sb-potato #sbCard,html.sb
   let built = false, full, fullIn, card, lane, hype, draw, rehTag, extHost;
   function build() {
     if (built || !document.body) return; built = true;
-    const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
+    const st = document.createElement('style'); st.textContent = (window.SBColours && window.SBColours.on ? window.SBColours.map(css) : css);      /* 1.5.5: your colours for the app's own layouts */ document.head.appendChild(st);
     const mk = (id, html) => { const e = document.createElement('div'); e.id = id; if (html) e.innerHTML = html; document.body.appendChild(e); return e; };
     full = mk('sbFull', '<div class="bg"></div><div class="sheen"></div><div class="in"></div>'); fullIn = full.querySelector('.in');
     card = mk('sbCard'); lane = mk('sbLane'); hype = mk('sbHype', '<i></i>'); rehTag = mk('sbReh', 'REHEARSAL'); extHost = mk('sbExt');

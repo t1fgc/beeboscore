@@ -593,7 +593,7 @@
 #sb-vs.vs-st-chrome.vs-in .vs-s1,#sb-vs.vs-st-chrome.vs-in .vs-s2{animation:vs-flip .7s cubic-bezier(.2,.9,.3,1.3) both}#sb-vs.vs-st-chrome.vs-in .vs-s2{animation-delay:.1s}
 @keyframes vs-flip{from{transform:perspective(800px) rotateX(90deg);transform-origin:top}}
 `;
-  const st = document.createElement('style'); st.id = 'sb-vs-style'; st.textContent = CSS;
+  const st = document.createElement('style'); st.id = 'sb-vs-style'; st.textContent = (window.SBColours && window.SBColours.on ? window.SBColours.map(CSS) : CSS);
   document.head.appendChild(st);
 
   // Each style: what flies out at the moment the sides collide.
@@ -639,7 +639,7 @@
   // the root's class list is rewritten every time the splash shows or hides.
   const hdr = document.createElement('img'); hdr.className = 'vs-hdr'; hdr.alt = ''; root.appendChild(hdr);
   const artCss = document.createElement('style');
-  artCss.textContent = `
+  artCss.textContent = (c => (window.SBColours && window.SBColours.on ? window.SBColours.map(c) : c))(`
 #sb-vs .vs-hdr{position:absolute;left:0;top:0;width:1920px;height:200px;object-fit:cover;display:none;z-index:2}
 #sb-vs[data-hdr] .vs-hdr{display:block}
 #sb-vs[data-hdr].vs-st-shattered .vs-round{top:-322px}#sb-vs[data-hdr].vs-st-oni .vs-round{top:-316px}
@@ -651,7 +651,7 @@
 #sb-vs[data-bar] .vs-name{background:none!important;-webkit-text-fill-color:var(--vs-ink)!important;color:var(--vs-ink)!important;filter:none!important;text-shadow:var(--vs-edge)!important}
 #sb-vs[data-bar] .vs-team,#sb-vs[data-bar] .vs-sub,#sb-vs[data-bar] .vs-rec i{color:var(--vs-accent)!important;text-shadow:var(--vs-edge)!important}
 #sb-vs[data-bar] .vs-rec .vs-n,#sb-vs[data-bar] .vs-rec small{color:var(--vs-ink)!important;text-shadow:none!important}
-#sb-vs[data-bar] .vs-rec .vs-w,#sb-vs[data-bar] .vs-rec .vs-l{background:var(--vs-chip)!important;clip-path:none!important;box-shadow:none!important;border-radius:6px}`;
+#sb-vs[data-bar] .vs-rec .vs-w,#sb-vs[data-bar] .vs-rec .vs-l{background:var(--vs-chip)!important;clip-path:none!important;box-shadow:none!important;border-radius:6px}`);
   document.head.appendChild(artCss);
   function customArt(a) {
     a = a || {};

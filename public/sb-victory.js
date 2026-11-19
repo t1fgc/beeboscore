@@ -188,7 +188,7 @@ html.sb-potato #sb-victory .vc-frame path{filter:none}
 @keyframes vc-up{from{opacity:0;transform:translateY(26px)}}
 html.sb-potato #sb-victory *,html.sb-potato #sb-victory{animation:none!important;transition:none!important}
 `;
-  const st = document.createElement('style'); st.textContent = CSS;
+  const st = document.createElement('style'); st.textContent = (window.SBColours && window.SBColours.on ? window.SBColours.map(CSS) : CSS);
   (document.head || document.documentElement).appendChild(st);
 
   // ----------------------------------------------------------------------------- DOM

@@ -396,7 +396,7 @@ html.sb-light .fxo i{display:none}
     (document.body || document.documentElement).appendChild(s);
   }
   let cssDone = false;
-  function addCSS() { if (cssDone) return; cssDone = true; const st = document.createElement('style'); st.id = 'sb-fx-css'; st.textContent = KEYS + CSS0 + lookCSS() + ATMOS_CSS() + MOVE_CSS; (document.head || document.documentElement).appendChild(st); }
+  function addCSS() { if (cssDone) return; cssDone = true; const st = document.createElement('style'); st.id = 'sb-fx-css'; { const c0 = KEYS + CSS0 + lookCSS() + ATMOS_CSS() + MOVE_CSS; st.textContent = (window.SBColours && window.SBColours.on ? window.SBColours.map(c0) : c0); } (document.head || document.documentElement).appendChild(st); }
 
   function vars(n, c, a) { n.style.setProperty('--c', c); n.style.setProperty('--c2', mix(c, '#ffffff', .45)); n.style.setProperty('--c3', mix(c, '#000000', .5)); n.style.setProperty('--cA', rgba(c, .35)); n.style.setProperty('--cB', rgba(c, .7)); n.style.setProperty('--a', String(a)); }
   // r = { el, node, parts } from sb-design; api = helpers from the renderer

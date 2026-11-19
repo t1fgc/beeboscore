@@ -31,6 +31,7 @@ const bracketModel = require('./lib/bracket');
 const sdHelper = require('./lib/streamdeck');
 const layoutImport = require('./lib/layout-import');      // 1.5.1: layouts people make, dropped into the Layouts tab
 const zip = require('./lib/zip');
+const sbColours = require('./public/sb-colours.js');      // 1.5.5: your colours for the app's own layouts (one file for the server and the overlay page)
 const FMT = require('./lib/format');
 const VT = require('./lib/vtourney');
 const { createShare } = require('./lib/share');
@@ -2319,6 +2320,11 @@ setInterval(function(){if(!wsOk)look()},1500);setInterval(look,6000);
   const liteFx = () => fxNow() === 'off';
   let liteWas = (() => { try { return liteFx(); } catch { return null; } })();
   function liteWatch() { const l = liteFx(); if (liteWas === true && !l) setTimeout(() => broadcast('reload', { ifLite: true }), 300); liteWas = l; }      // only pages that came without the engines reload
+  // 1.5.5: which of the app's own looks a layout is (its family), for your colours; '' for layouts you imported
+  function layoutColourFamily(name) {
+    const o = listOverlays().find(x => x.name === name);
+    return o && o.builtIn && sbColours.BASE[o.family] ? o.family : '';
+  }
   function injectOverlay(html, name, follow, mode = {}) {
     let base = `<base href="/o/${encodeURIComponent(mode.assets || name)}/">`;
     if ((mode.potato || liteFx()) && !mode.engines) { html = html.replace(/\/sb-design\.js\?v=/g, '/sb-design.js?lite&v='); base += '<script>window.__SB_LITE_BUNDLE=true</script>'; }
@@ -2327,6 +2333,15 @@ setInterval(function(){if(!wsOk)look()},1500);setInterval(look,6000);
     { const fq = ['auto', 'full', 'light', 'off', 'ultra'].includes(config.settings.fxQuality) ? config.settings.fxQuality : 'auto'; base += `<script>window.__SB_GFXQ=${JSON.stringify(fq === 'auto' && config.settings.lightFx ? 'light' : fq)};window.__SB_LAPTOP=${!!config.settings.laptopMode}</script>`; }
     if (mode.instant && !mode.framed && !mode.potato) base += '<style>html.sb-instant body{opacity:0!important}</style>';   // a soft reload: shown once drawn, faded in
     if (mode.framed || mode.instant || mode.potato) base += `<script>${mode.framed ? 'window.__SB_FRAMED=true;' : ''}${mode.instant ? "window.__SB_INSTANT=true;document.documentElement.classList.add('sb-instant');" : ''}${mode.soft ? 'window.__SB_SOFT=true;' : ''}${mode.potato ? "window.__SB_POTATO=true;document.documentElement.classList.add('sb-potato');" : ''}</script>`;
+    // 1.5.5: your colours for the app's own layouts — the design goes out recoloured, and the page gets the colours so
+    // what its scripts draw (FullVS, the game formats, the engine's sparks and glows) follows too
+    { const fam = layoutColourFamily(name), mine = fam && config.layoutColours && config.layoutColours[fam];
+      if (mine && Object.keys(mine).length) {
+        html = html.replace(/(<script id="sb-design" type="application\/json">)([\s\S]*?)(<\/script>)/, (m, a, j, b) => {
+          try { return a + JSON.stringify(sbColours.recolourDesign(JSON.parse(j), fam, mine)).replace(/</g, '\\u003c') + b; } catch { return m; }
+        });
+        base += `<script>window.__SB_COLOURS=${JSON.stringify({ family: fam, colours: mine }).replace(/</g, '\\u003c')}</script><script src="/sb-colours.js?v=${V}"></script>`;
+      } }
     const script = `<script>window.__SB_OVERLAY=${JSON.stringify(name)};window.__SB_FOLLOW_ACTIVE=${!!follow};</script><script src="/sb-fps.js?v=${V}"></script><script src="/static/beebo-icons.js?v=${V}"></script><script>window.BI&&BI.style()</script><script src="/sb-perf.js?v=${V}"></script><script src="/sb-client.js?v=${V}"></script><script src="/sb-vs.js?v=${V}"></script><script src="/sb-bracket.js?v=${V}"></script><script src="/sb-skin.js?v=${V}"></script><script src="/sb-vtjoin.js?v=${V}"></script><script src="/sb-comm.js?v=${V}"></script><script src="/sb-brand.js?v=${V}"></script><script src="/sb-fullvs.js?v=${V}"></script><script src="/sb-showcards.js?v=${V}"></script><script src="/sb-i18n.js?v=${V}"></script><script src="/sb-show.js?v=${V}"></script>${SHOW ? SHOW.ext.active().filter(e => e.js).map(e => `<script src="/ext/${e.id}/overlay.js?v=${V}"></script>`).join('') : ''}<script src="/sb-victory.js?v=${V}"></script><script src="/sb-sound.js?v=${V}"></script><script src="/sb-key.js?v=${V}"></script>` + (/<meta[^>]+name=["']sb-format["']/i.test(html) ? `<script src="/sb-format.js?v=${V}"></script><script src="/sb-hud.js?v=${V}"></script><script src="/sb-story.js?v=${V}"></script>` : '');
     html = /<head[^>]*>/i.test(html) ? html.replace(/<head[^>]*>/i, m => m + base) : base + html;
     html = /<\/body>/i.test(html) ? html.replace(/<\/body>(?![\s\S]*<\/body>)/i, script + '</body>') : html + script;
@@ -3055,6 +3070,7 @@ iframe{transition:opacity .45s ease}iframe.next{opacity:0;pointer-events:none}if
       }
       if (p === '/sb-victory.js') return serveFile(req, res, path.join(PUBLIC_DIR, 'sb-victory.js'));
       if (p === '/sb-format.js') return serveFile(req, res, path.join(PUBLIC_DIR, 'sb-format.js'));
+      if (p === '/sb-colours.js') return serveFile(req, res, path.join(PUBLIC_DIR, 'sb-colours.js'));
       if (p === '/sb-key.js') return serveFile(req, res, path.join(PUBLIC_DIR, 'sb-key.js'));
       if (p === '/sb-fps.js') return serveFile(req, res, path.join(PUBLIC_DIR, 'sb-fps.js'));      // 1.12.16: 60 fps outside OBS
       if (p === '/sb-sound.js') return serveFile(req, res, path.join(PUBLIC_DIR, 'sb-sound.js'));
@@ -3125,6 +3141,9 @@ iframe{transition:opacity .45s ease}iframe.next{opacity:0;pointer-events:none}if
         const name = safeName(rawName);
         const f = resolveInside(overlayDir(name), rest.join('/') || 'index.html');
         if (!f) return send(res, 403, 'Forbidden', 'text/plain; charset=utf-8');
+        // 1.5.5: the pictures drawn for the app's own layouts (the Top 8's cracks and light, say) follow your colours too
+        if (/\.svg$/i.test(f)) { const fam = layoutColourFamily(name), mine = fam && config.layoutColours && config.layoutColours[fam];
+          if (mine && Object.keys(mine).length) return fs.readFile(f, 'utf8', (err, svg) => { if (err) return send(res, 404, 'Not found', 'text/plain; charset=utf-8'); res.writeHead(200, { 'Content-Type': 'image/svg+xml', 'Cache-Control': 'no-store' }); res.end(sbColours.make(fam, mine).map(svg)); }); }
         return serveFile(req, res, f, html => injectOverlay(html, name, false));
       }
       if (p === '/api/live') {
@@ -3830,6 +3849,26 @@ iframe{transition:opacity .45s ease}iframe.next{opacity:0;pointer-events:none}if
         const files = (Array.isArray(body.files) ? body.files : []).map(f => ({ path: f && f.path, data: Buffer.from(String(f && f.data || ''), 'base64') }));
         try { return ok(res, importLayout({ files, title: body.name, game: body.game, replace: true })); }
         catch (e) { return send(res, e.status || 500, { error: e.message, code: e.code || '' }); }
+      }
+      // 1.5.5: your colours for the app's own layouts (the Layouts tab's Colours card)
+      if (p === '/api/layout-colours' && method === 'GET') {
+        const fams = {};
+        for (const f of Object.keys(sbColours.BASE)) fams[f] = { base: sbColours.BASE[f], colours: (config.layoutColours || {})[f] || {} };
+        const act = listOverlays().find(o => o.name === config.activeOverlay);
+        return ok(res, { roles: sbColours.ROLES, labels: sbColours.LABELS, families: fams, live: act && fams[act.family] ? act.family : '' });
+      }
+      if (p === '/api/layout-colours' && method === 'POST') {
+        const b = await readJSONBody(req), fam = String(b.family || '');
+        if (!sbColours.BASE[fam]) return fail(res, 400, 'Unknown layout.');
+        config.layoutColours = { ...(config.layoutColours || {}) };
+        const c = sbColours.clean(b.colours || {});
+        for (const r of Object.keys(c)) if (c[r] === sbColours.BASE[fam][r].toLowerCase()) delete c[r];      // the layout's own colour: nothing to keep
+        if (Object.keys(c).length) config.layoutColours[fam] = c; else delete config.layoutColours[fam];
+        writeJSON(CONFIG_FILE, config);
+        const act = listOverlays().find(o => o.name === config.activeOverlay);
+        if (!act || act.family === fam) broadcast('reload', {});
+        else for (const o of listOverlays()) if (o.family === fam) broadcast('reload', { overlay: o.name });
+        return ok(res, { ok: true, family: fam, colours: c });
       }
       // 1.5.1: the Layouts tab — bring in a layout (a folder, loose files or a .zip), share one, remove one, the starter layout
       if (p === '/api/layouts/import' && method === 'POST') {

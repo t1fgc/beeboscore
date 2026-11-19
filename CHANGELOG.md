@@ -1,5 +1,26 @@
 # Changelog
 
+## 1.5.5
+
+### BeeboScore 1.5.5
+- Your own colours for Classic and Obsidian Glass: pick up to nine on the Layouts tab and the whole look follows.
+- The bars, the lettering, the splash backgrounds, the edges, the accent, both players' colours and the effects all change, on the scoreboard and on every splash.
+- The shapes, the lettering style and the moves stay the same, so each layout keeps its own feel.
+- Six ready-made sets to start from (Crimson, Ocean, Emerald, Violet, Sakura and Mono), and one button to go back to the layout's own colours.
+- Each look keeps its own colours, in every game.
+
+### New
+- **Colours** card at the top of the **Layouts** tab. Nine parts: **Bars**, **Splash background**, **Edges**, **Lettering**, **Small lettering**, **Accent**, **Player 1**, **Player 2** and **Effects**. Change one and only that part moves; the others stay as the layout comes. A switch picks which look you're colouring (Classic or Obsidian Glass), and the colours apply to that look in all four games and in Tekken 8's game-format versions. A dot marks each part you've changed, with its own ↺ to put it back. OBS picks up the change by itself.
+- Every shade follows its part: a darker edge of a bar stays darker than the bar, a glow stays a glow. Parts of the design that were white lettering turn into your lettering colour when you choose a dark one, so a light look (like Sakura) still reads.
+- It reaches everything the layout draws: the scoreboard, the VS, Victory, Top 8, bracket and standings screens, FullVS, the story strip, the game-format bar and its Team VS, Board and Champion splashes, the particles, sparks, flashes and other effects, and the pictures that come with the layout (like the Top 8 crack art).
+- Imported layouts aren't changed: their colours are their maker's.
+
+### For developers
+- `public/sb-colours.js` is the colour engine, shared by the server and the overlay page. Each built-in family has a base colour per part; your colour moves every shade of that part by the same amount (hue, saturation and lightness).
+- The server sends a built-in layout's design and its SVG pictures out in your colours, and adds `window.__SB_COLOURS` and `/sb-colours.js` to the page so the colours the scripts draw with follow too.
+- New routes: `GET /api/layout-colours` (the parts, each family's own colours and yours) and `POST /api/layout-colours` (`family`, `colours`; `{}` puts the family back). Saved as `layoutColours` in the settings.
+- Tests: `test/layouts/colours.test.mjs`.
+
 ## 1.5.4
 
 ### BeeboScore 1.5.4

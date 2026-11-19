@@ -85,7 +85,7 @@
 #sbc .mt small{position:absolute;left:0;right:0;top:-24px;text-align:center;font:700 13px/1 ${TH.ui};letter-spacing:4px;color:${TH.sub}}
 .sb-potato #sbc *{animation:none!important;transition:none!important}
 `;
-  const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
+  const st = document.createElement('style'); st.textContent = (window.SBColours && window.SBColours.on ? window.SBColours.map(css) : css); document.head.appendChild(st);
   const root = document.createElement('div'); root.id = 'sbc'; document.body.appendChild(root);
   const potato = () => document.documentElement.classList.contains('sb-potato') || !!window.__SB_POTATO;
 

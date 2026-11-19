@@ -12,6 +12,8 @@
  */
 (function () {
   'use strict';
+  // 1.5.5: the colours this draws with when a layout doesn't say, moved with your colours for the app's own layouts (public/sb-colours.js)
+  const UC = (r, c, anchor) => (window.SBColours && window.SBColours.on ? window.SBColours.as(r, c, anchor) : c);
   const SEEDNOW = () => (window.BeeboFX4 ? window.BeeboFX4.seedNow() : Date.now());   // 1.12.15: seeds follow "Same every time" (and tests)
   if (window.SBDesign) return;
   const CORE = window.__SBDCore;     // 1.12.11: the core lives in sb-design-core.js (served first, in the same /sb-design.js)
@@ -118,7 +120,7 @@
       }
     }
     const doms = new Map();            // element id → { el, node, parts }
-    const rc0 = c => { if (typeof c !== 'string' || c[0] !== '@') return c || '#ff5a1f'; const t = ((D.theme && D.theme.colors) || []).find(x => '@' + x.id === c); return t ? t.value : '#ff5a1f'; };
+    const rc0 = c => { if (typeof c !== 'string' || c[0] !== '@') return c || UC('effects', '#ff5a1f', '#ff5a1f'); const t = ((D.theme && D.theme.colors) || []).find(x => '@' + x.id === c); return t ? t.value : UC('effects', '#ff5a1f', '#ff5a1f'); };
     const fxApi = { get root() { return root; }, get W() { return W; }, get H() { return H; }, path: (el, w, h) => pathFor(el, w, h), outline: (el, w, h) => pathFor(el, w, h, 0, true), anim: (n, k, o) => anim(n, k, o), later: (fn, ms) => later(fn, ms), spark: (...a) => spark(...a), ring: (...a) => ring(...a) };
     // 3D pieces (sb-3d.js + three.js, loaded only when a layout has one)
     const ctx3 = { uid, color: c => rc0(c), font: k => fontOf(D, k), text: tpl => fillText(tpl, V), url: tpl => fillText(tpl, V) };
@@ -140,7 +142,7 @@
       node.className = `sd-el sd-k-${el.kind}`; node.dataset.id = el.id;
       // the scoreboard's player bars are where game formats show lives, the king's crown, team and stock (sb-format.js)
       if (sceneName === 'board' && el.kind === 'bar' && (el.side === 1 || el.side === 2) && !document.getElementById('plate' + el.side)) { node.id = 'plate' + el.side; node.dataset.sbPlate = el.side; }
-      node.style.cssText = `left:${el.x}px;top:${el.y}px;width:${el.w}px;height:${el.h}px;transform:rotate(${Number(el.rot) || 0}deg);opacity:${el.opacity ?? 1};--fxc:${el.effect.color};--win:${el.winColor || '#f6c453'}`;
+      node.style.cssText = `left:${el.x}px;top:${el.y}px;width:${el.w}px;height:${el.h}px;transform:rotate(${Number(el.rot) || 0}deg);opacity:${el.opacity ?? 1};--fxc:${el.effect.color};--win:${el.winColor || UC('accent', '#f6c453')}`;
       const look = el.look || {}, filt = [];
       if (look.shadow && look.shadow.on) filt.push(`drop-shadow(${Number(look.shadow.x) || 0}px ${Number(look.shadow.y) || 0}px ${Number(look.shadow.blur) || 0}px ${look.shadow.color || '#000000'})`);
       if (Number(look.blur) > 0) filt.push(`blur(${Number(look.blur)}px)`);
@@ -333,7 +335,7 @@
         if (el.font.gfx && el.font.gfx !== 'none' && g3l.LETTERS[el.font.gfx]) g3all.push(g3l.text(lt, { k: el.font.gfx, colors: el.font.gfxColors, speed: el.font.gfxSpeed, amt: el.font.gfxAmt, ...(clipBox ? { host: clipBox, origin: inn } : {}) }));
         else if (el.font.mask && (el.font.mask.src || el.font.mask.mat)) g3all.push(g3l.mask(lt, { ...el.font.mask }));
       }
-      if (fxT !== 'none') for (const n of letters) { n.style.setProperty('--tfx', el.font.fxColor || '#ff3b14'); n.style.setProperty('--tfw', (el.font.fxSize || (fxT === 'neon' ? 3 : fxT === 'extrude' ? 6 : 1.5)) + 'px'); if (fxT === 'neon') n.style.setProperty('--tfx2', mix(el.font.fxColor || '#ff3b14', '#ffffff', .55)); }   // 1.12.14: the neon tube's core is lighter than its glow
+      if (fxT !== 'none') for (const n of letters) { n.style.setProperty('--tfx', el.font.fxColor || UC('effects', '#ff3b14', '#ff5a1f')); n.style.setProperty('--tfw', (el.font.fxSize || (fxT === 'neon' ? 3 : fxT === 'extrude' ? 6 : 1.5)) + 'px'); if (fxT === 'neon') n.style.setProperty('--tfx2', mix(el.font.fxColor || '#ff3b14', '#ffffff', .55)); }   // 1.12.14: the neon tube's core is lighter than its glow
       if (el.kind === 'bar') {
         const a = alignOf(el, el.side === 2 ? 'right' : 'left'), two = el.side === 2;
         body.querySelector('.sd-who').style.alignItems = JUST[a];
@@ -494,7 +496,7 @@
       const bar = parts.gbar; if (!bar) return null;
       const b = barState(bar.el), st = b.win ? 'win' : b.lose ? 'lose' : 'normal'; if (st === 'normal') return null;
       // the winner's plate runs from a light top through the win colour to a darker foot: its tone at this piece's own height
-      const e = bar.el, fy = Math.max(0, Math.min(1, (el.y + el.h / 2 - e.y) / Math.max(1, e.h))), wc = /^#[0-9a-f]{6}$/i.test(e.winColor || '') ? e.winColor : '#f6c453';
+      const e = bar.el, fy = Math.max(0, Math.min(1, (el.y + el.h / 2 - e.y) / Math.max(1, e.h))), wc = /^#[0-9a-f]{6}$/i.test(e.winColor || '') ? e.winColor : UC('accent', '#f6c453');
       const tone = e.tones && e.tones[st] ? String(e.tones[st]).slice(0, 7)
         : st === 'win' ? (fy < .5 ? mix(mix(wc, '#ffffff', .75), wc, fy * 2) : mix(wc, mix(wc, '#000000', .45), fy * 2 - 1))
         : mix(String(plateTone(e, 'normal')).slice(0, 7), '#000000', e.loseDim !== false ? .64 : .45);
@@ -601,7 +603,7 @@
       const paths = crackPaths(el.w, el.h, ox, oy, Math.floor(Math.random() * 99999));
       // the inner rings only (the cracks stay round the impact), each segment bent in two so it reads as a tear, not a ruled line
       const ds = [...paths.matchAll(/data-r="(\d)" d="M([\d.-]+),([\d.-]+)L([\d.-]+),([\d.-]+)"/g)].filter(m => +m[1] <= 2).map(m => { const [x0, y0, x1, y1] = m.slice(2).map(Number), mx = (x0 + x1) / 2 + (Math.random() - .5) * 14, my = (y0 + y1) / 2 + (Math.random() - .5) * 8; return `M${x0},${y0}L${mx.toFixed(0)},${my.toFixed(0)}L${x1},${y1}`; });
-      svg.innerHTML = `<g class="lava">${ds.map(d => `<path d="${d}" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1" stroke="#7a1404" stroke-width="7"/><path d="${d}" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1" stroke="#ff4a12" stroke-width="3.6"/><path d="${d}" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1" stroke="#fff1a8" stroke-width="1.4"/>`).join('')}</g>`;
+      svg.innerHTML = `<g class="lava">${ds.map(d => `<path d="${d}" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1" stroke="${UC('effects', '#7a1404', '#ff5a1f')}" stroke-width="7"/><path d="${d}" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1" stroke="#ff4a12" stroke-width="3.6"/><path d="${d}" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1" stroke="#fff1a8" stroke-width="1.4"/>`).join('')}</g>`;
       node.appendChild(svg);
       const all = [...svg.querySelectorAll('path')];
       all.forEach((pth, i) => anim(pth, [{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], { duration: 650, delay: (i % 3) * 40 + Math.floor(i / 3) * 25, easing: 'cubic-bezier(.2,.8,.3,1)', fill: 'forwards' }));
@@ -611,7 +613,7 @@
       // embers boiling out of the cracks (inside the plate)
       const seeds = []; for (let k = 0; k < (ULTRA() ? 24 : 60); k++) { const t = Math.random(), x = ox + (Math.random() - .5) * el.w * .8, y = oy + (Math.random() - .5) * el.h * .6; seeds.push([x, y, (Math.random() - .5) * 40, -30 - Math.random() * 90, .6 + Math.random() * 1.2, Math.random() < .2]); }
       later(() => plateSparks(r, seeds, { gravity: -40, col: (k, hot) => hot ? `rgba(255,240,200,${k})` : `rgba(255,${(90 + 120 * k) | 0},${(20 * k) | 0},${k * .9})` }), 250);
-      if (!fromEngine && GFX) GFX.fxAt('fissure', { x: el.x, y: el.y, w: el.w, h: el.h }, { color: color || '#ff6a1a' });
+      if (!fromEngine && GFX) GFX.fxAt('fissure', { x: el.x, y: el.y, w: el.w, h: el.h }, { color: color || UC('effects', '#ff6a1a', '#ff5a1f') });
       later(() => { svg.remove(); parts.fissuring = false; }, 3300);
     }
     const ULTRA = () => document.documentElement.classList.contains('sb-ultra');
@@ -799,14 +801,14 @@
               if (was != null && now > was && !POTATO() && !calm()) { const sb2 = parts.scoreBox; sb2.style.setProperty('--ptd', (tempoOf().d * 2.2 / 1000).toFixed(2) + 's'); sb2.classList.remove('sd-pt'); void sb2.offsetWidth; sb2.classList.add('sd-pt'); later(() => sb2.classList.remove('sd-pt'), 2000); }   // 1.12.21: a flash in the scorer's own colour
             } }
           const st8 = b.win ? 'win' : b.lose ? 'lose' : 'normal', tone = plateTone(el, st8), faded = st8 === 'lose' ? x => mix(x, tone, .15) : x => x, need = st8 === 'lose' ? 4 : 6;   // aimed above the 3 / 4.5 the test asks for: textures and sheen on the plate vary
-          parts.pro.style.color = readable(st8 === 'win' && lum(el.winColor) > .55 ? '#3a2405' : el.subColor, tone, need, faded);
+          parts.pro.style.color = readable(st8 === 'win' && lum(el.winColor) > .55 ? UC('accent', '#3a2405', '#f6c453') : el.subColor, tone, need, faded);
           // 1.12.21: the team tag reads on the plate in every state — gold on the winner's gold plate (1.7:1 on Obsidian
           // Glass) is nudged toward black or white until it reaches 3:1; the side tag keeps reading on a dimmed score box
           { const tk = st8 + '|' + parts.teamInk; if (parts.teamK !== tk) { parts.teamK = tk; const ti = parts.teamInk;
               parts.team.style.color = st8 !== 'normal' && /^#[0-9a-f]{6}$/i.test(ti || '') && /^#[0-9a-f]{6}$/i.test(tone || '') && contrast(faded(ti), tone) < 2.2 ? readable(ti, tone, 3, faded) : ti; }
             if (parts.sideTag) { const dk = b.lose && el.loseDim !== false ? 'l' : 'n'; if (parts.tagK !== dk) { parts.tagK = dk; parts.sideTag.style.color = dk === 'l' ? parts.tagInkLose : parts.tagInk; } } }
           setText(parts.status, b.win ? 'Victory' : b.mp && b.danger ? 'Final game' : b.mp ? 'Match point' : b.danger ? 'On the edge' : '');
-          parts.status.style.color = readable(b.win ? (lum(el.winColor) > .55 ? '#3a2405' : el.winColor) : (el.statusColor || el.teamColor), tone, need, faded);
+          parts.status.style.color = readable(b.win ? (lum(el.winColor) > .55 ? UC('accent', '#3a2405', '#f6c453') : el.winColor) : (el.statusColor || el.teamColor), tone, need, faded);
           // (what a game format adds to this line — “#1 of 4 · 4 left” — takes the same ink on the winner's plate: its own gold on gold couldn't be read)
           if (b.win) node.style.setProperty('--l2ink', parts.status.style.color); else node.style.removeProperty('--l2ink');
           const wasWin = node.classList.contains('sd-win');
@@ -819,7 +821,7 @@
           if (parts.stroke && b.win && !el.stroke.width) parts.stroke.setAttribute('stroke-width', 2);
           if (parts.stroke && !b.win) parts.stroke.setAttribute('stroke-width', Number(el.stroke.width) || 0);
           const darkName = b.win && lum(el.winColor) > .55;           // gold plate: dark lettering stays readable
-          textPaint(parts.name, darkName ? { type: 'linear', angle: 180, colors: ['#3a2405', '#120a01'] } : st8 === 'normal' ? autoInk(el.font.color, tone) : el.font.color);
+          textPaint(parts.name, darkName ? { type: 'linear', angle: 180, colors: [UC('accent', '#3a2405', '#f6c453'), UC('accent', '#120a01', '#f6c453')] } : st8 === 'normal' ? autoInk(el.font.color, tone) : el.font.color);
           parts.name.style.filter = darkName && !(el.font.fx && el.font.fx !== 'none') ? 'drop-shadow(0 1px 0 rgba(255,246,214,.7))' : '';
           if (!first && b.win && !wasWin && !POTATO()) { node.classList.remove('sd-flash'); void node.offsetWidth; node.classList.add('sd-flash'); later(() => node.classList.remove('sd-flash'), 700); }
           if (el.dyn) dynPlate(r, b, first);
@@ -1056,7 +1058,7 @@
         bounce: [{ transform: 'translateY(0)' }, { transform: 'translateY(-22px)', offset: .3 }, { transform: 'translateY(0)', offset: .6 }, { transform: 'translateY(-8px)', offset: .8 }, { transform: 'translateY(0)' }],
         pop: [{ transform: 'scale(1)' }, { transform: 'scale(1.25)', offset: .3 }, { transform: 'scale(.95)', offset: .7 }, { transform: 'scale(1)' }],
         spin: [{ transform: 'rotate(0)' }, { transform: 'rotate(360deg)' }],
-        glow: [{ filter: 'drop-shadow(0 0 0 transparent)' }, { filter: `drop-shadow(0 0 22px ${r.el.effect.color || '#ffb020'})`, offset: .3 }, { filter: 'drop-shadow(0 0 0 transparent)' }],
+        glow: [{ filter: 'drop-shadow(0 0 0 transparent)' }, { filter: `drop-shadow(0 0 22px ${r.el.effect.color || UC('effects', '#ffb020', '#ff5a1f')})`, offset: .3 }, { filter: 'drop-shadow(0 0 0 transparent)' }],
       }[type];
       if (K) anim(n, K, { duration: type === 'spin' ? 700 : 620, easing: 'ease-out' });
     }
@@ -1084,7 +1086,7 @@
         if (r.el.effect.type === 'embers' || r.el.effect.type === 'lightning') emit.push({ r, type: r.el.effect.type, color: r.el.effect.color, acc: 0 });
       }
       for (const r of doms.values()) {
-        if (r.el.font && r.el.font.fx === 'flame' && visible(r) && textActive(r.el) && !['logo', 'shape'].includes(r.el.kind)) emit.push({ r, type: 'tflame', color: r.el.font.fxColor || '#ff3b14', acc: 0 });
+        if (r.el.font && r.el.font.fx === 'flame' && visible(r) && textActive(r.el) && !['logo', 'shape'].includes(r.el.kind)) emit.push({ r, type: 'tflame', color: r.el.font.fxColor || UC('effects', '#ff3b14', '#ff5a1f'), acc: 0 });
       }
       for (const name of ['vs', 'victory']) {
         const sc = D.scenes[name];
@@ -1157,7 +1159,7 @@
           let x = e.x, w = e.w, y = e.y + e.h * .55;
           if (n && n.offsetWidth) { let o = n, ox = 0, oy = 0; while (o && o !== em.r.node) { ox += o.offsetLeft; oy += o.offsetTop; o = o.offsetParent; } x = e.x + ox; w = Math.min(n.offsetWidth, n.scrollWidth); y = e.y + oy + n.offsetHeight * .6; }
           if (GFX && GFX.textFlame && /^#[0-9a-f]{6}$/i.test(em.color || '') && GFX.textFlame(em.r.el.id, { x, y: y - (n ? n.offsetHeight * .6 : e.h * .55), w, h: n ? n.offsetHeight : e.h * .6 }, em.color)) continue;   // 1.12.5: a real flame with the engine on
-          const [r, g, bl] = rgbOf(em.color), hot = rgbOf(mix(em.color, '#ffe0a0', .6));
+          const [r, g, bl] = rgbOf(em.color), hot = rgbOf(mix(em.color, UC('effects', '#ffe0a0', '#ff5a1f'), .6));
           for (let i = 0; i < 2; i++) parts.push({ x: x + Math.random() * w, y: y + (Math.random() - .5) * 8, vx: (Math.random() - .5) * 16, vy: -(40 + Math.random() * 60), g: -10, life: 1, decay: 1.8 + Math.random() * 1.2, size: 1.6 + Math.random() * 2.6, c: Math.random() < .4 ? hot : [r, g, bl], wob: Math.random() * 6 });
         }
         if (em.type === 'ptc') {
@@ -1165,7 +1167,7 @@
           const every = 1 / ({ embers: .5, snow: .35, sparks: .6, bubbles: .15, confetti: .8, dust: .25, stars: .2, rain: 2.4, smoke: .06, shards: .2 }[pc.type] * amt);
           while (em.acc > every && parts.length < 1100) {
             em.acc -= every; if (!keep()) continue;
-            const c = rgbOf(pc.color || '#ffb020'), rnd = Math.random;
+            const c = rgbOf(pc.color || UC('effects', '#ffb020', '#ff5a1f')), rnd = Math.random;
             const P2 = { embers: () => ({ x: rnd() * W, y: H + 5, vx: wind + (rnd() - .5) * 30, vy: -(60 + rnd() * 140) * sp, g: -10, decay: .2 + rnd() * .2, size: (1 + rnd() * 2.4) * sz, wob: rnd() * 6 }),
               snow: () => ({ x: rnd() * (W + 200) - 100, y: -10, vx: wind, vy: (40 + rnd() * 50) * sp, g: 0, decay: .05 * sp, size: (1.5 + rnd() * 2.5) * sz, wob: rnd() * 6, soft: 1 }),
               sparks: () => { const a = rnd() * 6.283, v = (120 + rnd() * 260) * sp; return { x: rnd() * W, y: rnd() * H, vx: Math.cos(a) * v + wind, vy: Math.sin(a) * v, g: 200, decay: 1.4 + rnd(), size: (1 + rnd() * 1.6) * sz, trail: 1 }; },
@@ -1451,7 +1453,7 @@
       if (/^(gx|tr)-/.test(type)) { if (info.edge) return gxPiece(target, type, delay, info, 'in'); return transIn(target, gxFallback(type), delay, info); }
       if (FXL && FXL.INS[type] && !simpleKF(type, m)) {
         const e = info.edge && info.size !== 700 ? info.edge : { x: 0, y: 0, w: W, h: H };
-        try { FXL.INS[type].play({ ...fxApi, t: target, rect: e, color: rc0(info.color || '#ff5a1f'), delay: delay * 1000, dur: (Number(m.dur) || FXL.INS[type].dur / 1000) * 1000, dir: info.dir || 1, el: info.el }); } catch (e2) { console.warn('in', e2); }
+        try { FXL.INS[type].play({ ...fxApi, t: target, rect: e, color: rc0(info.color || UC('effects', '#ff5a1f', '#ff5a1f')), delay: delay * 1000, dur: (Number(m.dur) || FXL.INS[type].dur / 1000) * 1000, dir: info.dir || 1, el: info.el }); } catch (e2) { console.warn('in', e2); }
         if (info.decode !== false && /^(bolt|strike|forge|fireburst|stamp)$/.test(type)) later(() => target.querySelectorAll('.sd-name,.sd-round,.sd-text').forEach(n => decode(n, 500)), delay * 1000 + 250);
         return;
       }
@@ -1476,7 +1478,7 @@
         case 'shatter':
           A([{ opacity: 0, transform: 'scale(1.08)', filter: 'brightness(3) saturate(0)' }, { opacity: 1, offset: .35, transform: 'scale(.985)', filter: 'brightness(2.2) saturate(.3)' }, { opacity: 1, transform: 'none', filter: 'none' }], { ...o, duration: 750, easing: 'ease-out' });
           if (info.cracks) { later(() => { info.cracks.classList.add('sd-crack-burst'); later(() => info.cracks.classList.remove('sd-crack-burst'), 900); }, d); }
-          if (info.at) later(() => spark(info.at[0], info.at[1], 30, .6, info.color || '#ffb36b'), d + 200);
+          if (info.at) later(() => spark(info.at[0], info.at[1], 30, .6, info.color || UC('effects', '#ffb36b', '#ff5a1f')), d + 200);
           break;
         case 'slash':
           A([{ clipPath: 'polygon(0 0,0 0,-30% 100%,-30% 100%)' }, { clipPath: 'polygon(0 0,130% 0,100% 100%,-30% 100%)' }], { ...o, duration: 520, easing: 'cubic-bezier(.6,0,.3,1)' });
@@ -1495,7 +1497,7 @@
         }
         case 'slam':
           A([{ opacity: 0, transform: 'scale(2.4)', filter: 'blur(10px)' }, { opacity: 1, offset: .55, transform: 'scale(.92)', filter: 'none' }, { opacity: 1, transform: 'none' }], { ...o, duration: 680, easing: 'cubic-bezier(.2,.9,.3,1.3)' });
-          if (info.at) later(() => ring(info.at[0], info.at[1], Math.max(200, info.size || 300) * 2.2, info.color || '#ffb36b'), d + 370);
+          if (info.at) later(() => ring(info.at[0], info.at[1], Math.max(200, info.size || 300) * 2.2, info.color || UC('effects', '#ffb36b', '#ff5a1f')), d + 370);
           break;
       }
     }
@@ -1504,7 +1506,7 @@
       if (calm()) type = 'fade';
       if (ULTRA() && type !== 'fade' && !simpleKF(type, m, true)) type = 'fade';  // …and out (no shattering copies of the screen)
       if (FXL && FXL.OUTS[type]) { let ended = false; const end = () => { if (ended) return; ended = true; node.classList.add('sd-hidden'); node.getAnimations().forEach(a => a.cancel()); node.style.visibility = ''; done && done(); };
-        try { FXL.OUTS[type].play({ ...fxApi, t: node, rect: { x: 0, y: 0, w: W, h: H }, color: '#ff5a1f', delay: (Number(m.delay) || 0) * 1000, dur: (Number(m.dur) || FXL.OUTS[type].dur / 1000) * 1000, done: end }); } catch (e) { end(); }
+        try { FXL.OUTS[type].play({ ...fxApi, t: node, rect: { x: 0, y: 0, w: W, h: H }, color: UC('effects', '#ff5a1f', '#ff5a1f'), delay: (Number(m.delay) || 0) * 1000, dur: (Number(m.dur) || FXL.OUTS[type].dur / 1000) * 1000, done: end }); } catch (e) { end(); }
         setTimeout(end, 4000); return; }
       const skf = simpleKF(type, m, true);
       if (skf) { const a = anim(node, skf, { duration: (Number(m.dur) || .45) * 1000, delay: (Number(m.delay) || 0) * 1000, easing: EASE[m.ease] || 'ease-in', fill: 'forwards' }); a.onfinish = () => { node.classList.add('sd-hidden'); a.cancel(); done && done(); }; return; }
@@ -1582,7 +1584,7 @@
       if (/^tr-/.test(type)) { const c = (D.transitions || []).find(x => 'tr-' + x.key === type); if (c && FX2.TRANSITIONS[c.base]) base = { ...c, id: c.base }; }
       else if (/^gx-/.test(type) && FX2.TRANSITIONS[type.slice(3)]) base = { id: type.slice(3) };
       if (!base) return null;
-      return { id: base.id, dur: Number(m.dur) || Number(base.dur) || FX2.TRANSITIONS[base.id].dur || 1.1, ramp: base.ramp || m.ramp || 'smooth', color: base.color || rc0(sc.effectColor || '#ff5a1f'), origin: base.origin || [.5, .5],
+      return { id: base.id, dur: Number(m.dur) || Number(base.dur) || FX2.TRANSITIONS[base.id].dur || 1.1, ramp: base.ramp || m.ramp || 'smooth', color: base.color || rc0(sc.effectColor || UC('effects', '#ff5a1f', '#ff5a1f')), origin: base.origin || [.5, .5],
         angle: Number(base.angle ?? m.angle) || 0, intensity: Number(base.intensity ?? 1), blur: base.blur ?? (D.motion ? D.motion.blur !== false : true), seed: Number(base.seed) || 7 };
     }
     const gxFallback = type => { const id = /^tr-/.test(type) ? ((D.transitions || []).find(x => 'tr-' + x.key === type) || {}).base : type.slice(3); return (FX2 && FX2.TRANSITIONS[id] && FX2.TRANSITIONS[id].fb) || 'fade'; };

@@ -37,7 +37,7 @@ html.sb-potato .sbc{transition:none}`;
   let built = false, stats, spon;
   function build() {
     if (built || !document.body) return; built = true;
-    const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
+    const st = document.createElement('style'); st.textContent = (window.SBColours && window.SBColours.on ? window.SBColours.map(css) : css);      /* 1.5.5: your colours for the app's own layouts */ document.head.appendChild(st);
     stats = document.createElement('div'); stats.id = 'sbStats'; stats.className = 'sbc'; document.body.appendChild(stats);
     spon = document.createElement('div'); spon.id = 'sbSpon'; spon.className = 'sbc w-bottom'; document.body.appendChild(spon);
     fit(); addEventListener('resize', fit); addEventListener('sb:fit', fit);

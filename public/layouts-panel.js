@@ -209,5 +209,67 @@
     importFiles(out);
   });
 
+  
+  // ------------------------------------------------------------ 1.5.5: your colours for the app's own layouts
+  // Nine parts of the look (public/sb-colours.js); each family (Classic, Obsidian Glass) keeps its own set. A change shows
+  // in OBS a moment later: the server sends the layout out again in your colours.
+  const PRESETS = [
+    ['Crimson', { plates: '#2a0d12', backdrop: '#0c0406', edges: '#6b1a24', text: '#fff1f1', subtext: '#c99aa0', accent: '#ff4d5e', p1: '#ff2d47', p2: '#ffd1d6', effects: '#ff6a3d' }],
+    ['Ocean', { plates: '#0c2333', backdrop: '#03101a', edges: '#1f5a7a', text: '#eaf8ff', subtext: '#8fb6c9', accent: '#3fd0ff', p1: '#36e0c8', p2: '#3f8cff', effects: '#5fe3ff' }],
+    ['Emerald', { plates: '#0e2419', backdrop: '#030d08', edges: '#1f6b45', text: '#effff5', subtext: '#8fbfa4', accent: '#38e58a', p1: '#2fd17a', p2: '#e6f56a', effects: '#7dffb1' }],
+    ['Violet', { plates: '#1d1233', backdrop: '#08040f', edges: '#4d2f86', text: '#f5efff', subtext: '#a899c9', accent: '#b682ff', p1: '#ff5ccf', p2: '#7c6bff', effects: '#c77dff' }],
+    ['Sakura', { plates: '#fff0f4', backdrop: '#ffe3ea', edges: '#e7a7b8', text: '#3a1a24', subtext: '#9b6b79', accent: '#ff6f9a', p1: '#ff4f86', p2: '#7a8cff', effects: '#ffb3c8' }],
+    ['Mono', { plates: '#1a1a1a', backdrop: '#050505', edges: '#4a4a4a', text: '#ffffff', subtext: '#9a9a9a', accent: '#e6e6e6', p1: '#ffffff', p2: '#bdbdbd', effects: '#ffffff' }],
+  ];
+  let COL = null, fam = '', mineC = {}, saveT = 0;
+  const colBox = $('#layCols');
+  async function loadColours(keepFam) {
+    try { COL = await api('/api/layout-colours'); } catch (e) { return; }
+    const fams = Object.keys(COL.families);
+    if (!keepFam || !COL.families[fam]) fam = (P.store('layColFam') && COL.families[P.store('layColFam')]) ? P.store('layColFam') : (COL.live || fams[0]);
+    mineC = { ...(COL.families[fam].colours || {}) };
+    $('#layColFam').innerHTML = fams.map(f => `<button type="button" data-f="${esc(f)}" class="${f === fam ? 'on' : ''}" aria-pressed="${f === fam}">${esc(f)}${f === COL.live ? ' <small class="lay-live-dot" title="On stream now">●</small>' : ''}</button>`).join('');
+    drawColours();
+  }
+  function drawColours() {
+    if (!COL) return;
+    const base = COL.families[fam].base;
+    colBox.innerHTML = COL.roles.map(r => {
+      const v = mineC[r] || base[r], own = !!mineC[r];
+      return `<div class="lay-col${own ? ' own' : ''}" data-r="${r}">
+        <label><input type="color" value="${esc(v)}" data-r="${r}" aria-label="${esc(COL.labels[r])}"><span class="sw" style="background:${esc(v)}"></span>
+        <span class="t"><b>${esc(COL.labels[r])}</b><small>${own ? esc(v.toUpperCase()) : 'The layout’s own'}</small></span></label>
+        ${own ? `<button type="button" class="lay-col-x" data-x="${r}" title="Back to the layout’s ${esc(COL.labels[r].toLowerCase())} colour" aria-label="Back to the layout’s ${esc(COL.labels[r].toLowerCase())} colour">↺</button>` : ''}
+      </div>`;
+    }).join('');
+    $('#layColPresets').innerHTML = PRESETS.map(([n, c]) => `<button type="button" class="lay-chip" data-p="${esc(n)}" title="${esc(n)}"><span class="dots">${['plates', 'accent', 'p1', 'p2', 'text'].map(k => `<i style="background:${c[k]}"></i>`).join('')}</span>${esc(n)}</button>`).join('');
+    $('#layColReset').disabled = !Object.keys(mineC).length;
+  }
+  function saveColours(now) {
+    clearTimeout(saveT);
+    $('#layColState').textContent = 'Saving…';
+    const go = async () => {
+      try { const r = await api('/api/layout-colours', { method: 'POST', body: { family: fam, colours: mineC } }); mineC = { ...r.colours }; COL.families[fam].colours = mineC; $('#layColState').textContent = 'Saved. OBS shows it in a moment.'; drawColours(); }
+      catch (e) { $('#layColState').textContent = ''; toast(e.message, true); }
+    };
+    if (now) go(); else saveT = setTimeout(go, 450);
+  }
+  colBox.addEventListener('input', e => {
+    const i = e.target.closest('input[type=color]'); if (!i) return;
+    const r = i.dataset.r; mineC[r] = i.value; const row = i.closest('.lay-col');
+    row.classList.add('own'); row.querySelector('.sw').style.background = i.value; row.querySelector('small').textContent = i.value.toUpperCase();
+    saveColours(false);
+  });
+  colBox.addEventListener('change', e => { if (e.target.closest('input[type=color]')) saveColours(true); });
+  colBox.addEventListener('click', e => { const x = e.target.closest('[data-x]'); if (!x) return; delete mineC[x.dataset.x]; drawColours(); saveColours(true); });
+  $('#layColPresets').addEventListener('click', e => { const b = e.target.closest('[data-p]'); if (!b) return; const pr = PRESETS.find(([n]) => n === b.dataset.p); if (!pr) return; mineC = { ...pr[1] }; drawColours(); saveColours(true); toast(`${pr[0]} colours on ${fam}`); });
+  $('#layColFam').addEventListener('click', e => { const b = e.target.closest('[data-f]'); if (!b || b.dataset.f === fam) return; fam = b.dataset.f; P.store('layColFam', fam); mineC = { ...(COL.families[fam].colours || {}) }; $('#layColFam').querySelectorAll('[data-f]').forEach(x => { x.classList.toggle('on', x === b); x.setAttribute('aria-pressed', x === b); }); drawColours(); });
+  $('#layColReset').onclick = async () => {
+    if (!(await ask.confirm({ title: `Back to ${fam}’s own colours?`, text: 'All nine colours go back to how the layout comes.', ok: 'Reset colours' }))) return;
+    mineC = {}; drawColours(); saveColours(true);
+  };
+  window.addEventListener('beebo:tab', e => { if (e.detail && e.detail.name === 'layouts') loadColours(true); });
+  loadColours(false);
+
   render();
 })();

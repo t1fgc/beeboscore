@@ -4,7 +4,9 @@
 
 The **Layouts** tab brings in layouts other people made, and ones you make yourself. An imported layout goes in the **Layout** menu at the top of the app with the app's own, and OBS shows it the same way: same OBS link, same Update button.
 
-![The Layouts tab with two imported layouts](../images/panel-layouts.jpg)
+![The Layouts tab: the Colours card, importing a layout and two imported layouts](../images/panel-layouts.jpg)
+
+The **Colours** card at the top of the tab is for the app's own layouts (Classic and Obsidian Glass): see [your own colours](layouts.md#your-own-colours). It doesn't change layouts you import.
 
 ## Importing a layout
 

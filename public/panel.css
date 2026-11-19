@@ -1325,3 +1325,28 @@ kbd { font: 600 11px/1 ui-monospace, monospace; padding: 2px 5px; border: 1px so
 .lay-code code { background: none; border: 0; padding: 0; border-radius: 0; color: inherit; font: inherit; }
 .lacts a.btn { color: var(--text); }
 .lay-game select.f { width: auto; }
+
+/* ---------- 1.5.5: your colours for the app's own layouts (Layouts tab) ---------- */
+#layColCard h2 { align-items: center; }
+.lay-col-fam button small { color: var(--accent); font-size: 9px; vertical-align: 2px; margin-left: 2px; }
+.lay-cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 14px 0 12px; }
+@media (max-width: 760px) { .lay-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.lay-col { position: relative; display: flex; align-items: center; border: 1px solid var(--line); border-radius: 12px; background: var(--bg-2); }
+.lay-col label { flex: 1; display: flex; align-items: center; gap: 12px; padding: 10px 12px; cursor: pointer; min-width: 0; }
+.lay-col input[type=color] { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.lay-col label:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 12px; }
+.lay-col .sw { flex: none; width: 38px; height: 38px; border-radius: 9px; box-shadow: inset 0 0 0 1px rgba(255,255,255,.18), 0 2px 6px rgba(0,0,0,.35); }
+.lay-col .t { display: flex; flex-direction: column; min-width: 0; }
+.lay-col .t b { font-size: 14px; }
+.lay-col .t small { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.lay-col.own { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
+.lay-col-x { flex: none; margin-right: 8px; width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--muted); cursor: pointer; font-size: 15px; }
+.lay-col-x:hover { color: var(--text); }
+.lay-presets { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+.lay-presets .l { color: var(--muted); font-size: 12px; font-weight: 600; }
+.lay-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.lay-chip { display: inline-flex; align-items: center; gap: 7px; padding: 5px 10px 5px 6px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--text); font-size: 12px; font-weight: 600; cursor: pointer; }
+.lay-chip:hover { border-color: var(--line-2); }
+.lay-chip .dots { display: inline-flex; }
+.lay-chip .dots i { width: 12px; height: 12px; border-radius: 50%; margin-right: -3px; box-shadow: 0 0 0 1.5px var(--card); }
+.lay-col-state { margin: 0; }

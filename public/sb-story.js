@@ -94,7 +94,7 @@
 #sbReset.k-porc .seam{position:absolute;left:0;top:0;width:${W}px;height:${H}px}
 #sbReset.k-porc .seam path{fill:none;stroke:#c9a13b;stroke-width:3;stroke-linecap:round;filter:drop-shadow(0 0 4px rgba(201,161,59,.7))}
 `;
-  const st = document.createElement('style'); st.id = 'sb-story-css'; st.textContent = css; document.head.appendChild(st);
+  const st = document.createElement('style'); st.id = 'sb-story-css'; st.textContent = (window.SBColours && window.SBColours.on ? window.SBColours.map(css) : css);      /* 1.5.5: your colours for the app's own layouts */ document.head.appendChild(st);
   const root = document.createElement('div'); root.id = 'sbStory'; root.className = 'k-' + K; root.innerHTML = '<div class="strip"></div>'; document.body.appendChild(root);
   const strip = root.querySelector('.strip');
   const rs = document.createElement('div'); rs.id = 'sbReset'; rs.className = 'k-' + K; document.body.appendChild(rs);

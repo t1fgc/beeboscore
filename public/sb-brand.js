@@ -25,7 +25,7 @@
 html.sb-brand-sp #sbc .mt{bottom:92px}
 .sb-potato #sbbr *{transition:none!important}
 `;
-  const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
+  const st = document.createElement('style'); st.textContent = (window.SBColours && window.SBColours.on ? window.SBColours.map(css) : css); document.head.appendChild(st);
   const root = document.createElement('div'); root.id = 'sbbr'; document.body.appendChild(root);
   let B = null, key = '', rot = 0, rotT = 0;
   const splashUp = () => /\bsb-(vs|victory|bracket|comm)-on\b/.test(H.className) || H.classList.contains('sd-splash-on') || H.classList.contains('sb-comm-only')

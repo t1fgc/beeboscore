@@ -452,7 +452,13 @@
     <!-- ===================== LAYOUTS (1.5.1) ===================== -->
     <section class="tab" data-tab="layouts">
       <h1 class="pagetitle">Layouts</h1>
-      <p>Bring in a layout someone made, or one of your own. It goes in the <b>Layout</b> menu at the top with the app’s own, and OBS shows it the same way.</p>
+      <p>Give the app’s own layouts your colours, or bring in a layout someone made (or one of your own). An imported layout goes in the <b>Layout</b> menu at the top with the app’s own, and OBS shows it the same way.</p>
+      <div class="card" id="layColCard">
+        <h2>Colours <span class="spacer"></span><span class="seg lay-col-fam" id="layColFam" role="group" aria-label="Which look"></span></h2>
+        <p class="lead">Choose up to nine colours for the app’s own layouts. The bars, the lettering, the splashes and the effects all follow; the shapes and the moves stay the same. They apply to this look in every game.</p>
+        <div class="lay-cols" id="layCols"></div>
+        <div class="lay-presets"><span class="l">Ready-made</span><span class="lay-chips" id="layColPresets"></span><span class="spacer"></span><span class="hint lay-col-state" id="layColState" aria-live="polite"></span><button class="btn sm ghost" id="layColReset">Back to the layout’s colours</button></div>
+      </div>
       <div class="card up-card local-only" id="layImportCard">
         <h2>Import a layout</h2>
         <div class="drop up-drop" id="layDrop" tabindex="0" role="button" aria-label="Import a layout: drop it here, or press Enter to choose a .zip">
