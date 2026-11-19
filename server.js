@@ -2154,6 +2154,8 @@ setInterval(function(){if(!wsOk)look()},1500);setInterval(look,6000);
           bundled: fs.existsSync(path.join(BUNDLE_DIR, 'overlays', d.name, 'index.html')) && path.resolve(BUNDLE_DIR, 'overlays') !== path.resolve(OVERLAYS_DIR),
           builtIn: fs.existsSync(path.join(BUNDLE_DIR, 'overlays', d.name, 'index.html')),      // 1.5.1: one of the app's own (the Layouts tab lists the rest as yours)
           author: String(meta.author || '').slice(0, 60), imported: !!meta.imported,
+          // 1.5.6: a layout made in the layout maker keeps its whole-layout colours here (the look it started from, and yours)
+          palette: meta.palette && sbColours.BASE[meta.palette.look] ? { look: meta.palette.look, colours: sbColours.clean(meta.palette.colours) } : null, maker: !!meta.maker,
           modified: fs.statSync(path.join(dir, 'index.html')).mtimeMs,
           // a still of the player bars for the Layouts tab card (a few KB): the app's own looks ship one, any layout can carry its own thumb.webp / thumb.png
           thumb: !isEdited(d.name) && fs.existsSync(path.join(PUBLIC_DIR, 'thumbs', d.name + '.webp')) ? `/static/thumbs/${d.name}.webp?v=${APP_VERSION}`
@@ -2283,8 +2285,8 @@ setInterval(function(){if(!wsOk)look()},1500);setInterval(look,6000);
       if (meta && !mine) continue;                       // another layout already has that name
       fs.mkdirSync(dir, { recursive: true });
       writeJSON(path.join(dir, 'overlay.json'), { title: `${title} — ${FORMAT_LABELS[f]}`, game, family: title, format: f, base: name, auto: true, colors,
-        description: `${title}, drawn for ${FORMAT_LABELS[f]}: the format bar, splashes and moments, and the format info under each player bar. Change the look in the Layout Designer.` });
-      fs.writeFileSync(path.join(dir, 'index.html'), `<!-- BeeboScore: "${title} — ${FORMAT_LABELS[f]}" is the ${title} layout drawn for ${FORMAT_LABELS[f]}. It's made from that layout every time you save it in the Layout Designer — edit that one. -->\n`);
+        description: `${title}, drawn for ${FORMAT_LABELS[f]}: the format bar, splashes and moments, and the format info under each player bar. Change the look in the layout maker.` });
+      fs.writeFileSync(path.join(dir, 'index.html'), `<!-- BeeboScore: "${title} — ${FORMAT_LABELS[f]}" is the ${title} layout drawn for ${FORMAT_LABELS[f]}. It's made from that layout every time you save it in the layout maker — edit that one. -->\n`);
       made.push(vn);
     }
     return made;
@@ -2325,6 +2327,15 @@ setInterval(function(){if(!wsOk)look()},1500);setInterval(look,6000);
     const o = listOverlays().find(x => x.name === name);
     return o && o.builtIn && sbColours.BASE[o.family] ? o.family : '';
   }
+  // 1.5.6: the colours a layout goes out in — the app's own layouts take yours from the Layouts tab; one made in the layout
+  // maker takes the colours saved with it (a format version, those of the layout it's made from). { fam, mine } or null
+  function layoutPalette(name) {
+    const all = listOverlays(), o = all.find(x => x.name === name); if (!o) return null;
+    const fam = layoutColourFamily(name);
+    if (fam) { const mine = config.layoutColours && config.layoutColours[fam]; return mine && Object.keys(mine).length ? { fam, mine } : null; }
+    const pal = o.palette || (o.base && (all.find(x => x.name === o.base) || {}).palette);
+    return pal && Object.keys(pal.colours || {}).length ? { fam: pal.look, mine: pal.colours } : null;
+  }
   function injectOverlay(html, name, follow, mode = {}) {
     let base = `<base href="/o/${encodeURIComponent(mode.assets || name)}/">`;
     if ((mode.potato || liteFx()) && !mode.engines) { html = html.replace(/\/sb-design\.js\?v=/g, '/sb-design.js?lite&v='); base += '<script>window.__SB_LITE_BUNDLE=true</script>'; }
@@ -2335,7 +2346,7 @@ setInterval(function(){if(!wsOk)look()},1500);setInterval(look,6000);
     if (mode.framed || mode.instant || mode.potato) base += `<script>${mode.framed ? 'window.__SB_FRAMED=true;' : ''}${mode.instant ? "window.__SB_INSTANT=true;document.documentElement.classList.add('sb-instant');" : ''}${mode.soft ? 'window.__SB_SOFT=true;' : ''}${mode.potato ? "window.__SB_POTATO=true;document.documentElement.classList.add('sb-potato');" : ''}</script>`;
     // 1.5.5: your colours for the app's own layouts — the design goes out recoloured, and the page gets the colours so
     // what its scripts draw (FullVS, the game formats, the engine's sparks and glows) follows too
-    { const fam = layoutColourFamily(name), mine = fam && config.layoutColours && config.layoutColours[fam];
+    { const pal = layoutPalette(name), fam = pal && pal.fam, mine = pal && pal.mine;
       if (mine && Object.keys(mine).length) {
         html = html.replace(/(<script id="sb-design" type="application\/json">)([\s\S]*?)(<\/script>)/, (m, a, j, b) => {
           try { return a + JSON.stringify(sbColours.recolourDesign(JSON.parse(j), fam, mine)).replace(/</g, '\\u003c') + b; } catch { return m; }
@@ -3142,7 +3153,7 @@ iframe{transition:opacity .45s ease}iframe.next{opacity:0;pointer-events:none}if
         const f = resolveInside(overlayDir(name), rest.join('/') || 'index.html');
         if (!f) return send(res, 403, 'Forbidden', 'text/plain; charset=utf-8');
         // 1.5.5: the pictures drawn for the app's own layouts (the Top 8's cracks and light, say) follow your colours too
-        if (/\.svg$/i.test(f)) { const fam = layoutColourFamily(name), mine = fam && config.layoutColours && config.layoutColours[fam];
+        if (/\.svg$/i.test(f)) { const pal = layoutPalette(name), fam = pal && pal.fam, mine = pal && pal.mine;
           if (mine && Object.keys(mine).length) return fs.readFile(f, 'utf8', (err, svg) => { if (err) return send(res, 404, 'Not found', 'text/plain; charset=utf-8'); res.writeHead(200, { 'Content-Type': 'image/svg+xml', 'Cache-Control': 'no-store' }); res.end(sbColours.make(fam, mine).map(svg)); }); }
         return serveFile(req, res, f, html => injectOverlay(html, name, false));
       }
@@ -3889,8 +3900,11 @@ iframe{transition:opacity .45s ease}iframe.next{opacity:0;pointer-events:none}if
         const name = safeName((await readJSONBody(req)).name);
         if (isBuiltIn(name)) return fail(res, 400, 'The app’s own layouts can’t be removed.');
         if (!name || !fs.existsSync(overlayDir(name))) return fail(res, 404, 'Layout not found.');
-        if (config.activeOverlay === name) { const f = fallbackLayout(name); if (f) setActive(f); }
+        // 1.5.6: a layout made in the layout maker has a version for each game format (made from it when saved): they go with it
+        const kids = listOverlays().filter(o => o.base === name && readJSON(path.join(overlayDir(o.name), 'overlay.json'), {}).auto);
+        if (config.activeOverlay === name || kids.some(k => k.name === config.activeOverlay)) { const f = fallbackLayout(name); if (f) setActive(f); }
         const to = retireLayout(name);
+        for (const k of kids) { try { fs.rmSync(overlayDir(k.name), { recursive: true, force: true }); } catch {} }
         overlaysChanged();
         return ok(res, { ok: true, kept: to ? path.relative(APP_DIR, to).split(path.sep).join('/') : '', active: config.activeOverlay });
       }
@@ -4217,10 +4231,21 @@ iframe{transition:opacity .45s ease}iframe.next{opacity:0;pointer-events:none}if
         return ok(res, { list, folder: BAKES_DIR });
       }
       if (p === '/api/bakes/open' && method === 'POST') { if (localOnly()) return; fs.mkdirSync(BAKES_DIR, { recursive: true }); if (opts.openPath) opts.openPath(BAKES_DIR); return ok(res, { folder: BAKES_DIR }); }
+      // 1.5.6: the layout maker opens a layout: its design, and the colours it goes out in. The app's own layouts open as a
+      // starting point (the maker saves them as a new layout of yours); the colours are those you gave that look
+      if (p === '/api/designs/get' && method === 'GET') {
+        const name = safeName(url.searchParams.get('name') || ''), o = listOverlays().find(x => x.name === name);
+        if (!o || o.base) return fail(res, 404, 'There’s no layout by that name.');
+        const d = readJSON(path.join(overlayDir(name), 'design.json'), null);
+        if (!d || !d.scenes) return fail(res, 409, 'This layout wasn’t made with the layout maker, so it can’t be opened in it.');
+        const look = o.builtIn ? (sbColours.BASE[o.family] ? o.family : '') : (o.palette ? o.palette.look : '');
+        const colours = o.builtIn ? ((config.layoutColours && config.layoutColours[o.family]) || {}) : (o.palette ? o.palette.colours : {});
+        return ok(res, { name, title: o.title, game: o.game, builtIn: o.builtIn, design: d, palette: look ? { look, colours } : null, description: o.description });
+      }
       const dm = p.match(/^\/api\/designs\/([^/]+)$/);
       if (dm && method === 'GET') {
         const name = safeName(dm[1]), f = path.join(overlayDir(name), 'design.json');
-        if (!fs.existsSync(f)) return fail(res, 404, 'That layout wasn’t made with the Layout Designer.');
+        if (!fs.existsSync(f)) return fail(res, 404, 'That layout wasn’t made with the layout maker.');
         const preset = fs.existsSync(path.join(BUNDLE_DIR, 'overlays', name, 'index.html')) && path.resolve(BUNDLE_DIR, 'overlays') !== path.resolve(OVERLAYS_DIR);   // 1.12.8: the Designer edits a copy of a preset
         return ok(res, { name, design: readJSON(f, {}), preset });
       }
@@ -4234,6 +4259,9 @@ iframe{transition:opacity .45s ease}iframe.next{opacity:0;pointer-events:none}if
         // the same save sent twice (a browser can resend a request when a connection drops): answer it like the first time
         const nonce = typeof b.nonce === 'string' ? b.nonce.slice(0, 40) : '';
         if (nonce && designNonces.has(nonce)) return ok(res, designNonces.get(nonce));
+        // 1.5.7: one of the app's own layouts' names (imports were already turned away; a save could take it)
+        // (run from source with no data folder, yours sit beside the app's own: one the layout maker made is still yours to save over)
+        if (isBuiltIn(name) && !readJSON(path.join(overlayDir(name), 'overlay.json'), {}).maker) return send(res, 409, { error: `“${name}” is the name of one of the app’s own layouts. Give yours another name.`, builtin: true });
         const dir = overlayDir(name), exists = fs.existsSync(path.join(dir, 'index.html'));
         const isDesign = fs.existsSync(path.join(dir, 'design.json'));
         if (exists && (!b.overwrite || !isDesign)) return send(res, 409, { error: isDesign ? 'A layout with that name already exists.' : `A layout called “${name}” already exists.`, designer: isDesign });
@@ -4273,10 +4301,10 @@ iframe{transition:opacity .45s ease}iframe.next{opacity:0;pointer-events:none}if
 <meta name="sb-vs" content="off">
 <meta name="sb-victory" content="off">
 <meta name="sb-format" content="splash">${lookMeta(d.look)}
-<meta name="generator" content="BeeboScore Layout Designer">
+<meta name="generator" content="BeeboScore layout maker">
 <title>${title.replace(/[<>&]/g, '')}</title>
-<!-- Made with the BeeboScore Layout Designer. Open it from the Layouts tab (Edit design) to change it;
-     editing this file by hand works too, but the designer won't see those changes. -->
+<!-- Made with the BeeboScore layout maker. Open it from the Layouts tab (Edit) to change it;
+     editing this file by hand works too, but the layout maker won't see those changes. -->
 <style>html,body{margin:0;width:${sw}px;height:${sh}px;overflow:hidden;background:transparent}</style>
 </head>
 <body>
@@ -4294,7 +4322,11 @@ iframe{transition:opacity .45s ease}iframe.next{opacity:0;pointer-events:none}if
           }
         } catch {}
         writeJSON(path.join(dir, 'design.json'), d);
-        writeJSON(path.join(dir, 'overlay.json'), { title, game, family: title, description: 'Made with the Layout Designer.', colors, imported: new Date().toISOString() });      // 1.5.3: one of yours (the Layouts tab lists it)
+        // 1.5.6: the layout maker sends the look it started from and the whole-layout colours, kept with the layout (applied as it's served)
+        const pal = b.palette && sbColours.BASE[b.palette.look] ? { look: b.palette.look, colours: sbColours.clean(b.palette.colours) } : null;
+        const before = readJSON(path.join(dir, 'overlay.json'), {});
+        writeJSON(path.join(dir, 'overlay.json'), { title, game, family: title, description: String(b.description || before.description || 'Made with the layout maker.').slice(0, 200), colors,
+          ...(pal ? { palette: pal } : {}), maker: true, imported: before.imported || new Date().toISOString() });      // 1.5.3: one of yours (the Layouts tab lists it)
         let variants = [];
         try { variants = writeVariants(name, { title, game, colors, on: d.formatVersions !== false && !(d.size && (Number(d.size.w) !== 1920 || Number(d.size.h) !== 1080)) }); } catch (e) { console.error('format versions:', e.message); }
         overlaysChanged();

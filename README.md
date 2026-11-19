@@ -83,11 +83,11 @@ Give Classic or Obsidian Glass up to nine colours of your own on the **Layouts**
 
 ### Your own layouts
 
-![The Layouts tab: the Colours card, importing a layout and two imported layouts](docs/images/panel-layouts.jpg)
+![The layout maker: pieces to drag on the left, the layout in the middle, the piece's colours and lettering on the right](docs/images/layout-maker.jpg)
 
-Got a layout from a creator, or made one yourself? Drop its `.zip`, its folder or its page on the **Layouts** tab. It goes in the **Layout** menu with the app's own and shows in OBS the same way. Each one can be previewed with the scoreboard as it is now, put on stream, shared as a `.zip`, or removed (a copy is kept).
+Make your own layout by dragging pieces onto the screen in the **layout maker** (Layouts tab › **Make your own**). Start from Classic, Obsidian Glass or an empty screen, then add player bars, the round, the commentators, text, boxes and pictures. Move them with snapping, resize them, and change their colours and lettering from a simple side panel. The VS, Victory and Top 8 screens come with it, and the whole layout's colours work the same way as the Colours card. **Save** puts it in the **Layout** menu, with a version for each game format.
 
-Making one takes a web page and a few `data-sb` attributes: `<span data-sb="p1.name"></span>` shows player 1's name, and BeeboScore fills it in every time you press **Update**. **Download the starter layout** in the tab for a finished scoreboard with every part explained, and see [your own layouts](docs/guide/your-own-layouts.md) in the guide.
+Got a layout from a creator? Drop its `.zip`, its folder or its page on the **Layouts** tab. It goes in the **Layout** menu with the app's own and shows in OBS the same way. Each one can be previewed with the scoreboard as it is, shared as a `.zip` or removed. Creators who write HTML can still build one by hand with `data-sb` attributes and the starter layout. See [your own layouts](docs/guide/your-own-layouts.md) in the guide.
 
 ### Game formats
 

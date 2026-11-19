@@ -484,13 +484,25 @@
       </div>
       <div class="card local-only" id="layMakeCard">
         <h2>Make your own</h2>
-        <p class="lead">A layout is a web page the size of your stream (1920 × 1080). Mark the parts that change with <code>data-sb</code>, and BeeboScore fills them in every time you press <b>Update</b>. You don’t add any script yourself.</p>
-<pre class="lay-code"><code>&lt;span data-sb="p1.name"&gt;&lt;/span&gt;            <i>the player’s name</i>
+        <p class="lead">Build a layout by dragging pieces onto the screen. Start from Classic or Obsidian Glass, move and resize anything, and change its colours and lettering. The VS, Victory and Top 8 screens come with it, and it goes in the <b>Layout</b> menu when you save.</p>
+        <div class="lay-make">
+          <label class="lay-game"><span class="l">Game</span><select id="layMakeGame" class="f"></select></label>
+          <div class="lay-make-starts" id="layMakeStarts">
+            <button type="button" class="lay-start" data-make="Classic"><b>Start from Classic</b><small>Slate bars, red and blue for the players, gold for the win.</small></button>
+            <button type="button" class="lay-start" data-make="Obsidian Glass"><b>Start from Obsidian Glass</b><small>Black glass and antique gold that cracks as a player falls behind.</small></button>
+            <button type="button" class="lay-start" data-make="Empty"><b>Start empty</b><small>Nothing on the scoreboard yet: drag on only what you want.</small></button>
+          </div>
+        </div>
+        <p class="hint">It opens the layout maker. Layouts you made there have an <b>Edit</b> button above.</p>
+        <details class="lay-ref lay-hand">
+          <summary>Build one by hand instead (for creators who write HTML)</summary>
+          <p>A layout is a web page the size of your stream (1920 × 1080). Mark the parts that change with <code>data-sb</code>, and BeeboScore fills them in every time you press <b>Update</b>. You don’t add any script yourself.</p>
+          <pre class="lay-code"><code>&lt;span data-sb="p1.name"&gt;&lt;/span&gt;            <i>the player’s name</i>
 &lt;b data-sb="p1.score"&gt;&lt;/b&gt;                <i>their score</i>
 &lt;span data-sb="{round} | {event}"&gt;&lt;/span&gt;  <i>several fields at once</i>
 &lt;i data-sb-show="p1.loser"&gt;[L]&lt;/i&gt;        <i>only there in losers</i></code></pre>
-        <div class="inline lay-make-btns"><a class="btn primary" id="layStarter" href="/api/layouts/starter.zip" download>Download the starter layout</a><span class="hint">A finished scoreboard with every part explained inside. Change it, zip the folder and import it here.</span></div>
-        <details class="lay-ref">
+          <div class="inline lay-make-btns"><a class="btn" id="layStarter" href="/api/layouts/starter.zip" download>Download the starter layout</a><span class="hint">A finished scoreboard with every part explained inside. Change it, zip the folder and import it here.</span></div>
+          <details class="lay-ref lay-ref-in">
           <summary>Every binding and field</summary>
           <table>
             <tr><th>Binding</th><th>What it does</th></tr>
@@ -507,6 +519,7 @@
           <p><b>Classes on <code>&lt;html&gt;</code>:</b> <code>sb-p1-winner</code>, <code>sb-p2-winner</code>, <code>sb-p1-matchpoint</code>, <code>sb-p2-matchpoint</code>, <code>sb-final-game</code>, <code>sb-p1-loser</code>, <code>sb-p2-loser</code> and <code>sb-gf</code>. An element whose value just changed gets <code>sb-changed</code> for a moment.</p>
           <p><b>Scripting:</b> <code>addEventListener('scoreboard', e =&gt; e.detail)</code> gives the whole scoreboard on every update; <code>scoreboard:scored</code> and <code>scoreboard:set-over</code> fire at those moments.</p>
           <p><b>Details:</b> an <code>overlay.json</code> next to the page can give the layout a <code>title</code>, <code>author</code>, <code>description</code> and <code>game</code>; a <code>thumb.png</code> becomes its picture here.</p>
+        </details>
         </details>
       </div>
     </section>
