@@ -39,18 +39,6 @@ Only click **Run anyway** on a copy you downloaded from this repository's [Relea
 
 The app keeps everything it saves in a **`BeeboScore Lite Data`** folder next to the exe (the name it got in 1.5.0, when the app was called BeeboScore Lite). To move it to another PC, move the exe and that folder together.
 
-### Coming from BeeboScore 1.4.0?
-
-Open **Settings → Check for updates** in 1.4.0 and it fetches the latest version for you. After **Restart & update**:
-
-- BeeboScore copies your players, pictures, settings and exports from `BeeboScore Data` into its own `BeeboScore Lite Data` folder. The old folder is left as it was.
-- The first-time setup opens once, so you can pick your game's layout.
-- **Sign in to start.gg again** (Bracket tab). Sign-ins are locked to the app that made them, so the new version can't read 1.4.0's.
-- The OBS link stays the same (`http://localhost:3300/overlay`), so nothing changes in OBS.
-- The old exe goes to the Recycle Bin.
-- Ember, Porcelain and layouts you made in the Overlay maker aren't built in any more (each game has its own **Classic** layout), but you can bring them back: drop their folder from `BeeboScore Data\overlays` into the **Layouts** tab.
-- There's a new Stream Deck plugin, **BeeboScore**. Install it from **Settings → Stream Deck**, then remove the old *BeeboScore Prototype* plugin in Stream Deck.
-
 ---
 
 ## What's in it
