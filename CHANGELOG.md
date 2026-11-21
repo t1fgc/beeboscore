@@ -1,5 +1,75 @@
 # Changelog
 
+## 1.5.11
+
+### BeeboScore 1.5.11
+- Obsidian Glass on Tekken 8: the round counters show through the player bars whole.
+- In a light colour set (like Sakura), the lettering on the VS, Victory, Top 8, bracket, standings and game-format screens is easy to read.
+
+### Fixed
+- **Obsidian Glass, Tekken 8:** the cut-outs for the game's round counters sat a little high, and on Player 2's side a little to the left, so the bar covered the bottom-left of each counter. Each side's cut-outs are now where the game draws its counters, a little larger than the counter's rim.
+- **Faint lettering in a light colour set.** Lettering drawn in a pale shade of a colour (a gold highlight, a cream line, the effect colour) came out nearly white on the light plates. On Obsidian Glass, the event line, the **VICTORY** title, the winner's team, score and **def.** line, the **TOP 8** title and the bracket's names and round names faded out; on Classic, the outline of the **8** and the score on the Victory screen. On the full-screen VS, the small line over each name and the runback in the strip below were nearly invisible, and on the game-format splashes so were the event over the title and each team's line. All of these are now a deeper shade of their colour. An empty picture box's initial, which sits on black, is lightened instead. Dark colour sets and the layouts' own colours look exactly as before.
+
+### For developers
+- `public/sb-colours.js`: on a light look (your lettering colour dark, your plates or splash background light), `make()` gives `light`, `ink(str, need)` (your colours, then lettering deepened towards your lettering colour until it stands out from the lighter of your plates and splash background by `need`: 3.5 for big lettering, 4.5 for small) and `deepen(str, need)` (the same without recolouring, for a team's colour). What `ink()` makes is never moved again by `map()`. `recolourDesign()` deepens lettering on every screen but the scoreboard: a text piece's colour and gradient-lettering colours, a neon tube's colour, and a bracket's or a list's lettering colours. A picture box's initial is lightened against its `#111` box.
+- `public/sb-fullvs.js`, `public/sb-story.js`, `public/sb-format.js`: the small lettering uses `SBColours.ink()` / `deepen()`. `public/sb-design.js`: on a light look a neon tube's core is its own colour, not whitened.
+- `overlays/tekken8-obsidian` (version 5): each bar's `holes` measured from the game's round counters (they aren't a mirror image), y 54px, radius 14.5px.
+- Tests: `obsidian.test.mjs` checks the counters' cut-outs on both sides; `colours.test.mjs` checks that every screen's lettering stands out in Sakura, that the scoreboard and the dark sets are untouched.
+
+## 1.5.10
+
+### BeeboScore 1.5.10
+- The sets sections of the player bars look right in every colour set, on Classic and Obsidian Glass.
+- At the end of a set, the winner's set pips stay lit on Street Fighter 6, Avatar Legends and Fatal Fury.
+
+### Fixed
+- **Obsidian Glass, Street Fighter 6:** the slot behind the set pips stayed black whatever colours you chose, so in a light set (Sakura) it was a black hole in a pale box and the unlit pips looked filled in. It follows the bars' colour now, as Classic's does.
+- **The winner's set pips went dark at the end of a set** on Street Fighter 6, Avatar Legends and Fatal Fury (Classic and Obsidian Glass): dark pips in a dark set box looked unlit, or vanished. The dark win colour is for pips on the winner's own plate, which lights up (Tekken 8's); pips in a box of their own keep the player's colour.
+- **Classic, Fatal Fury:** in a light colour set the bars' hard shadow turned pale while the set boxes' stayed black. Both are black now, as on Obsidian Glass.
+
+### For developers
+- `public/sb-design.js` (`drawPips`): `winColor` only when the pips sit on a bar that has lit up for the win (`groundOf()` finds it); otherwise `onColor`.
+- `overlays/sf6-obsidian` (version 4): the set wells are `#030304`, one of the bars' colours. `overlays/fatalfury-default` (version 3): the bars' drop shadows are `#000000`, like the set boxes'.
+- Tests: `colours.test.mjs` checks every scoreboard: pure black only for drop shadows, and every drop shadow black.
+
+## 1.5.9
+
+### BeeboScore 1.5.9
+- Obsidian Glass has a new look for all four games.
+
+### Changed
+- **Obsidian Glass (Tekken 8, Street Fighter 6, Avatar Legends, Fatal Fury)** has a new design: black obsidian glass and antique gold, with the bars where Classic has them. Cracks spread from the score as a player falls behind and a comeback mends them, embers rise off a plate on a winning streak, and the loser's plate shatters like glass at the end of the set. New Victory, Top 8, bracket and standings screens; on Tekken 8 the sets won show as diamonds by the word **SET**. The full-screen VS and the game-format splashes are as before. Updating swaps it in by itself, unless you've changed the layout's files by hand.
+- **Your own colours** work on the new Obsidian Glass. Its two players share the gold, so **Player 1** and **Player 2** start as the accent; pick one and it colours that player's own pieces (the bar, the score box, the set pips). Classic's colours work as before.
+- The **Crew Battle** version of Obsidian Glass says what it does: knockouts shatter like glass.
+
+### For developers
+- `overlays/<game>-obsidian`: a new `design.json`, `index.html` and pictures, each linking only to its own folder, with no sound. Obsidian Glass is version 4 on Tekken 8 and 3 on the others; Tekken 8's format versions are version 2.
+- `tools/make-obsidian.js` is gone: Obsidian Glass isn't built from Classic any more (running it would have put the old look back).
+- `public/sb-colours.js`: Obsidian Glass's nine colours and every colour of the new layouts; `SIDED` families colour a player's own pieces (a piece's `side`, or a name that starts 1P / 2P) with that player's colour, falling back to the accent.
+- Tests: `test/layouts/obsidian.test.mjs` checks the new layouts (their screens, the glass effects, no sound, pictures in their own folder, the page matching `design.json`); `colours.test.mjs` checks the player colours.
+
+## 1.5.8
+
+### BeeboScore 1.5.8
+- The player bars are mirror images of each other: the score box, the set pips and the name sit the same way on both sides.
+- Obsidian Glass for Tekken 8 shows the sets won as small diamonds that light up, like the old Ember layout.
+
+### Changed
+- **Obsidian Glass (Tekken 8):** the set pips are small diamonds instead of bars. A set won lights its diamond with a glint and a soft glow in that player's colour (gold for Player 1, silver for Player 2, or your own colours). The match-point diamond still pulses, and the format versions (Crew Battle, League…) have them too.
+
+### Fixed
+- **Player 2's set pips sat at the wrong end of their space.** Player 1's were beside the score box and Player 2's at the far end, 32 px from where a mirror image would put them (Tekken 8, Classic and Obsidian Glass). Both now start beside the score box.
+- **The slanted score box leaned the same way on both sides** (Tekken 8 and Street Fighter 6). Player 2's now leans the other way, like the rest of the bar.
+- **Street Fighter 6's slanted set pips** leaned the same way on both sides. Player 2's now lean like the frame around them.
+- **Upright names sat closer to Player 2's score box** than to Player 1's (by 6 to 8 px on the Classic layouts), because of room kept for slanted lettering they don't have.
+- The round cut-outs on the Tekken 8 bars stay where they are: they line up with the game's own round markers, which aren't quite a mirror image.
+
+### For developers
+- `public/sb-design.js`: a bar with `flip` mirrors its score box; upright bar names get even padding; on a right-to-left pips row (`side: 2`) `left` / `right` are where they look (a row-reverse flipped `justify-content`), and slanted pip shapes are mirrored (the still preview too).
+- New pips option `gem`: a won pip gets a light-to-deep gradient, a pale edge and a glow in its own colour (not on the winner's gold plate).
+- `tools/make-obsidian.js`: Tekken 8's pips become `pip: 'diamond'`, `ratio: 1`, `gap: 3`, `h: 16` (same middle), `gem: true`. Run it again after changing a Classic layout. Obsidian Glass (Tekken 8) is now version 3.
+- Tests: `test/layouts/obsidian.test.mjs` checks the pips by their middle and that Tekken 8's are gem diamonds.
+
 ## 1.5.7
 
 ### BeeboScore 1.5.7

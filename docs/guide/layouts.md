@@ -12,7 +12,7 @@ Layouts you import (or make) on the **Layouts** tab sit in the same menu, under 
 | **Street Fighter 6** | Classic (`sf6-default`) | Along the top, above the health bars: slanted plates, a slanted set box |
 | **Avatar Legends** | Classic (`avatar-default`) | Along the top, above the health bars: Art Deco plates, a round window for each lamp |
 | **Fatal Fury: City of the Wolves** | Classic (`fatalfury-default`) | Along the top, above the health bars: comic-book plates and a burst for the set count |
-| **Every game** | Obsidian Glass (`tekken8-obsidian`, `sf6-obsidian`, `avatar-obsidian`, `fatalfury-obsidian`) | In exactly the same places as that game's Classic, in black glass and antique gold |
+| **Every game** | Obsidian Glass (`tekken8-obsidian`, `sf6-obsidian`, `avatar-obsidian`, `fatalfury-obsidian`) | With the bars where that game's Classic has them, in black obsidian glass and antique gold |
 
 | Tekken 8 | Street Fighter 6 |
 |---|---|
@@ -22,7 +22,7 @@ Layouts you import (or make) on the **Layouts** tab sit in the same menu, under 
 
 ### Obsidian Glass
 
-Black glass and antique gold, built from each game's Classic so it sits in exactly the same places. The lettering is italic, a player's plate cracks as they fall behind (a comeback mends it in gold), heat builds on a streak, and at the end of the set the loser's plate shatters while the winner's turns gold. It moves with a little overshoot. Its own VS, Victory, Top 8, bracket and standings screens are in the same glass with gold embers, and the game-format splashes, FullVS and GlassVS wear it too. Tekken 8's Obsidian Glass has a version for each game format, like Classic.
+Black obsidian glass and antique gold, with the bars where each game's Classic has them. The lettering is italic, cracks spread from the score as a player falls behind (a comeback mends them), embers rise off a plate on a winning streak, and at the end of the set the loser's plate shatters like glass. It moves with a snap and a little overshoot. The VS and Victory splashes are full-screen dark glass and gold, its own Top 8, bracket and standings screens are in the same glass, and the game-format splashes wear it too. On Tekken 8 the sets won show as diamonds by the word SET, and Tekken 8's Obsidian Glass has a version for each game format, like Classic.
 
 When **Follow the game** is on, changing the game keeps the look: Obsidian Glass on Tekken 8 becomes Obsidian Glass on Street Fighter 6.
 
@@ -48,7 +48,7 @@ The **Colours** card at the top of the **Layouts** tab recolours the app's own l
 | **Player 2** | 2P's colour, the same way |
 | **Effects** | Particles, sparks, flashes, glows, embers and the moves' trails |
 
-Only the parts you change move; every shade of a part moves with it, so a bar's darker edge stays darker and a glow stays a glow. The shapes, the lettering style and the moves stay the same, so Classic still looks like Classic and Obsidian Glass still cracks and shatters. Choose a dark **Lettering** colour and the white lettering turns into it, so a light set like Sakura still reads.
+Only the parts you change move; every shade of a part moves with it, so a bar's darker edge stays darker and a glow stays a glow. The shapes, the lettering style and the moves stay the same, so Classic still looks like Classic and Obsidian Glass still cracks and shatters. Choose a dark **Lettering** colour and the white lettering turns into it, so a light set like Sakura still reads. On the full-screen screens (VS, Victory, Top 8, the bracket, the standings and the game-format splashes), lettering in a pale shade, like a gold title or a cream line, is drawn a deeper shade so it stands out from the light plates too.
 
 - **Ready-made** gives you six full sets to start from: Crimson, Ocean, Emerald, Violet, Sakura and Mono. Pick one, then change any part you like.
 - A part you've changed has a dot and its own **↺** to put just that part back. **Back to the layout's colours** puts all nine back.

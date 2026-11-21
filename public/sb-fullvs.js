@@ -23,6 +23,9 @@
     : { a: '#e0a93b', b: '#f6dc96', faceL: 'linear-gradient(160deg,#2b2112,#100c06 55%,#060504)', faceR: 'linear-gradient(200deg,#22190a,#0d0b07 55%,#040408)', plate: 'linear-gradient(180deg,rgba(42,38,30,.94),rgba(11,10,8,.97))', plateEdge: '#e0a93b', name: 'linear-gradient(180deg,#fff,#f3ede0 45%,#b9ad92)', small: '#f0c766', vs: 'linear-gradient(180deg,#fff,#f2ebdb 40%,#d4c7a6 55%,#e0a93b 80%,#f6dc96)', vsGlow: 'rgba(224,169,59,.6)', weld: ['#e0a93b', '#ffffff', '#f6dc96'], ghost: 'rgba(255,255,255,.05)', round: 'rgba(8,8,12,.92)', roundInk: '#f8f3e6', chip: 'linear-gradient(135deg,rgba(255,255,255,.85),rgba(240,199,102,.55) 45%,rgba(40,30,10,.7))' };
   // 1.5.5: your colours for the app's own layouts (public/sb-colours.js)
   if (window.SBColours && window.SBColours.on) for (const k of Object.keys(C)) C[k] = Array.isArray(C[k]) ? C[k].map(v => window.SBColours.map(v)) : window.SBColours.map(C[k]);
+  // 1.5.11: the small line over each name is a pale gold: on a light look it's deepened so it still reads on the light plate
+  const INK = (v, n) => (window.SBColours && window.SBColours.on && window.SBColours.ink ? window.SBColours.ink(v, n) : v);
+  C.smallInk = INK(C.small, 4.5); C.bInk = INK(C.b, 4.5);
   const css = `
 #sbv{position:absolute;left:0;top:0;width:${W}px;height:${H}px;z-index:9500;pointer-events:none;display:none;overflow:hidden;contain:strict}
 #sbv.on{display:block}
@@ -47,8 +50,8 @@
 #sbv .plate{position:absolute;top:850px;height:150px;width:700px;display:flex;flex-direction:column;justify-content:center;padding:0 46px;box-sizing:border-box;background:${C.plate};border-top:3px solid ${C.plateEdge};box-shadow:0 18px 40px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.12)}
 #sbv #vL .plate{left:40px;clip-path:polygon(0 0,100% 0,calc(100% - 46px) 100%,0 100%)}
 #sbv #vR .plate{right:40px;text-align:right;align-items:flex-end;clip-path:polygon(46px 0,100% 0,100% 100%,0 100%);border-top-color:${PORC ? C.plateEdge : C.b}}
-#sbv .plate small{font:700 24px/1.1 'Chakra Petch',sans-serif;letter-spacing:.22em;color:${C.small};text-transform:uppercase;white-space:nowrap}
-#sbv #vR .plate small{color:${PORC ? C.small : C.b}}
+#sbv .plate small{font:700 24px/1.1 'Chakra Petch',sans-serif;letter-spacing:.22em;color:${C.smallInk};text-transform:uppercase;white-space:nowrap}
+#sbv #vR .plate small{color:${PORC ? C.smallInk : C.bInk}}
 #sbv .plate b{display:block;max-width:610px;font:800 92px/1.02 'Saira Condensed',sans-serif;font-style:italic;text-transform:uppercase;letter-spacing:1px;white-space:nowrap;overflow:hidden;
   background:${C.name};-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;padding-right:.08em}
 #sbv .weld{position:absolute;left:${(SX0 + SX1) / 2 - SEAM / 2}px;top:${H / 2}px;width:${SEAM}px;height:90px;margin-top:-45px;transform-origin:50% 50%;transform:rotate(-${ANG}deg) scaleX(0);opacity:0;will-change:transform,opacity;

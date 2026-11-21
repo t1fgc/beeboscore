@@ -2,13 +2,13 @@
   "title": "Obsidian Glass",
   "game": "Tekken 8",
   "gen": 2,
-  "version": 2,
+  "version": 5,
   "family": "Obsidian Glass",
   "order": 1,
   "colors": [
-    "#100f0c",
-    "#e3a536",
-    "#b9c0ca"
+    "#050507",
+    "#e0a93b",
+    "#f6dc96"
   ],
-  "description": "Black glass and antique gold for Tekken 8, along the top, between the health bars and round counters and clear of the timer, in the same places as Classic. Italic lettering, plates that crack as a player falls behind and shatter on the loser, gold for the winner. Its own VS, Victory, Top 8, bracket and standings screens in the same glass."
+  "description": "Black obsidian glass and antique gold, with the bars where Classic has them. Cracks spread from the score as a player falls behind and a comeback mends them, embers rise off a plate on a winning streak, and the loser's plate shatters like glass at the end of the set. Full-screen VS and Victory in dark glass and gold, and its own Top 8, bracket and standings screens."
 }

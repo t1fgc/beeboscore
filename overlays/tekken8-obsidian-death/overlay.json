@@ -6,10 +6,10 @@
   "base": "tekken8-obsidian",
   "description": "Lives on the player bars, every lost life breaks on screen, survivors along the bottom, the final duel.",
   "colors": [
-    "#100f0c",
-    "#e3a536",
-    "#b9c0ca"
+    "#050507",
+    "#e0a93b",
+    "#f6dc96"
   ],
-  "version": 1,
+  "version": 2,
   "gen": 2
 }

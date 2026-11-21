@@ -217,12 +217,13 @@
         body.innerHTML = `<div class="sd-who" style="${two ? 'align-items:flex-end' : ''}"><div class="sd-l1" style="gap:${h * .12}px;${two ? 'flex-direction:row-reverse' : ''}">`
           + `<img class="sd-flag" alt="" style="width:${h * .48}px;height:${h * .32}px"><span class="sd-team"></span><span class="sd-name"></span><span class="sd-ltag">L</span></div>`
           + `<div class="sd-l2" style="font-size:${Math.max(9, h * .17)}px;gap:${h * .12}px;${two ? 'flex-direction:row-reverse' : ''}"><span class="sd-pro"></span><span class="sd-status"></span></div></div>`
-          + `<div class="sd-score" style="width:${h * .98}px;height:${h * .72}px"><svg viewBox="0 0 100 72" preserveAspectRatio="none"><defs>${svgGrad(el.accent.type === 'linear' ? el.accent : { ...el.accent, colors: [cols(el.accent)[0], cols(el.accent)[0]] }, gid + 'a')}</defs>`
+          + `<div class="sd-score" style="width:${h * .98}px;height:${h * .72}px"><svg viewBox="0 0 100 72" preserveAspectRatio="none"${el.flip ? ' style="transform:scaleX(-1)"' : ''}><defs>${svgGrad(el.accent.type === 'linear' ? el.accent : { ...el.accent, colors: [cols(el.accent)[0], cols(el.accent)[0]] }, gid + 'a')}</defs>`
           + `<path d="${SCORE_SHAPES[el.scoreShape] || SCORE_SHAPES.skew}" fill="url(#${gid}a)" stroke="${esc(el.teamColor)}" stroke-opacity=".6" stroke-width="1.5" vector-effect="non-scaling-stroke"/></svg><b class="sd-num" style="font-size:${h * .55}px;color:${esc(el.scoreColor)};text-shadow:0 0 ${h * .2}px ${esc(el.teamColor)}"></b></div>`;
         parts.name = body.querySelector('.sd-name'); parts.team = body.querySelector('.sd-team'); parts.flag = body.querySelector('.sd-flag');
         parts.ltag = body.querySelector('.sd-ltag'); parts.pro = body.querySelector('.sd-pro'); parts.status = body.querySelector('.sd-status'); parts.num = body.querySelector('.sd-num');
         parts.l2 = body.querySelector('.sd-l2'); parts.scoreBox = body.querySelector('.sd-score');
-        if (el.font.italic) parts.num.style.translate = '-.07em .03em';     // 1.11: a slanted digit sits right of the middle of its box; nudge it back so it reads centred
+        if (el.font.italic) parts.num.style.translate = '-.07em .03em';
+        else parts.name.style.padding = '0 .04em';          // 1.5.8: upright, it needs no room for a lean: even on both sides, so 2P's name sits as far from its box as 1P's     // 1.11: a slanted digit sits right of the middle of its box; nudge it back so it reads centred
         // 1.12.21: readable on any colour — the team tag on the plate and the number on its score box keep the colour you gave
         // them when it reads there, and are nudged toward black or white when it doesn't (a white 3 on a yellow box)
         const boxTone = (ac => (ac.length ? ac.reduce((a, c) => mix(a, c, .5)) : ''))(cols(el.accent).filter(c => /^#[0-9a-f]{6}/i.test(c)).map(c => c.slice(0, 7)));   // the score box's own colour (the middle of its gradient)
@@ -335,7 +336,7 @@
         if (el.font.gfx && el.font.gfx !== 'none' && g3l.LETTERS[el.font.gfx]) g3all.push(g3l.text(lt, { k: el.font.gfx, colors: el.font.gfxColors, speed: el.font.gfxSpeed, amt: el.font.gfxAmt, ...(clipBox ? { host: clipBox, origin: inn } : {}) }));
         else if (el.font.mask && (el.font.mask.src || el.font.mask.mat)) g3all.push(g3l.mask(lt, { ...el.font.mask }));
       }
-      if (fxT !== 'none') for (const n of letters) { n.style.setProperty('--tfx', el.font.fxColor || UC('effects', '#ff3b14', '#ff5a1f')); n.style.setProperty('--tfw', (el.font.fxSize || (fxT === 'neon' ? 3 : fxT === 'extrude' ? 6 : 1.5)) + 'px'); if (fxT === 'neon') n.style.setProperty('--tfx2', mix(el.font.fxColor || '#ff3b14', '#ffffff', .55)); }   // 1.12.14: the neon tube's core is lighter than its glow
+      if (fxT !== 'none') for (const n of letters) { n.style.setProperty('--tfx', el.font.fxColor || UC('effects', '#ff3b14', '#ff5a1f')); n.style.setProperty('--tfw', (el.font.fxSize || (fxT === 'neon' ? 3 : fxT === 'extrude' ? 6 : 1.5)) + 'px'); if (fxT === 'neon') n.style.setProperty('--tfx2', window.SBColours && window.SBColours.light ? (el.font.fxColor || '#ff3b14') : mix(el.font.fxColor || '#ff3b14', '#ffffff', .55)); }   // 1.12.14: the neon tube's core is lighter than its glow (1.5.11: not on a light look of yours, where a whitened core fades into the light plates)
       if (el.kind === 'bar') {
         const a = alignOf(el, el.side === 2 ? 'right' : 'left'), two = el.side === 2;
         body.querySelector('.sd-who').style.alignItems = JUST[a];
@@ -719,26 +720,37 @@
       let fs2 = base; for (let i = 0; i < 6 && over(); i++) { fs2 *= .94; m.style.fontSize = fs2.toFixed(2) + 'px'; }
     }
     // score pips: one for every game it takes, filled as games are won; the one that would win the set stands out at match point
-    function pipPath(el, w, h) {
+    function pipPath(el, w, h, mirror) {
       const sh = SHAPES[el.pip] || SHAPES.diamond;
       if (sh.pill) { const rd = Math.min(w, h) / 2; return `M${rd},0H${w - rd}A${rd},${rd} 0 0 1 ${w - rd},${h}H${rd}A${rd},${rd} 0 0 1 ${rd},0Z`; }
-      return 'M' + sh.pts.map(([x, y]) => `${(x * w).toFixed(2)},${(y * h).toFixed(2)}`).join('L') + 'Z';
+      return 'M' + sh.pts.map(([x, y]) => `${((mirror ? 1 - x : x) * w).toFixed(2)},${(y * h).toFixed(2)}`).join('L') + 'Z';
     }
     function drawPips(r, n, score, st) {
       const { el, parts } = r, box = parts.pips, gap = Number(el.gap) || 0, ratio = Math.max(.2, Number(el.ratio) || 1), sw = Math.max(1, Math.min(2.5, el.h * .09));
       let pw = n ? (el.w - gap * (n - 1)) / n : 0, ph = pw / ratio; if (ph > el.h) { ph = el.h; pw = ph * ratio; }
       pw = Math.max(2, pw - sw); ph = Math.max(2, ph - sw);                                   // room for the outline
       const rtl = el.dir ? el.dir === 'rtl' : el.side === 2;
-      box.style.justifyContent = JUST[alignOf(el, rtl ? 'right' : 'left')] || 'flex-start'; box.style.gap = gap + 'px'; box.style.flexDirection = rtl ? 'row-reverse' : 'row';
+      // 1.5.8: and a slanted pip (Street Fighter 6's) leans the other way on 2P's side, like the frame around it
+      // 1.5.8: 2P's row runs right to left, so "right" is where the row starts (flex-start), not where it ends: they were at the
+      // wrong end of their slot, 32 px off 1P's mirror image on Tekken 8
+      const at = alignOf(el, rtl ? 'right' : 'left');
+      box.style.justifyContent = (rtl ? { left: 'flex-end', right: 'flex-start' }[at] : null) || JUST[at] || 'flex-start'; box.style.gap = gap + 'px'; box.style.flexDirection = rtl ? 'row-reverse' : 'row';
       // (on a bar whose plate has turned gold or dimmed, the pips keep reading: a colour that's lost there is nudged, and the
       // glaze a not-yet pip is filled with dims along with the loser's plate)
       const g = st.win || st.lose ? groundOf(r) : null, hold = c => (g && /^#[0-9a-f]{6}$/i.test(c || '') && contrast(c, g.tone) < 2 ? readable(c, g.tone, 3) : c);
-      const d = pipPath(el, pw, ph), onC = hold(st.win && el.winColor ? el.winColor : el.onColor), offC = el.offColor, quiet = el.pulse === false || calm() || POTATO();
+      // 1.5.10: the win colour is for pips on the winner's plate, which lights up (dark pips read there). Pips in a box of their
+      // own (Street Fighter 6, Avatar, Fatal Fury) keep the player's colour: dark on a dark box, the sets won looked unlit
+      const onWin = st.win && el.winColor && g && g.st === 'win';
+      const d = pipPath(el, pw, ph, rtl), onC = hold(onWin ? el.winColor : el.onColor), offC = el.offColor, quiet = el.pulse === false || calm() || POTATO();
       const offF = !el.offFill ? 'none' : g && st.lose && /^#[0-9a-f]{6}$/i.test(el.offFill) ? mix(el.offFill, g.tone, .6) : el.offFill;
+      // 1.5.8: el.gem — a won pip lit like a gem (the old Ember layout's set diamonds): a glint from light to deep across it,
+      // a pale edge and a soft glow in its own colour. Not on the winner's gold plate, where the pips go dark to read.
+      const gem = el.gem && !st.win && /^#[0-9a-f]{6}/i.test(onC || ''), gc = gem ? onC.slice(0, 7) : '';
+      const gemDefs = gem ? `<defs><linearGradient id="${esc(el.id)}-gem" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${mix(gc, '#ffffff', .62)}"/><stop offset=".55" stop-color="${gc}"/><stop offset="1" stop-color="${mix(gc, '#000000', .42)}"/></linearGradient></defs>` : '';
       let html = '';
       for (let i = 0; i < n; i++) {
-        const on = i < score, next = !on && st.mp && i === score;
-        html += `<svg${next ? ` class="${quiet ? 'sd-pip-mark' : 'sd-pip-next'}"` : ''} width="${(pw + sw).toFixed(1)}" height="${(ph + sw).toFixed(1)}" viewBox="${(-sw / 2).toFixed(2)} ${(-sw / 2).toFixed(2)} ${(pw + sw).toFixed(2)} ${(ph + sw).toFixed(2)}"><path class="sd-pip${on ? ' sd-pip-on' : ''}" d="${d}" fill="${esc(on ? onC : next ? onC : offF)}"${next ? ' fill-opacity=".5"' : ''} stroke="${esc(on || next ? onC : offC)}" stroke-width="${sw.toFixed(2)}" stroke-linejoin="round"/></svg>`;
+        const on = i < score, next = !on && st.mp && i === score, lit = gem && on;
+        html += `<svg${next ? ` class="${quiet ? 'sd-pip-mark' : 'sd-pip-next'}"` : ''} width="${(pw + sw).toFixed(1)}" height="${(ph + sw).toFixed(1)}" viewBox="${(-sw / 2).toFixed(2)} ${(-sw / 2).toFixed(2)} ${(pw + sw).toFixed(2)} ${(ph + sw).toFixed(2)}"${lit ? ` style="filter:drop-shadow(0 0 ${Math.max(2, ph * .42).toFixed(1)}px ${gc})"` : ''}>${i === 0 ? gemDefs : ''}<path class="sd-pip${on ? ' sd-pip-on' : ''}" d="${d}" fill="${lit ? `url(#${esc(el.id)}-gem)` : esc(on ? onC : next ? onC : offF)}"${next ? ' fill-opacity=".5"' : ''} stroke="${lit ? mix(gc, '#ffffff', .7) : esc(on || next ? onC : offC)}" stroke-width="${sw.toFixed(2)}" stroke-linejoin="round"/></svg>`;
       }
       box.innerHTML = html; box.style.setProperty('--pipd', { snappy: '.9s', overshoot: '1.15s', soft: '2.4s' }[tempoName()]);
       const pip = st.grew && !POTATO() && box.children[score - 1] ? box.children[score - 1].firstChild : null;
@@ -1869,7 +1881,7 @@
       }
       if (el.kind === 'pips') {          // 1.12.21: as a still — three pips, the first one won
         const n = 3, gap = Number(el.gap) || 0, ratio = Math.max(.2, Number(el.ratio) || 1), shp = SHAPES[el.pip] || SHAPES.diamond; let pw = (el.w - gap * (n - 1)) / n, ph = pw / ratio; if (ph > el.h) { ph = el.h; pw = ph * ratio; }
-        const pd = shp.pill ? `M${ph / 2},0H${pw - ph / 2}A${ph / 2},${ph / 2} 0 0 1 ${pw - ph / 2},${ph}H${ph / 2}A${ph / 2},${ph / 2} 0 0 1 ${ph / 2},0Z` : 'M' + shp.pts.map(([x, y]) => `${+(x * pw).toFixed(2)},${+(y * ph).toFixed(2)}`).join('L') + 'Z';
+        const pd = shp.pill ? `M${ph / 2},0H${pw - ph / 2}A${ph / 2},${ph / 2} 0 0 1 ${pw - ph / 2},${ph}H${ph / 2}A${ph / 2},${ph / 2} 0 0 1 ${ph / 2},0Z` : 'M' + shp.pts.map(([x, y]) => `${+((el.side === 2 ? 1 - x : x) * pw).toFixed(2)},${+(y * ph).toFixed(2)}`).join('L') + 'Z';   // (1.5.8: 2P's lean the other way, as on stream)
         for (let k = 0; k < n; k++) g += `<path transform="translate(${+(el.side === 2 ? el.w - pw - k * (pw + gap) : k * (pw + gap)).toFixed(2)} ${+((el.h - ph) / 2).toFixed(2)})" d="${pd}" fill="${k ? esc(rc(el.offFill) || 'none') : esc(rc(el.onColor))}" stroke="${esc(rc(k ? el.offColor : el.onColor))}" stroke-width="1.5" stroke-linejoin="round"/>`;
       }
       if (el.kind === 'logo' && el.src) { const p = Number(el.pad) || 0; g += `<image href="${esc(el.src)}" x="${p}" y="${p}" width="${el.w - p * 2}" height="${el.h - p * 2}" preserveAspectRatio="xMidYMid ${el.fit === 'cover' ? 'slice' : 'meet'}"/>`; }

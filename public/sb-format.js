@@ -51,7 +51,9 @@
   // 1.12.21: …and on the dark looks a dark team colour (navy, black, deep purple) as lettering gets a lighter shade of itself
   const lightFor = c => { const m = /^#?([0-9a-f]{6})$/i.exec(String(c || '')); if (!m) return c; const n = parseInt(m[1], 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255;
     const L = (.2126 * r + .7152 * g + .0722 * b) / 255; if (L >= .34) return '#' + m[1]; const t = (.46 - L) / (1 - L); return '#' + [r, g, b].map(v => Math.round(v + (255 - v) * t).toString(16).padStart(2, '0')).join(''); };
-  const tcv = c => { const e = String(c == null ? '' : c).replace(/[^#0-9a-zA-Z(),.%\s-]/g, ''); return `--tc:${e};--tct:${ONI ? darkFor(e) : lightFor(e)}${/^#[0-9a-f]{6}$/i.test(e) ? `;--tcw:${e}${ONI ? '3a' : '55'}` : ''}`; };   // --tcw (1.12.6): a wash of the colour for the cards
+  // 1.5.11: a light look of your own colours (Layouts › Colours, like Sakura): lettering is deepened so it reads on the light cards
+  const LIGHTC = !!(window.SBColours && window.SBColours.on && window.SBColours.light && window.SBColours.deepen);
+  const tcv = c => { const e = String(c == null ? '' : c).replace(/[^#0-9a-zA-Z(),.%\s-]/g, ''); return `--tc:${e};--tct:${LIGHTC ? window.SBColours.deepen(e, 4.5) : ONI ? darkFor(e) : lightFor(e)}${/^#[0-9a-f]{6}$/i.test(e) ? `;--tcw:${e}${ONI ? '3a' : '55'}` : ''}`; };   // --tcw (1.12.6): a wash of the colour for the cards
   const POTATO = () => document.documentElement.classList.contains('sb-potato') || !!window.__SB_POTATO;
   // 1.12.21: Less movement (Settings › Accessibility) — a format's moments fade: no sparks, embers, rings, shakes, flashes, shards or slashes
   const CALM = () => document.documentElement.classList.contains('sb-calm');
@@ -557,6 +559,16 @@
 `;
   const css2 = tone(css);
   const st = document.createElement('style'); st.textContent = css2; document.head.appendChild(st);
+  // 1.5.11: on a light look of yours, the small lines on the splashes (the event over the title, a team's line, a player's
+  // character, the labels) are drawn in a deeper shade of their colour — a pale gold or effect colour faded into the light cards
+  if (LIGHTC) {
+    const vars = tone(VARS2), v = k => { const m = [...vars.matchAll(new RegExp('--' + k + ':(#[0-9a-fA-F]{6})', 'g'))].pop(); return m ? window.SBColours.deepen(m[1], 4.5) : ''; };
+    const acc = v('acc'), muted = v('muted'), gold = v('gold'), rule = (sel, c) => (c ? `${sel}{color:${c}}` : '');
+    const li = document.createElement('style'); li.id = 'sbf-light-ink';
+    li.textContent = rule('#sbf-sp .ttl small,.sp-big small,#sbf-vs .top small', acc) + rule('.sp-mid small,.tv-pn small,.sp-lb h3 small,.sbf-stamp small', muted)
+      + rule('.sp-champ small,#sbf-vs .mid .emb small', gold);
+    document.head.appendChild(li);
+  }
   // 1.12.9: one plate for everything a format draws — the PlayerCards, the team boxes, the middle header, the splashes' name
   // rows — made like the layout's own player bars (the same glass / glaze / card, the same slanted ends, the same name
   // lettering), so the bottom of the screen looks like part of the scoreboard. The team's colour stays as a stripe.

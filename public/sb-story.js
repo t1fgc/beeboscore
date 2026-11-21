@@ -27,6 +27,8 @@
     glass: { hit: 990, strip: 1650, d: 560, ease: 'cubic-bezier(.3,1.5,.5,1)', shake: 10, font: "'Saira Condensed','Arial Narrow',Impact,sans-serif", up: true },
     porc: { hit: 1000, strip: 1950, d: 900, ease: 'cubic-bezier(.4,0,.2,1)', shake: 3, font: "'Saira Condensed','Arial Narrow',Impact,sans-serif", up: true },
   }[K];
+  // 1.5.11: a lettering colour, deepened on a light look of yours so it reads on the light strip (public/sb-colours.js)
+  const INK = (v, n) => (window.SBColours && window.SBColours.on && window.SBColours.ink ? window.SBColours.ink(v, n) : v);
   const css = `
 #sbStory{position:absolute;left:0;top:0;width:${W}px;height:${H}px;z-index:9560;pointer-events:none;overflow:hidden;contain:strict}
 #sbStory .strip{position:absolute;display:none;grid-template-columns:1fr 1.45fr 1fr;align-items:stretch;box-sizing:border-box;font-family:${T.font};text-transform:uppercase;white-space:nowrap}
@@ -46,13 +48,13 @@
 #sbStory.k-classic .strip{background:linear-gradient(180deg,#1c2030,#151822);border:1.5px solid #333a50;border-radius:4px;color:#eef1f7;box-shadow:0 10px 26px rgba(0,0,0,.5)}
 #sbStory.k-classic .cell.L{border-left:4px solid #ff3b5c}#sbStory.k-classic .cell.R{border-right:4px solid #3b8eff}
 #sbStory.k-classic .cell.M{border-left:1px solid #252a3a;border-right:1px solid #252a3a}
-#sbStory.k-classic .cell small{color:#8b93a7}#sbStory.k-classic .cell.M small{color:#e9c35e}
+#sbStory.k-classic .cell small{color:#8b93a7}#sbStory.k-classic .cell.M small{color:${INK('#e9c35e', 4.5)}}
 /* Obsidian Glass: a blade of black glass with a gold edge, its ends cut to points */
 #sbStory.k-glass .strip{background:linear-gradient(180deg,rgba(42,38,30,.95),rgba(11,10,8,.97));color:#fff6dc;clip-path:polygon(28px 0,calc(100% - 28px) 0,100% 50%,calc(100% - 28px) 100%,28px 100%,0 50%)}
 #sbStory.k-glass .strip::before{content:'';position:absolute;inset:0;clip-path:inherit;box-shadow:inset 0 0 0 1.5px #e0a93b;pointer-events:none}
 #sbStory.k-glass .strip::after{content:'';position:absolute;left:28px;right:28px;top:0;height:1.5px;background:linear-gradient(90deg,transparent,#f6dc96,transparent);opacity:.9}
 #sbStory.k-glass .cell{font-style:italic;font-weight:800}
-#sbStory.k-glass .cell small{color:#e0a93b}#sbStory.k-glass .cell.M b{color:#f6dc96}
+#sbStory.k-glass .cell small{color:${INK('#e0a93b', 4.5)}}#sbStory.k-glass .cell.M b{color:${INK('#f6dc96', 4.5)}}
 #sbStory.k-glass .cell.M::before,#sbStory.k-glass .cell.M::after{content:'';position:absolute;top:22%;bottom:22%;width:1.5px;background:#e0a93b;opacity:.55;transform:skewX(-18deg)}
 #sbStory.k-glass .cell.M::before{left:0}#sbStory.k-glass .cell.M::after{right:0}
 /* Porcelain: a rounded white tile with a gold hairline, dark lettering, the labels in deep gold */

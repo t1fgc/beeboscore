@@ -49,8 +49,14 @@ test('a design recoloured: every part follows, splash backgrounds and effects in
   const r = JSON.stringify(C.recolourDesign(d, 'Obsidian Glass', mine));
   for (const old of Object.values(C.BASE['Obsidian Glass'])) assert.ok(!r.toLowerCase().includes(old), `${old} left`);
   for (const c of Object.values(mine)) assert.ok(r.includes(c), `${c} used`);
-  const sc = JSON.parse(r).scenes.vs;
-  assert.equal(sc.particles.color, '#c77dff'); assert.equal(sc.bg.colors.at(-1), '#08040f');
+  const R = JSON.parse(r), sc = R.scenes.vs;
+  assert.equal(sc.bg.colors.at(-1), '#08040f');
+  // 1.5.9: Obsidian's players share the gold: each player's colour takes over the gold on that player's own pieces
+  const b = R.scenes.board.elements, bar = s => b.find(e => e.kind === 'bar' && e.side === s);
+  assert.equal(bar(1).stroke.color, '#ff5ccf'); assert.equal(bar(2).stroke.color, '#7c6bff');
+  assert.equal(b.find(e => e.kind === 'header').stroke.color, '#b682ff', 'the accent everywhere else');
+  const acc = C.recolourDesign(d, 'Obsidian Glass', { accent: '#b682ff' }).scenes.board.elements;
+  assert.equal(acc.find(e => e.kind === 'bar' && e.side === 1).stroke.color, '#b682ff', 'no player colour picked: the player follows the accent');
 });
 
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'bs-col-'));
@@ -77,4 +83,55 @@ test('server: colours saved per look, layouts go out in them, imported layouts a
   g = await (await fetch(U + '/api/layout-colours')).json();
   assert.deepEqual(g.families.Classic.colours, {});
   assert.ok(!(await (await fetch(U + '/overlay/sf6-default?direct')).text()).includes('__SB_COLOURS'));
+});
+
+// 1.5.10: a light colour set (Sakura) showed a black well behind Street Fighter 6's set pips, and Classic Fatal Fury's bars lost
+// the hard shadow its set boxes kept. On every scoreboard: pure black is only a hard drop shadow, and every drop shadow is black.
+test('scoreboards: pure black only for drop shadows, and every drop shadow is black', () => {
+  for (const suf of ['default', 'obsidian']) for (const g of ['tekken8', 'sf6', 'avatar', 'fatalfury']) {
+    const d = JSON.parse(fs.readFileSync(new URL(`${g}-${suf}/design.json`, OV), 'utf8'));
+    for (const e of d.scenes.board.elements) {
+      const f = e.fill; if (!f || f.type === 'none' || !(e.opacity > 0)) continue;
+      const black = (f.colors || []).some(c => /^#000000(ff)?$/i.test(c)), drop = /\bdrop\b/i.test(e.name || '');
+      if (drop) assert.ok((f.colors || []).every(c => /^#000000(ff)?$/i.test(c)), `${g}-${suf}: ${e.name} is a shadow: black`);
+      else assert.ok(!black, `${g}-${suf}: ${e.name} is drawn in pure black, which your colours can't move`);
+    }
+  }
+});
+
+// 1.5.11: on a light colour set (Sakura), lettering drawn in a pale shade of a part (a gold highlight, a cream line, the
+// effect colour) came out nearly white on the light plates of the splashes. It's deepened towards your lettering colour.
+const lumOf = c => { const f = v => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); }; const [r, g, b] = C.hex2rgb(c); return .2126 * f(r) + .7152 * f(g) + .0722 * f(b); };
+const ratio = (a, b) => { const x = lumOf(a), y = lumOf(b); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); };
+test('a light look: the splashes’ lettering stands out from the light plates, and dark looks are untouched', () => {
+  const sakura = C.PRESETS.find(p => p[0] === 'Sakura')[1];
+  for (const suf of ['default', 'obsidian']) for (const g of ['tekken8', 'sf6', 'avatar', 'fatalfury']) {
+    const d = JSON.parse(fs.readFileSync(new URL(`${g}-${suf}/design.json`, OV), 'utf8')), fam = suf === 'obsidian' ? 'Obsidian Glass' : 'Classic';
+    const out = C.recolourDesign(d, fam, sakura);
+    for (const [sn, s] of Object.entries(out.scenes)) {
+      if (sn === 'board') continue;
+      for (const e of s.elements) {
+        if (e.kind !== 'text' && e.kind !== 'bracket') continue;
+        const cs = [...(e.font.color.colors || []), ...(e.font.gfxColors || []), ...(e.kind === 'bracket' ? [e.winColor, e.subColor, e.teamColor] : [])].filter(c => /^#[0-9a-f]{6}$/i.test(c || ''));
+        for (const c of cs) assert.ok(ratio(c, sakura.plates) >= 3.49, `${g}-${suf} ${sn}: ${e.name} lettering ${c} on ${sakura.plates} (${ratio(c, sakura.plates).toFixed(2)}:1)`);
+      }
+      for (const e of s.elements.filter(x => x.kind === 'avatar')) for (const c of e.font.color.colors || [])
+        assert.ok(ratio(c, '#111111') >= 4.49, `${g}-${suf} ${sn}: ${e.name}'s initial reads on its dark box`);
+    }
+    // the scoreboard is left as it was
+    const plain = C.recolourDesign({ ...d, scenes: { board: d.scenes.board } }, fam, sakura);
+    assert.deepEqual(out.scenes.board, plain.scenes.board);
+  }
+  // a dark look of yours: nothing deepened
+  for (const [n, set] of C.PRESETS.filter(p => p[0] !== 'Sakura')) {
+    const E = C.make('Classic', set); assert.equal(E.light, false, n);
+    assert.equal(E.ink('#e9c35e', 4.5), E.map('#e9c35e'), n); assert.equal(E.deepen('#3b8eff', 4.5), '#3b8eff', n);
+  }
+  // a light look: a pale gold line is deepened, a team's colour is only deepened (never recoloured), dark ink is left alone
+  const L = C.make('Classic', sakura);
+  assert.ok(L.light);
+  assert.ok(ratio(L.ink('#f3d98c', 4.5), sakura.plates) >= 4.49);
+  assert.ok(ratio(L.deepen('#ff3b5c', 4.5), sakura.plates) >= 4.49);
+  assert.equal(L.ink('#3a1a24', 4.5), '#3a1a24');
+  assert.equal(L.map(L.ink('#f3d98c', 4.5)), L.ink('#f3d98c', 4.5), 'what ink() made is never moved again');
 });

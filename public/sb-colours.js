@@ -1,4 +1,4 @@
-/* BeeboScore (developed by Beebo), 1.5.5 — your colours for the app's own layouts (Classic and Obsidian Glass).
+/* BeeboScore (developed by Beebo), 1.5.5 (1.5.9: Obsidian Glass's new colours) — your colours for the app's own layouts (Classic and Obsidian Glass).
  *
  * Nine colours, each one a part of the look: the bars, the splash background, the edges, the lettering, the small
  * lettering, the accent, player 1, player 2 and the effects. Each layout family has its own nine (BASE below); every
@@ -17,16 +17,26 @@
   const LABELS = { plates: 'Bars', backdrop: 'Splash background', edges: 'Edges', text: 'Lettering', subtext: 'Small lettering', accent: 'Accent', p1: 'Player 1', p2: 'Player 2', effects: 'Effects' };
   const BASE = {
     Classic: { plates: '#1c2030', backdrop: '#0a0b10', edges: '#333a50', text: '#eef1f7', subtext: '#8b93a7', accent: '#e9c35e', p1: '#ff3b5c', p2: '#3b8eff', effects: '#ff5a1f' },
-    'Obsidian Glass': { plates: '#1f1d18', backdrop: '#050507', edges: '#5a4824', text: '#f4eedf', subtext: '#8f8878', accent: '#e0a93b', p1: '#e3a536', p2: '#b9c0ca', effects: '#f0b84c' },
+    // 1.5.9: Obsidian Glass's new design. Its players share the gold, so Player 1 and Player 2 start as the
+    // accent and colour that player's own pieces when you pick them (SIDED below)
+    'Obsidian Glass': { plates: '#171511', backdrop: '#030304', edges: '#4a4030', text: '#ece4d2', subtext: '#8f8878', accent: '#e0a93b', p1: '#e0a93b', p2: '#e0a93b', effects: '#f0c766' },
   };
-  // every colour each family's designs use, and the part it belongs to (tools/make-obsidian.js keeps Obsidian's in step)
+  // the families whose player colours are the accent on that player's pieces (a piece's side, or a name that starts 1P / 2P)
+  const SIDED = { 'Obsidian Glass': true };
+  // every colour each family's designs use (and the splash scripts draw with), and the part it belongs to
   const KNOWN = {
     Classic: { plates: ['#1c2030', '#151822', '#10121a', '#07080c', '#05060a', '#141210', '#17181d', '#0b0c0f'], backdrop: ['#0a0b10', '#050507'], edges: ['#333a50', '#252a3a', '#3a3d48'],
       text: ['#eef1f7', '#d9dce4'], subtext: ['#8b93a7', '#5d6579', '#8d919d'], accent: ['#e9c35e', '#f6c453', '#f3d98c', '#fff3cc', '#8a6a12'], p1: ['#ff3b5c'], p2: ['#3b8eff'],
       effects: ['#ff5a1f', '#ffb36b', '#ff3b14', '#ffb020', '#ff6a1a', '#ff6a2a', '#ffd0a0', '#ffe0a0'] },
-    'Obsidian Glass': { plates: ['#1f1d18', '#100f0c', '#0c0b09', '#040404', '#030303', '#0b0b0d', '#2b2112', '#100c06', '#060504', '#22190a', '#0d0b07'], backdrop: ['#050507'],
-      edges: ['#5a4824', '#2a261d', '#8a6a2c', '#4a3f2a', '#6e4a0e'], text: ['#f4eedf', '#ece4d2', '#fff6de'], subtext: ['#8f8878', '#7d7462', '#a8814a'],
-      accent: ['#e0a93b', '#ffe2a1', '#f8e2a6', '#f6dc96', '#c98f26', '#fff0c6'], p1: ['#e3a536'], p2: ['#b9c0ca'], effects: ['#f0b84c', '#f0c766'] },
+    // (1.5.9: the layouts' own colours, and the ones the splash scripts still draw Obsidian with)
+    'Obsidian Glass': { plates: ['#171511', '#33302a', '#0b0a08', '#030304', '#090806', '#2e2b25', '#25221d', '#211f1a', '#211c12', '#28251e', '#1d1b16', '#1f1d18', '#100f0c',
+        '#0c0b09', '#0d0b07', '#0d0c0a', '#0e0d0a', '#07070a', '#2b1c04', '#1c1303', '#3a2405', '#040404', '#030303', '#0b0b0d', '#2b2112', '#100c06', '#060504', '#22190a'],
+      backdrop: ['#050507', '#1d160b', '#07070b', '#22190b', '#020203', '#2e2108', '#120e07', '#18120a', '#070605'],
+      edges: ['#4a4030', '#6e4a0e', '#3a3d48', '#4f4636', '#8c6416', '#5a4824', '#2a261d', '#8a6a2c', '#4a3f2a'],
+      text: ['#ece4d2', '#d9dce4', '#e9ecf0', '#f3ede0', '#f8f3e6', '#f2ebdb', '#f4eedf', '#fff6de'],
+      subtext: ['#8f8878', '#a39b88', '#b9ad92', '#c2b393', '#cfc2a2', '#d4c7a6', '#7d7462', '#a8814a'],
+      accent: ['#e0a93b', '#ffe2a1', '#f6dc96', '#fff0c6', '#d9a33c', '#c4881f', '#ffe9b4', '#ffd65a', '#fff6d6', '#8a5a12', '#f8e2a6', '#c98f26'],
+      p1: [], p2: [], effects: ['#f0c766', '#ff5a1f', '#ffc95e', '#f0b84c'] },
   };
 
   const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
@@ -60,12 +70,16 @@
     return hsl2rgb([h, s, l]);
   }
   const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+  // how bright a colour looks (WCAG relative luminance), and how far apart two are (1–21)
+  const relLum = c => { const f = v => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); }; return .2126 * f(c[0]) + .7152 * f(c[1]) + .0722 * f(c[2]); };
+  const contrastOf = (a, b) => { const x = relLum(a), y = relLum(b); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); };
+  const lighter = (a, b) => (relLum(a) >= relLum(b) ? a : b);
   const isWB = c => (c[0] === 255 && c[1] === 255 && c[2] === 255) || (c[0] === 0 && c[1] === 0 && c[2] === 0);
 
   /** the colour engine for one family and your colours: { on, role(rgb), shiftAs(role, rgb, anchorRgb?), map(str), as(role, c, anchor) } */
   function make(family, user) {
     const base = BASE[family], known = {}, mine = {}, skip = new Set();
-    if (!base) return { on: false, map: s => s, as: (r, c) => c, role: () => '', family };
+    if (!base) return { on: false, map: s => s, as: (r, c) => c, ink: s => s, role: () => '', family };
     for (const [r, list] of Object.entries(KNOWN[family] || {})) for (const h of list) known[h.toLowerCase()] = r;
     for (const r of ROLES) { const u = hex2rgb(user && user[r]); if (u && rgb2hex(u) !== base[r].toLowerCase()) { mine[r] = u; skip.add(rgb2hex(u)); } }
     const on = Object.keys(mine).length > 0;
@@ -110,7 +124,41 @@
       const rgb = hex2rgb(c); if (!rgb) return map(c);
       const o = rgb2hex(keep(shiftAs(r, rgb, anchor ? hex2rgb(anchor) : null))); return o + (c.replace(/^#/, '').length === 8 ? c.slice(-2) : '');
     }
-    return { on, family, role, map, as, shiftAs, one, B, mine };
+    // 1.5.11: lettering on a light look. A pale shade of a part (a gold highlight, a cream line, a soft effect colour) comes
+    // out nearly white once your parts are light, and lettering drawn with it fades into the light plates behind it. ink()
+    // deepens such lettering towards your own lettering colour until it stands out; dark looks, and lettering that already
+    // reads, are left exactly as they are.
+    const ground = lighter(mine.plates || B.plates, mine.backdrop || B.backdrop);
+    const light = whiteIsText && relLum(ground) > .35;
+    const inkTo = mine.text || [0, 0, 0];
+    // c moved towards `to` in tenths until it stands out from `bg` by `need`
+    function apart(c, bg, need, to) {
+      if (contrastOf(c, bg) >= need) return c;
+      let o = c; for (let t = .1; t <= 1.0001; t += .1) { o = c.map((v, i) => v + (to[i] - v) * t); if (contrastOf(o, bg) >= need) break; }
+      return o.map(v => Math.round(v));
+    }
+    const deep = (c, need) => (light ? apart(c, ground, need, inkTo) : c);
+    // the initial in an empty picture box stands on near-black (#111) whatever your colours: on a light look it's lifted
+    // towards your light plates instead
+    const lift = (c, need) => (light ? apart(c, [17, 17, 17], need, ground) : c);
+    /** lettering colour(s) in a string — your colours applied, then deepened on a light look to stand out by `need` (3 = big
+     * lettering, 4.5 = small). See-through colours (glows, sheens) are left alone. What it makes is never moved again by map(),
+     * so a script can ink a colour inside CSS it maps as a whole */
+    function ink(str, need = 3) { return typeof str === 'string' ? deepen(map(str), need) : str; }
+    /** the same, for colours that aren't the layout's own (a team's colour): deepened on a light look, never recoloured */
+    function deepen(s, need = 3) {
+      if (typeof s !== 'string' || !light) return s;
+      return s.replace(RX, (m, r, g, b, a) => {
+        if (m[0] === '#') {
+          const body = m.slice(1), alpha = body.length === 8 ? body.slice(6) : '', c = hex2rgb(body.slice(0, body.length === 8 ? 6 : body.length));
+          if (!c || (alpha && parseInt(alpha, 16) < 200)) return m; const o = deep(c, need); if (o === c) return m; made.add(rgb2hex(o)); return rgb2hex(o) + alpha;
+        }
+        if (a && parseFloat(a.replace(/[,\s]/g, '')) < .8) return m;
+        const c = [+r, +g, +b], o = deep(c, need); if (o === c) return m; made.add(rgb2hex(o));
+        return a ? `rgba(${o[0]},${o[1]},${o[2]}${a.replace(/\s+/g, '')})` : `rgb(${o[0]},${o[1]},${o[2]})`;
+      });
+    }
+    return { on, family, role, map, as, shiftAs, one, ink, deepen, light, deep, lift, B, mine };
   }
 
   /** server: a layout's design with your colours, reading each colour's part from where it is used */
@@ -125,7 +173,7 @@
     };
     const RXH = /#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{3})\b/g;
     const fix = (str, path) => {
-      const ctx = ctxRole(path, str);
+      const ctx = ctxRole(path, str), need = needOf(path);
       return str.replace(RXH, m => {
         const body = m.slice(1), alpha = body.length === 8 ? body.slice(6) : '', c = hex2rgb(body.slice(0, body.length === 8 ? 6 : body.length)); if (!c) return m;
         let r = '';
@@ -133,15 +181,45 @@
         else if (ctx === 'effects-if-white' && isWB(c)) r = c[0] ? 'effects' : '';
         else if (ctx === 'text-if-white' && isWB(c)) r = c[0] ? 'text' : '';
         if (!r) r = E.role(c);
-        if (!r || !E.mine[r]) return m;
-        return rgb2hex(shift(c, E.B[r], E.mine[r])) + alpha;
+        if (r === 'accent' && side && E.mine['p' + side]) r = 'p' + side;
+        let o = r && E.mine[r] ? shift(c, E.B[r], E.mine[r]) : null;
+        if (need && !(alpha && parseInt(alpha, 16) < 200)) { const at = (o || c).map(v => Math.round(clamp(v, 0, 255))), d = (cur.kind === 'avatar' ? E.lift : E.deep)(at, need); if (d !== at) o = d; }
+        return o ? rgb2hex(o) + alpha : m;
       });
     };
+    // 1.5.11: which colours are lettering (deepened on a light look by E.deep): the words on the screens other than the
+    // scoreboard — a text piece's colour, its gradient-lettering colours, a neon tube's colour, and the names, round names
+    // and labels of a bracket or a list. How far they must stand out: 3.5 for big lettering, 4.5 for small.
+    // A picture box's initial (shown while there's no picture) is lifted instead: it stands on near-black.
+    const LETTER = { text: 1, bracket: 1, list: 1, avatar: 1 };
+    const needOf = (path) => {
+      if (!E.light || !cur || !LETTER[cur.kind] || path[0] !== 'scenes' || path[1] === 'board') return 0;
+      const k = path.slice(4).join('.'), f = cur.font || {};
+      if (cur.kind === 'avatar') return /^font\.color(\.|$)/.test(k) ? 4.5 : 0;
+      const lettering = /^font\.color(\.|$)/.test(k) || /^font\.gfxColors\./.test(k) || (k === 'font.fxColor' && f.fx === 'neon')
+        || (cur.kind !== 'text' && /^(winColor|subColor|teamColor|statusColor)$/.test(k));
+      if (!lettering) return 0;
+      const px = cur.kind === 'text' ? (Number(cur.h) || 0) * .78 * (Number(f.size) || 1) : 0;
+      return px >= 34 ? 3.5 : 4.5;
+    };
+    // the player a piece belongs to (only where the family colours players that way)
+    const sideOf = (o, outer) => {
+      if (!SIDED[family] || !o || typeof o.kind !== 'string') return outer;
+      if (o.side === 1 || o.side === 2) return o.side;
+      const n = String(o.name || ''); return /^(1P|P1|Player 1)\b/i.test(n) ? 1 : /^(2P|P2|Player 2)\b/i.test(n) ? 2 : outer;
+    };
+    let side = 0, cur = null;
     const walk = (o, path) => {
       if (typeof o === 'string') return fix(o, path);
       if (Array.isArray(o)) return o.map((v, i) => walk(v, path.concat(String(i))));
       // 1.5.6: a piece you gave its own colours in the layout maker keeps them (ownColours: true)
-      if (o && typeof o === 'object') { if (o.ownColours === true) return o; const out = {}; for (const [k, v] of Object.entries(o)) out[k] = walk(v, path.concat(k)); return out; }
+      if (o && typeof o === 'object') {
+        if (o.ownColours === true) return o;
+        const was = side, wasEl = cur; side = sideOf(o, side);
+        if (path.length === 4 && path[0] === 'scenes' && path[2] === 'elements') cur = o;
+        const out = {}; for (const [k, v] of Object.entries(o)) out[k] = walk(v, path.concat(k));
+        side = was; cur = wasEl; return out;
+      }
       return o;
     };
     return walk(design, []);
@@ -163,11 +241,11 @@
     ['Sakura', { plates: '#fff0f4', backdrop: '#ffe3ea', edges: '#e7a7b8', text: '#3a1a24', subtext: '#9b6b79', accent: '#ff6f9a', p1: '#ff4f86', p2: '#7a8cff', effects: '#ffb3c8' }],
     ['Mono', { plates: '#1a1a1a', backdrop: '#050505', edges: '#4a4a4a', text: '#ffffff', subtext: '#9a9a9a', accent: '#e6e6e6', p1: '#ffffff', p2: '#bdbdbd', effects: '#ffffff' }],
   ];
-  const api = { ROLES, LABELS, BASE, KNOWN, PRESETS, make, recolourDesign, clean, hex2rgb, rgb2hex, shift };
+  const api = { ROLES, LABELS, BASE, KNOWN, SIDED, PRESETS, make, recolourDesign, clean, hex2rgb, rgb2hex, shift };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else {
     root.SBColoursLib = api;
     const cfg = root.__SB_COLOURS;          // set by the server on a page of the app's own layouts when you've chosen colours
-    root.SBColours = cfg ? make(cfg.family, cfg.colours) : { on: false, map: s => s, as: (r, c) => c };
+    root.SBColours = cfg ? make(cfg.family, cfg.colours) : { on: false, map: s => s, as: (r, c) => c, ink: s => s };
   }
 })(typeof window !== 'undefined' ? window : this);

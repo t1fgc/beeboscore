@@ -96,7 +96,7 @@
   }
   function scriptColours() {
     const p = doc.palette, on = p && COL && Object.keys(p.colours || {}).length;
-    window.SBColours = on ? COL.make(p.look, p.colours) : { on: false, map: s => s, as: (r, c) => c };
+    window.SBColours = on ? COL.make(p.look, p.colours) : { on: false, map: s => s, as: (r, c) => c, ink: s => s };
   }
   let drawT = 0;
   function draw(now) {
