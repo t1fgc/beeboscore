@@ -4,13 +4,13 @@
 
 1. The repository is **public**.
 2. The release is **published**: not a draft, and not marked as a pre-release.
-3. The exe attached to it is named exactly **`BeeboScore-<version>.exe`** (with a copy named `BeeboScore-Lite-<version>.exe`; the workflow adds it), for example `BeeboScore-1.5.1.exe`. The version is read from this file name, not from the tag.
+3. The exe attached to it is named exactly **`BeeboScore-<version>.exe`**, for example `BeeboScore-1.5.1.exe`. The version is read from this file name, not from the tag.
 
 Other files in a release are ignored, so release notes, checksums or other downloads can sit beside the exe.
 
 ### Older copies (1.4.0 and BeeboScore Lite 1.5.0)
 
-Those copies look for **`BeeboScore-<version>.exe`**, the release exe's own name since 1.5.2, so they find every new release by themselves. Copies of 1.5.0 (then called BeeboScore Lite) only look for **`BeeboScore-Lite-<version>.exe`**, so the workflow attaches the same exe under that name too. Keep both files in every release.
+Copies of 1.4.0 look for **`BeeboScore-<version>.exe`**, the release exe's own name since 1.5.2, so they find every new release by themselves. Copies of 1.5.0 and 1.5.1 (then called BeeboScore Lite) only look for `BeeboScore-Lite-<version>.exe`, which releases no longer carry: anyone still on one of those downloads the new exe from the Releases page once, and Check for updates works from then on.
 
 ## Each release
 

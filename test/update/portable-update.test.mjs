@@ -49,16 +49,14 @@ test('a newer exe already in the folder is used without downloading (either name
   fs.rmSync(dir, { recursive: true, force: true });
 });
 
-test('1.4.0 (BeeboScore-x.y.z.exe) and 1.5.0 (BeeboScore-Lite-x.y.z.exe) both find a new release', () => {
-  const OLD140 = /^BeeboScore-(\d+)\.(\d+)\.(\d+)\.exe$/i, LITE150 = /^BeeboScore-Lite-(\d+)\.(\d+)\.(\d+)\.exe$/i;
-  const names = ['BeeboScore-1.5.2.exe', 'BeeboScore-Lite-1.5.2.exe'];
-  assert.deepEqual(names.filter(n => OLD140.test(n)), ['BeeboScore-1.5.2.exe']);
-  assert.deepEqual(names.filter(n => LITE150.test(n)), ['BeeboScore-Lite-1.5.2.exe']);
+test('1.4.0 (BeeboScore-x.y.z.exe) finds a new release by its one exe', () => {
+  const OLD140 = /^BeeboScore-(\d+)\.(\d+)\.(\d+)\.exe$/i;
+  assert.deepEqual(['BeeboScore-1.5.12.exe'].filter(n => OLD140.test(n)), ['BeeboScore-1.5.12.exe']);
 });
 
-test('the workflow attaches the exe under both names to every release', () => {
+test('the workflow attaches the one exe, BeeboScore-<version>.exe, to every release', () => {
   const y = fs.readFileSync(new URL('../../.github/workflows/release.yml', import.meta.url), 'utf8');
-  assert.match(y, /cp "dist\/BeeboScore-\$VERSION\.exe" "dist\/BeeboScore-Lite-\$VERSION\.exe"/);
-  assert.match(y, /FILES=\("dist\/BeeboScore-\$VERSION\.exe" "dist\/BeeboScore-Lite-\$VERSION\.exe"\)/);
+  assert.match(y, /FILES=\("dist\/BeeboScore-\$VERSION\.exe"\)/);
+  assert.doesNotMatch(y, /BeeboScore-Lite-/, 'no second copy under the old name');
   assert.match(y, /path: dist\/BeeboScore-\$\{\{ steps\.v\.outputs\.version \}\}\.exe/);
 });

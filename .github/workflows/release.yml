@@ -57,10 +57,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           VERSION="${{ steps.v.outputs.version }}"
-          # BeeboScore-<version>.exe is the app. Copies of 1.5.0 and 1.5.1 (then called BeeboScore Lite) only look for
-          # BeeboScore-Lite-<version>.exe, so every release carries the same exe under that name too.
-          cp "dist/BeeboScore-$VERSION.exe" "dist/BeeboScore-Lite-$VERSION.exe"
-          FILES=("dist/BeeboScore-$VERSION.exe" "dist/BeeboScore-Lite-$VERSION.exe")
+          # the release carries one file: BeeboScore-<version>.exe, the app
+          FILES=("dist/BeeboScore-$VERSION.exe")
           NOTES="docs/release-notes/$VERSION.md"
           if [ -f "$NOTES" ]; then FLAGS=(--notes-file "$NOTES"); else FLAGS=(--generate-notes); fi
           gh release create "$GITHUB_REF_NAME" "${FILES[@]}" --draft --title "BeeboScore $VERSION" "${FLAGS[@]}"
